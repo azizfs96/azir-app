@@ -43,7 +43,7 @@ class _WaslaAppState extends ConsumerState<WaslaApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final push = ref.read(pushServiceProvider);
       push.registerIfSignedIn();
-      push.wireOrderTaps((orderId) => ref.read(appRouterProvider).push('/orders/$orderId'));
+      push.wireOrderTaps((orderId) => pendingDeepLink.value = '/orders/$orderId');
     });
   }
 

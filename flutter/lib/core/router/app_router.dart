@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,9 +38,16 @@ import '../../features/stores/presentation/storefront_screen.dart';
 String? confirmedRouteGuard(Object? extra) =>
     extra is BookingResult ? null : '/';
 
+/// A deep link to navigate to as soon as the router can honour it — set when the
+/// customer taps a push notification. Going through the router's own
+/// refreshListenable makes the navigation reliable even on a cold launch, where
+/// pushing directly is dropped before the first route settles.
+final pendingDeepLink = ValueNotifier<String?>(null);
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: pendingDeepLink,
     routes: [
       GoRoute(
         path: '/',
@@ -143,6 +151,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
      * them. Only the home screen, the scanner and sign-in itself stay open.
      */
     redirect: (context, state) async {
+      // A tapped notification asked to open a specific screen: honour it once,
+      // then fall through to the normal auth checks for that destination.
+      final pending = pendingDeepLink.value;
+      if (pending != null && state.matchedLocation != pending) {
+        pendingDeepLink.value = null;
+        return pending;
+      }
+
       final loc = state.matchedLocation;
       final needsAuth = loc.startsWith('/s/') ||
           loc.endsWith('/book') ||

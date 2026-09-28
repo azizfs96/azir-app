@@ -71,11 +71,15 @@ class PushService {
     if (_tapsWired) return;
     _tapsWired = true;
 
+    // Cold start (app was terminated): the launch message. Navigate after the
+    // router has settled its initial route, otherwise the push is dropped and
+    // the app just shows home.
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       final id = _orderIdOf(message);
       if (id != null) openOrder(id);
     });
 
+    // Warm start (app was in the background).
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       final id = _orderIdOf(message);
       if (id != null) openOrder(id);

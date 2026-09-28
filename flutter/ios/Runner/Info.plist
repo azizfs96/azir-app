@@ -39,11 +39,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>AppsDar</string>
+	<string>Azir</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>UIBackgroundModes</key>
@@ -51,7 +53,7 @@
 		<string>remote-notification</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>AppsDar</string>
+	<string>Azir</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>لتحديد موقع التوصيل على الخريطة.</string>
 	<key>CFBundlePackageType</key>
