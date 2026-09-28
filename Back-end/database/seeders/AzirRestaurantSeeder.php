@@ -38,13 +38,20 @@ class AzirRestaurantSeeder extends Seeder
     {
         $password = env('SEED_OWNER_PASSWORD', 'password');
 
-        $owner = User::factory()->create([
+        // Created directly (not via factory) so the seeder runs on a production
+        // install where faker (a dev dependency) is absent.
+        $owner = new User;
+        $owner->forceFill([
             'name' => 'Azir Owner',
             'email' => 'owner@azir.sa',
-            'password' => $password,
+            'password' => $password, // hashed by the model's cast
             'role' => User::ROLE_MERCHANT_OWNER,
             'phone' => '+966555000111',
-        ]);
+            'locale' => 'ar',
+            'is_active' => true,
+            'email_verified_at' => now(),
+            'phone_verified_at' => now(),
+        ])->save();
 
         $merchant = Merchant::create([
             'owner_user_id' => $owner->id,
