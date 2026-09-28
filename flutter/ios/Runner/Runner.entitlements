@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		PUSH NOTIFICATIONS (spec §23)
+
+		`development` here covers debug/TestFlight builds; Xcode automatically
+		promotes it to `production` for an App Store distribution. The matching
+		APNs auth key lives in Firebase, which relays our FCM sends to APNs.
+
+		NOTE: this file is only applied because CODE_SIGN_ENTITLEMENTS in the
+		Xcode project points at it — without that setting the entitlement is
+		silently dropped from the signature and APNs never issues a token.
+
+		(Universal Links / associated-domains were removed with the rename to
+		Azir: applinks:wasla.sa was a stale domain whose AASA file was never
+		live, and requesting a capability the App ID lacks breaks signing.)
+	-->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

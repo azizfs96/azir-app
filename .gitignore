@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Secrets / local env (belt-and-suspenders; subprojects also ignore these)
+**/.env
+!**/.env.example
+!**/.env.production
+!**/.env.production.example
+**/storage/app/firebase/

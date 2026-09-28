@@ -1,0 +1,22 @@
+# Azir queue worker — delivers notifications (order/booking) and FCM push.
+# Install: copy to /etc/systemd/system/azir-queue.service, then
+#   sudo systemctl daemon-reload && sudo systemctl enable --now azir-queue
+# After every backend deploy, restart it so it loads the new code:
+#   php artisan queue:restart   (graceful) — systemd relaunches the process.
+
+[Unit]
+Description=Azir Laravel queue worker
+After=network.target mysql.service
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=3
+WorkingDirectory=/var/www/azir/api
+ExecStart=/usr/bin/php /var/www/azir/api/artisan queue:work --tries=3 --sleep=1 --timeout=60
+StandardOutput=append:/var/log/azir-queue.log
+StandardError=append:/var/log/azir-queue.log
+
+[Install]
+WantedBy=multi-user.target

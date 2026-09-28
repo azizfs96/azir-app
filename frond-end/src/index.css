@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+/*
+ * ============================================================================
+ * WASLA DESIGN TOKENS (spec §32)
+ *
+ *   "Premium · Minimal · Modern · Clean · Professional"
+ *   "Avoid generic AI-generated dashboard designs. Avoid excessive gradients.
+ *    Avoid excessive cards. Use strong hierarchy and whitespace."
+ *
+ * So: ONE neutral scale, ONE accent, semantic status colours, and nothing else.
+ * Surfaces are flat with hairline borders — not stacked drop shadows. Type and
+ * whitespace carry the hierarchy. The references are Linear and Stripe, not a
+ * Bootstrap admin template.
+ * ============================================================================
+ */
+
+@theme {
+  /* Neutrals — the entire structural palette. */
+  --color-ink-950: #0a0a0b;
+  --color-ink-900: #141416;
+  --color-ink-800: #1f1f23;
+  --color-ink-700: #33333a;
+  --color-ink-500: #6b6b76;
+  --color-ink-400: #8e8e99;
+  --color-ink-300: #c4c4cc;
+  --color-ink-200: #e4e4e9;
+  --color-ink-100: #f1f1f4;
+  --color-ink-50: #f8f8fa;
+
+  /* Accent. Deliberately one colour, used sparingly. */
+  --color-brand-600: #1a1a1f;
+  --color-brand-500: #2a2a32;
+  --color-accent-600: #7c5cff;
+  --color-accent-500: #8f74ff;
+  --color-accent-50: #f2eeff;
+
+  /* Semantic status — booking states (spec §19). */
+  --color-ok-600: #0f7b5a;
+  --color-ok-50: #e7f6f0;
+  --color-warn-600: #a16207;
+  --color-warn-50: #fdf6e3;
+  --color-bad-600: #b42318;
+  --color-bad-50: #fdeceb;
+  --color-info-600: #1d5fb8;
+  --color-info-50: #eaf1fc;
+
+  /* Arabic-first type stack (spec §32, §33). */
+  --font-sans: 'IBM Plex Sans Arabic', 'Inter', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', system-ui, sans-serif;
+
+  --radius-card: 10px;
+}
+
+/*
+ * RTL is the DEFAULT, not an afterthought (spec §33).
+ * Layout is built with logical properties (ps-/pe-/ms-/me-) throughout, so the
+ * whole tree mirrors from the `dir` attribute alone.
+ */
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--color-ink-50);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+}
+
+/* Arabic numerals stay Latin — Saudi business software universally uses them. */
+[dir='rtl'] {
+  font-feature-settings: 'ss01';
+}
+
+/* A single, restrained focus treatment across every control. */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-accent-600);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--color-accent-50);
+}
+
+/* Scrollbars that do not shout. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-300) transparent;
+}
