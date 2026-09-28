@@ -14,11 +14,18 @@ DNS: point `api.azir.sa` and `portal.azir.sa` (A/AAAA) at the server.
 
 ## 0. Server packages
 
+> The app needs **PHP 8.4** (Laravel 13 / Symfony 8). Ubuntu ships 8.3, so add
+> the ondrej PPA first:
+> ```bash
+> sudo add-apt-repository -y ppa:ondrej/php && sudo apt update
+> ```
+
 ```bash
 sudo apt update
-sudo apt install -y nginx mysql-server php8.3-fpm php8.3-cli php8.3-mysql \
-  php8.3-mbstring php8.3-xml php8.3-curl php8.3-gd php8.3-zip php8.3-bcmath \
+sudo apt install -y nginx mysql-server php8.4-fpm php8.4-cli php8.4-mysql \
+  php8.4-mbstring php8.4-xml php8.4-curl php8.4-gd php8.4-zip php8.4-bcmath \
   unzip git certbot python3-certbot-nginx
+sudo update-alternatives --set php /usr/bin/php8.4   # make 8.4 the CLI default
 # Composer
 curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer
 # Node 20 (to build the portal — can also be built on your laptop)
