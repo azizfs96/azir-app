@@ -83,7 +83,7 @@ class AzirRestaurantSeeder extends Seeder
         // Branding: the merchant's logo + the storefront banner.
         $store->forceFill([
             'logo_path' => $this->copyAsset('logo.png', $store->id, 'logo'),
-            'cover_path' => $this->copyAsset('banner.png', $store->id, 'cover'),
+            'cover_path' => $this->copyAsset('banner.jpg', $store->id, 'cover'),
         ])->save();
 
         BookingSettings::create(array_merge(BookingSettings::defaults(), [
@@ -144,17 +144,17 @@ class AzirRestaurantSeeder extends Seeder
 
         // [ar, en, category, price, calories, featured, image file]
         $items = [
-            ['جمرة كلاسك', 'Jamra Classic', 'burgers', 34, 540, true, 'menu/jamra-classic.png'],
-            ['سموكي باربكيو', 'Smoky BBQ', 'burgers', 39, 620, true, 'menu/smoky-bbq.png'],
-            ['ترافل مشروم', 'Truffle Mushroom', 'burgers', 44, 660, false, 'menu/truffle-mushroom.png'],
-            ['دجاج مقرمش', 'Crispy Chicken', 'chicken', 32, 580, true, 'menu/crispy-chicken.png'],
+            ['جمرة كلاسك', 'Jamra Classic', 'burgers', 34, 540, true, 'menu/jamra-classic.jpg'],
+            ['سموكي باربكيو', 'Smoky BBQ', 'burgers', 39, 620, true, 'menu/smoky-bbq.jpg'],
+            ['ترافل مشروم', 'Truffle Mushroom', 'burgers', 44, 660, false, 'menu/truffle-mushroom.jpg'],
+            ['دجاج مقرمش', 'Crispy Chicken', 'chicken', 32, 580, true, 'menu/crispy-chicken.jpg'],
             ['شيش طاووق', 'Shish Tawook', 'chicken', 36, 480, false, 'menu/shish-tawook.jpg'],
             ['راب شاورما', 'Shawarma Wrap', 'chicken', 29, 510, false, 'menu/shawarma-wrap.jpg'],
-            ['سلطة الجمرة', 'Jamra Salad', 'salads', 27, 220, false, 'menu/jamra-salad.png'],
-            ['بطاطس بالتوابل', 'Spicy Fries', 'sides', 16, 340, true, 'menu/spicy-fries.png'],
-            ['ميلك شيك', 'Milkshake', 'drinks', 19, 430, false, 'menu/milkshake.png'],
-            ['ليمون بالنعناع', 'Mint Lemonade', 'drinks', 14, 120, false, 'menu/mint-lemonade.png'],
-            ['سنديه كراميل', 'Caramel Sundae', 'desserts', 22, 390, true, 'menu/caramel-sundae.png'],
+            ['سلطة الجمرة', 'Jamra Salad', 'salads', 27, 220, false, 'menu/jamra-salad.jpg'],
+            ['بطاطس بالتوابل', 'Spicy Fries', 'sides', 16, 340, true, 'menu/spicy-fries.jpg'],
+            ['ميلك شيك', 'Milkshake', 'drinks', 19, 430, false, 'menu/milkshake.jpg'],
+            ['ليمون بالنعناع', 'Mint Lemonade', 'drinks', 14, 120, false, 'menu/mint-lemonade.jpg'],
+            ['سنديه كراميل', 'Caramel Sundae', 'desserts', 22, 390, true, 'menu/caramel-sundae.jpg'],
         ];
 
         foreach ($items as [$ar, $en, $cat, $price, $cal, $featured, $image]) {
