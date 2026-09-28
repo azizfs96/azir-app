@@ -62,6 +62,11 @@ return [
         | Set to null to restore random codes.
         */
         'fixed_code' => env('WASLA_OTP_FIXED_CODE', '1111'),
+
+        // DANGER: allow the fixed code above to work even in production. Only for
+        // pre-launch testing / App Review before a real SMS provider is wired.
+        // Turn OFF before real customers use the app.
+        'allow_fixed_in_production' => (bool) env('WASLA_OTP_ALLOW_FIXED_IN_PRODUCTION', false),
     ],
 
     /*

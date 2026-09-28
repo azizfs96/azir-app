@@ -115,10 +115,16 @@ class OtpService
         $fixed = config('wasla.otp.fixed_code');
 
         if (filled($fixed)) {
-            if (app()->isProduction()) {
+            // The fixed code is refused in production UNLESS explicitly opted in
+            // (WASLA_OTP_ALLOW_FIXED_IN_PRODUCTION=true) — a deliberate, dangerous
+            // switch for pre-launch testing / App Review before an SMS provider is
+            // wired. A fixed OTP lets anyone who knows a phone number sign in as
+            // that user, so it must be turned off before real customers use it.
+            if (app()->isProduction() && ! config('wasla.otp.allow_fixed_in_production')) {
                 throw new RuntimeException(
                     'WASLA_OTP_FIXED_CODE is set in production. A fixed OTP would let '
-                    .'anyone sign in as any user. Unset it before deploying.'
+                    .'anyone sign in as any user. Unset it, or explicitly set '
+                    .'WASLA_OTP_ALLOW_FIXED_IN_PRODUCTION=true for pre-launch testing.'
                 );
             }
 
@@ -137,6 +143,7 @@ class OtpService
      */
     public function isUsingFixedCode(): bool
     {
-        return filled(config('wasla.otp.fixed_code')) && ! app()->isProduction();
+        return filled(config('wasla.otp.fixed_code'))
+            && (! app()->isProduction() || (bool) config('wasla.otp.allow_fixed_in_production'));
     }
 }
