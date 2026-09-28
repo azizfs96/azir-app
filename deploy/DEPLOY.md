@@ -61,7 +61,7 @@ cp .env.production.example .env
 php artisan key:generate
 php artisan migrate --seed --force      # creates schema + seeds the Azir store
 php artisan storage:link                # exposes /storage (menu images, banner)
-php artisan config:cache route:cache
+php artisan config:cache && php artisan route:cache
 
 # Firebase push: upload the service account (NOT in git) to the path in .env
 #   scp service-account.json server:/var/www/azir/api/storage/app/firebase/
@@ -127,7 +127,7 @@ and banner, VAT/ZATCA invoicing settings, fulfilment config, and the full menu
 ```bash
 cd /var/www/azir/src && git pull
 cd Back-end && composer install --no-dev -o && php artisan migrate --force \
-  && php artisan config:cache route:cache && php artisan queue:restart
+  && php artisan config:cache && php artisan route:cache && php artisan queue:restart
 cd ../frond-end && npm ci && npm run build && sudo cp -r dist/* /var/www/azir/portal/
 ```
 
