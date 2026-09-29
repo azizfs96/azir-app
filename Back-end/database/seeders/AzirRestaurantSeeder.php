@@ -69,6 +69,11 @@ class AzirRestaurantSeeder extends Seeder
 
         $store = Store::create([
             'merchant_id' => $merchant->id,
+            // FIXED public token: the QR is printed and must NEVER change across
+            // re-seeds/redeploys. Overridable via AZIR_STORE_TOKEN. (In
+            // production, do not run migrate:fresh — but even if you do, the
+            // token — and therefore the printed QR — stays the same.)
+            'public_token' => env('AZIR_STORE_TOKEN', 'AZIR0001'),
             'name_ar' => 'برجر بلد',
             'name_en' => 'Balad Burger',
             'description_ar' => 'مطعم برجر ومشاوٍ',
