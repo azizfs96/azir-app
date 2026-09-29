@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/open_badge.dart';
 import '../../stores/presentation/store_avatar.dart';
 import '../data/my_stores_repository.dart';
 
@@ -54,16 +55,26 @@ class StoreCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          store.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink900,
-                            height: 1.25,
-                          ),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                store.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.ink900,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                            if (store.isOpen != null) ...[
+                              const SizedBox(width: 8),
+                              OpenBadge(open: store.isOpen!, s: s),
+                            ],
+                          ],
                         ),
                         if (store.description != null && store.description!.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),

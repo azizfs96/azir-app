@@ -48,7 +48,7 @@ class OpeningHoursSummary
         return [
             'days' => self::describeDays($days, $labels),
             'hours' => self::formatTime($opens, $locale).' - '.self::formatTime($closes, $locale),
-            'is_open_now' => self::isOpenNow($branch),
+            'is_open_now' => self::isBranchOpenNow($branch),
         ];
     }
 
@@ -101,7 +101,7 @@ class OpeningHoursSummary
     /**
      * Whether the branch is open at this moment, in ITS timezone.
      */
-    private static function isOpenNow(Branch $branch): bool
+    public static function isBranchOpenNow(Branch $branch): bool
     {
         $timezone = $branch->store?->timezone ?? config('wasla.default_timezone');
         $now = now($timezone);

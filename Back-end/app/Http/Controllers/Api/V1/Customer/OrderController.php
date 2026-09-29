@@ -38,6 +38,8 @@ class OrderController extends Controller
             'store_token' => ['required', 'string', 'max:20'],
             'fulfillment_type' => ['required', 'in:pickup,dine_in,delivery,curbside'],
             'table_number' => ['sometimes', 'nullable', 'string', 'max:20'],
+            // The chosen pickup branch; must belong to this store (checked below).
+            'branch_id' => ['sometimes', 'nullable', 'integer'],
             // The customer's own saved address (central), required for delivery.
             'address_id' => ['required_if:fulfillment_type,delivery', 'integer'],
             // The customer's own saved car (central), required for curbside.
@@ -76,7 +78,15 @@ class OrderController extends Controller
             ], 422);
         }
 
+        // The customer's chosen pickup branch, but only if it really belongs to
+        // this store — otherwise fall back to the default. The server owns this.
         $branch = $store->defaultBranch();
+        if (! empty($data['branch_id'])) {
+            $chosen = $store->activeBranches()->whereKey($data['branch_id'])->first();
+            if ($chosen !== null) {
+                $branch = $chosen;
+            }
+        }
         $customer = $request->user()->customer;
 
         // Pull the chosen address from the customer's OWN central list — a store

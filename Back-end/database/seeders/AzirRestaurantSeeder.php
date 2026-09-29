@@ -112,7 +112,7 @@ class AzirRestaurantSeeder extends Seeder
             'deposit_required' => false,
         ]));
 
-        Branch::create([
+        $branch = Branch::create([
             'store_id' => $store->id,
             'name_ar' => 'مطعم البلد',
             'name_en' => 'Balad Restaurant',
@@ -120,6 +120,15 @@ class AzirRestaurantSeeder extends Seeder
             'city' => 'الرياض',
             'slot_interval_minutes' => 15,
         ]);
+        // Opening hours (every day 10:00–23:00) so the open/closed badge works.
+        foreach (range(0, 6) as $day) {
+            $branch->schedules()->create([
+                'day_of_week' => $day,
+                'opens_at' => '10:00',
+                'closes_at' => '23:00',
+                'is_closed' => false,
+            ]);
+        }
 
         $this->seedMenu($store);
 

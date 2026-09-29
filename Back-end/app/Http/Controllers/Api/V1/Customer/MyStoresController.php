@@ -48,7 +48,7 @@ class MyStoresController extends Controller
         $links = CustomerStore::query()
             ->where('customer_id', $customer->id)
             ->where('is_hidden', false)
-            ->with(['store' => fn ($q) => $q->with('merchant')])
+            ->with(['store' => fn ($q) => $q->with('merchant', 'activeBranches.schedules')])
             ->orderByDesc('last_visited_at')
             ->get()
             // A store whose merchant was suspended should quietly drop out of
@@ -79,6 +79,8 @@ class MyStoresController extends Controller
                     'logo' => $store->logo_path,
                     'brand_color' => $store->brand_color,
                     'type' => $store->business_type,
+                    // Open/closed badge on the home card.
+                    'is_open' => $store->isOpenNow(),
                     'added_via' => $link->added_via,
 
                     // Drives which card variant the app shows.

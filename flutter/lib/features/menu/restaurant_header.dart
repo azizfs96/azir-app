@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/open_badge.dart';
 import '../stores/domain/storefront.dart';
 import '../stores/presentation/store_avatar.dart';
 import 'fulfillment.dart';
@@ -129,6 +130,10 @@ class RestaurantTopBar extends StatelessWidget {
           if (store.isVerified) ...[
             const SizedBox(width: 4),
             const Icon(Icons.verified_rounded, size: 17, color: AppColors.ink900),
+          ],
+          if (store.isOpen != null) ...[
+            const SizedBox(width: 8),
+            OpenBadge(open: store.isOpen!, s: Strings.of(context), compact: true),
           ],
         ],
       ),

@@ -58,6 +58,7 @@ class MyStore {
     this.brandColor,
     this.nextAppointment,
     this.lastVisitAt,
+    this.isOpen,
   });
 
   factory MyStore.fromJson(Map<String, dynamic> json) => MyStore(
@@ -70,6 +71,7 @@ class MyStore {
             ? NextAppointment.fromJson(json['next_appointment'] as Map<String, dynamic>)
             : null,
         lastVisitAt: json['last_visit_at'] as String?,
+        isOpen: json['is_open'] as bool?,
       );
 
   final String token;
@@ -77,6 +79,9 @@ class MyStore {
   final String? description;
   final String? logo;
   final String? brandColor;
+
+  /// Open/closed right now (null when the store has no hours configured).
+  final bool? isOpen;
 
   /// Decides which card variant the home screen shows (spec §5):
   /// "Next appointment / Tomorrow 7:00 PM" vs "Last visit / 5 days ago".

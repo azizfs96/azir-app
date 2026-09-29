@@ -216,6 +216,8 @@ class Strings {
   String itemsInCart(int n) => _('$n في السلة', '$n in cart');
   String get remove => _('حذف', 'Remove');
   String get removeStore => _('إزالة', 'Remove');
+  String get storeOpen => _('مفتوح', 'Open');
+  String get storeClosed => _('مغلق', 'Closed');
   String get storeRemoved => _('تمت الإزالة من قائمتك', 'Removed from your list');
   String get placeOrder => _('إتمام الطلب', 'Place order');
   String get fulfillmentPickup => _('استلام', 'Pickup');

@@ -61,6 +61,8 @@ class StorefrontResource extends JsonResource
                 'cover' => $this->cover_path,
                 'brand_color' => $this->brand_color,
                 'type' => $this->business_type,
+                // Open/closed right now, from the branches' opening hours.
+                'is_open' => $this->isOpenNow(),
                 'phone' => $this->phone,
                 'instagram' => $this->instagram,
                 'timezone' => $this->timezone,

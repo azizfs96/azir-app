@@ -33,12 +33,14 @@ class _FakeOrderRepository implements OrderRepository {
     String? tableNumber,
     int? addressId,
     int? carId,
+    int? branchId,
   }) async {
     lastBody = {
       'store_token': storeToken,
       'fulfillment_type': fulfillmentType,
       'table_number': tableNumber,
       'address_id': addressId,
+      'branch_id': branchId,
       'notes': notes,
       'items': [
         for (final l in lines)

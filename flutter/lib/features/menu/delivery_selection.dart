@@ -12,3 +12,6 @@ class SelectedId extends Notifier<int?> {
 
 final selectedAddressIdProvider = NotifierProvider<SelectedId, int?>(SelectedId.new);
 final selectedCarIdProvider = NotifierProvider<SelectedId, int?>(SelectedId.new);
+
+/// Which pickup branch the customer chose. Null = the store's default (first).
+final selectedBranchIdProvider = NotifierProvider<SelectedId, int?>(SelectedId.new);

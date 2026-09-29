@@ -298,6 +298,7 @@ class Storefront {
     this.requiresBranchSelection = false,
     this.cancellationPolicy,
     this.isVerified = false,
+    this.isOpen,
     this.genderPolicy = 'all',
     this.openingHours,
     this.location,
@@ -366,6 +367,7 @@ class Storefront {
       staff: list(json['staff'], StoreStaff.fromJson),
       requiresBranchSelection: json['requires_branch_selection'] as bool? ?? false,
       isVerified: store['is_verified'] as bool? ?? false,
+      isOpen: store['is_open'] as bool?,
       genderPolicy: store['gender_policy'] as String? ?? 'all',
       openingHours: json['hours'] is Map<String, dynamic>
           ? OpeningHours.fromJson(json['hours'] as Map<String, dynamic>)
@@ -412,6 +414,9 @@ class Storefront {
 
   /// The platform vouching for a merchant an admin approved (spec §39).
   final bool isVerified;
+
+  /// Open/closed right now, from the branches' opening hours (null = unset).
+  final bool? isOpen;
   final String genderPolicy;
   final OpeningHours? openingHours;
   final StoreLocation? location;

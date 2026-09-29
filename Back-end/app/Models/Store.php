@@ -127,6 +127,35 @@ class Store extends Model
     }
 
     /**
+     * Is the store open right now? True if any active branch is within its
+     * opening hours (branch timezone, honouring split shifts). A store that has
+     * set NO hours anywhere is treated as open — hours simply aren't restricting
+     * it — so the badge never wrongly reads "closed" for an unconfigured store.
+     */
+    public function isOpenNow(): bool
+    {
+        // Prefer already-loaded branches+schedules (list endpoints eager-load
+        // them); otherwise fetch once here. Never lazy-loads.
+        $branches = $this->relationLoaded('activeBranches')
+            && $this->activeBranches->every(fn ($b) => $b->relationLoaded('schedules'))
+            ? $this->activeBranches
+            : $this->activeBranches()->with('schedules')->get();
+
+        $anyConfigured = false;
+        foreach ($branches as $branch) {
+            if ($branch->schedules->isEmpty()) {
+                continue;
+            }
+            $anyConfigured = true;
+            if (\App\Domain\Merchant\OpeningHoursSummary::isBranchOpenNow($branch)) {
+                return true;
+            }
+        }
+
+        return ! $anyConfigured;
+    }
+
+    /**
      * The URL encoded in the QR and printed on the merchant's window (spec §38).
      */
     public function deepLink(): string

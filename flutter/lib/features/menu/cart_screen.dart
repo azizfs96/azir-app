@@ -243,38 +243,84 @@ class _FulfillmentCard extends ConsumerWidget {
           ),
           if (store.branches.isNotEmpty) ...[
             const Divider(height: 1, color: AppColors.ink100),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-              child: Row(
-                children: [
-                  const Icon(Icons.storefront_rounded, size: 22, color: AppColors.ink900),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(store.branches.first.name,
+            Builder(builder: (context) {
+              final selId = ref.watch(selectedBranchIdProvider);
+              final branch = store.branches.firstWhere((b) => b.id == selId,
+                  orElse: () => store.branches.first);
+              final canChange = store.branches.length > 1;
+              return GestureDetector(
+                onTap: canChange ? () => _pickBranch(context, ref) : null,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.storefront_rounded, size: 22, color: AppColors.ink900),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(branch.name,
+                                style: const TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink900)),
+                            if ((branch.address ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(branch.address!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12.5, color: AppColors.ink500)),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (canChange)
+                        Text(s.change,
                             style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink900)),
-                        if ((store.branches.first.address ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(store.branches.first.address!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12.5, color: AppColors.ink500)),
-                        ],
-                      ],
-                    ),
+                                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.flame)),
+                    ],
                   ),
-                  if (store.branches.length > 1)
-                    Text(s.change,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink900)),
-                ],
-              ),
-            ),
+                ),
+              );
+            }),
           ],
         ],
+      ),
+    );
+  }
+
+  Future<void> _pickBranch(BuildContext context, WidgetRef ref) {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(s.pickupBranch,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink900)),
+              const SizedBox(height: 8),
+              for (final b in store.branches)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.storefront_rounded, color: AppColors.ink900),
+                  title: Text(b.name, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
+                  subtitle: (b.address ?? '').isNotEmpty
+                      ? Text(b.address!, maxLines: 1, overflow: TextOverflow.ellipsis)
+                      : null,
+                  onTap: () {
+                    ref.read(selectedBranchIdProvider.notifier).set(b.id);
+                    Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -652,6 +698,7 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
             lines: cart.lines,
             addressId: addressId,
             carId: carId,
+            branchId: ref.read(selectedBranchIdProvider),
           );
       ref.read(cartProvider.notifier).clear();
       if (!mounted) return;

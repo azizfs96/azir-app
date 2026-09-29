@@ -61,6 +61,7 @@ class OrderRepository {
     String? tableNumber,
     int? addressId,
     int? carId,
+    int? branchId,
   }) async {
     final json = await _api.post('/orders', body: {
       'store_token': storeToken,
@@ -68,6 +69,7 @@ class OrderRepository {
       if (tableNumber != null && tableNumber.trim().isNotEmpty) 'table_number': tableNumber.trim(),
       'address_id': ?addressId,
       'car_id': ?carId,
+      'branch_id': ?branchId,
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
       'items': [
         for (final line in lines)
