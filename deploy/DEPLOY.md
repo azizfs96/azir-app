@@ -91,15 +91,31 @@ sudo mkdir -p /var/www/azir/portal
 sudo cp -r dist/* /var/www/azir/portal/
 ```
 
+## 4b. Customer web app (azir.sa)
+
+The same Flutter customer app, built for the web, so a customer can order from
+`azir.sa/s/<token>` without installing anything. Zero backend changes (same API);
+CORS already allows `azir.sa`.
+
+```bash
+cd /var/www/azir/src/flutter
+flutter build web --release --dart-define=WASLA_API_BASE=https://api.azir.sa/api/v1
+sudo mkdir -p /var/www/azir/web
+sudo cp -r build/web/* /var/www/azir/web/
+```
+
 ## 5. Nginx + SSL
 
 ```bash
-sudo cp /var/www/azir/src/deploy/nginx/api.azir.sa.conf   /etc/nginx/sites-available/
+sudo cp /var/www/azir/src/deploy/nginx/api.azir.sa.conf    /etc/nginx/sites-available/
 sudo cp /var/www/azir/src/deploy/nginx/portal.azir.sa.conf /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/api.azir.sa.conf    /etc/nginx/sites-enabled/
-sudo ln -s /etc/nginx/sites-available/portal.azir.sa.conf /etc/nginx/sites-enabled/
+sudo cp /var/www/azir/src/deploy/nginx/azir.sa.conf        /etc/nginx/sites-available/
+sudo ln -sf /etc/nginx/sites-available/api.azir.sa.conf    /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/portal.azir.sa.conf /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/azir.sa.conf        /etc/nginx/sites-enabled/
 # Verify the PHP-FPM socket path in api.azir.sa.conf matches: ls /run/php/
-sudo certbot --nginx -d api.azir.sa -d portal.azir.sa   # issues + wires SSL
+# Issue certs per host (standalone, nginx stopped) — see the notes if port 80 busy.
+sudo certbot --nginx -d api.azir.sa -d portal.azir.sa -d azir.sa -d www.azir.sa
 sudo nginx -t && sudo systemctl reload nginx
 ```
 

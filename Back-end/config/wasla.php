@@ -19,7 +19,7 @@ return [
     | Deep links & QR (spec §7, §24, §38)
     |--------------------------------------------------------------------------
     | A store's QR encodes {web_url}{store_link_path}/{public_token},
-    | e.g. https://azir.sa/s/AZIR0001
+    | e.g. https://azir.sa/s/AZRBRGR2
     */
 
     'web_url' => env('WASLA_WEB_URL', 'https://azir.sa'),

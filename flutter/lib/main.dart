@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,10 +14,13 @@ Future<void> main() async {
 
   // Firebase powers push notifications (order updates). A failure here must not
   // stop the app from launching — iOS reads GoogleService-Info.plist itself.
-  try {
-    await Firebase.initializeApp();
-  } catch (_) {
-    // App runs without push rather than not at all.
+  // On web there is no native Firebase config and push isn't wired, so skip it.
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp();
+    } catch (_) {
+      // App runs without push rather than not at all.
+    }
   }
 
   runApp(const ProviderScope(child: WaslaApp()));
@@ -40,11 +44,13 @@ class _WaslaAppState extends ConsumerState<WaslaApp> {
     super.initState();
     // Keep an already-signed-in customer's push token fresh on every launch,
     // and send a tapped order notification to that order's tracking screen.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final push = ref.read(pushServiceProvider);
-      push.registerIfSignedIn();
-      push.wireOrderTaps((orderId) => pendingDeepLink.value = '/orders/$orderId');
-    });
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final push = ref.read(pushServiceProvider);
+        push.registerIfSignedIn();
+        push.wireOrderTaps((orderId) => pendingDeepLink.value = '/orders/$orderId');
+      });
+    }
   }
 
   @override

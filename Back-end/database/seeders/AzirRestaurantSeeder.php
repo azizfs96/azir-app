@@ -73,7 +73,9 @@ class AzirRestaurantSeeder extends Seeder
             // re-seeds/redeploys. Overridable via AZIR_STORE_TOKEN. (In
             // production, do not run migrate:fresh — but even if you do, the
             // token — and therefore the printed QR — stays the same.)
-            'public_token' => env('AZIR_STORE_TOKEN', 'AZIR0001'),
+            // Token chars must be from the store-token alphabet (no 0 1 I L O U),
+            // or normalize() mangles a scanned/typed code and it stops resolving.
+            'public_token' => env('AZIR_STORE_TOKEN', 'AZRBRGR2'),
             'name_ar' => 'برجر بلد',
             'name_en' => 'Balad Burger',
             'description_ar' => 'مطعم برجر ومشاوٍ',

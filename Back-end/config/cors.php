@@ -12,7 +12,8 @@
 return [
     'paths' => ['api/*'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => [env('CORS_ALLOWED_ORIGINS', '*')],
+    // Comma-separated list, e.g. "https://portal.azir.sa,https://azir.sa".
+    'allowed_origins' => array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', '*'))),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

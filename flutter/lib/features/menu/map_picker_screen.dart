@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,6 +55,9 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
 
   /// Reverse-geocode the centre into a readable address (native geocoder).
   Future<void> _resolve(LatLng point) async {
+    // The native geocoder isn't available on web; the pin's coordinates still
+    // save, the customer just types the address label themselves.
+    if (kIsWeb) return;
     setState(() => _resolving = true);
     try {
       final marks = await geo.placemarkFromCoordinates(point.latitude, point.longitude);
