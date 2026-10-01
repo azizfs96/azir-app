@@ -104,6 +104,18 @@ sudo mkdir -p /var/www/azir/web
 sudo cp -r build/web/* /var/www/azir/web/
 ```
 
+## 4c. Marketing landing page (azir.sa/)
+
+The marketing landing (`landing/index.html`) is served at the **exact root** of
+`azir.sa`; every other path — `azir.sa/s/<token>`, deep links, app assets — stays
+the customer web app, so the QR links are unaffected. The landing is a single,
+self-contained file (inline + data-URI assets), so there is nothing else to copy.
+
+```bash
+sudo mkdir -p /var/www/azir/landing
+sudo cp /var/www/azir/src/landing/index.html /var/www/azir/landing/index.html
+```
+
 ## 5. Nginx + SSL
 
 ```bash
