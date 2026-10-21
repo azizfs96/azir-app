@@ -63,9 +63,9 @@
 .mz-portrait .mz-scene,.mz-ar.mz-portrait .mz-scene{left:50%;right:auto;top:auto;bottom:0;width:560px;height:600px;margin-left:-280px}
 .mz-float{position:absolute;inset:0;transform-style:preserve-3d}
 @keyframes mzFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.mz-tab{position:absolute;left:90px;top:200px;width:400px;height:290px;transform-style:preserve-3d;transform:rotateY(-16deg) rotateX(8deg) rotateZ(-1deg);transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.mz-tab{position:absolute;left:90px;top:230px;width:400px;height:290px;transform-style:preserve-3d;transform:rotateY(-16deg) rotateX(8deg) rotateZ(-1deg);transition:transform 1s cubic-bezier(.2,.8,.2,1)}
 .mz-ar .mz-tab{transform:rotateY(16deg) rotateX(8deg) rotateZ(1deg)}
-.mz-portrait .mz-tab{left:80px;top:190px}
+.mz-portrait .mz-tab{left:80px;top:230px}
 .mz-s-setup .mz-tab{transform:rotateY(-8deg) rotateX(5deg)}.mz-ar.mz-s-setup .mz-tab{transform:rotateY(8deg) rotateX(5deg)}
 .mz-tab .back{position:absolute;inset:0;border-radius:22px;background:#101013;transform:translateZ(-12px);box-shadow:0 60px 90px rgba(0,0,0,.7)}
 .mz-tab .side{position:absolute;inset:0;border-radius:22px;background:linear-gradient(160deg,#4a4a50,#1b1b1f 35%,#2d2d33 70%,#55555c)}
@@ -121,7 +121,7 @@
 .wz .ready i{width:20px;height:20px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .wz .ready i svg{width:11px;height:11px}
 /* scene A: QR tent + customer phones */
-.mz-tent{position:absolute;left:380px;top:70px;width:132px;border-radius:12px;background:#fff;color:#1F1A16;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.6);text-align:center;transform:rotateY(-14deg) translateZ(40px);transition:opacity .4s,transform .8s;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
+.mz-tent{position:absolute;left:380px;top:40px;width:132px;border-radius:12px;background:#fff;color:#1F1A16;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.6);text-align:center;transform:rotateY(-14deg) translateZ(40px);transition:opacity .4s,transform .8s;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
 .mz-ar .mz-tent{left:60px;transform:rotateY(14deg) translateZ(40px)}
 .mz-portrait .mz-tent,.mz-ar.mz-portrait .mz-tent{left:214px;top:0;transform:translateZ(40px)}
 .mz-tent .hd{height:28px;background:#1F1A16;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
@@ -131,25 +131,44 @@
 .mz-tent .ring{position:absolute;inset:-6px;border-radius:16px;border:2px solid var(--brand);opacity:0}
 .mz-tent.hit .ring{animation:mzRing .9s ease-out}
 @keyframes mzRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
-.mz-ph{position:absolute;width:66px;height:134px;border-radius:16px;background:#1a1a1c;box-shadow:0 0 0 1.5px #2c2c30,0 30px 50px rgba(0,0,0,.6);padding:4px;transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .4s;transform:translate3d(var(--x),var(--y),var(--z)) rotateY(var(--ry));z-index:3}
-.mz-ph .scr{width:100%;height:100%;border-radius:12px;background:radial-gradient(90% 60% at 50% 30%,#2b2a28,#121211 70%);position:relative;overflow:hidden}
-.mz-ph .scr:before{content:'';position:absolute;top:4px;left:50%;width:22px;height:6px;margin-left:-11px;border-radius:4px;background:#000}
-.mz-ph .fr{position:absolute;left:12px;right:12px;top:40px;height:42px;border:1.5px solid rgba(255,255,255,.7);border-radius:6px}
-.mz-ph .lz{position:absolute;left:14px;right:14px;top:44px;height:1.5px;background:var(--brand);box-shadow:0 0 6px var(--brand);opacity:0}
+.mz-ph{position:absolute;width:92px;height:190px;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .4s;transform:translate3d(var(--x),var(--y),var(--z)) rotateY(var(--ry)) rotateX(4deg);z-index:3}
+.mz-ph .pb{position:absolute;inset:0;border-radius:24px;background:#101013;transform:translateZ(-8px);box-shadow:0 30px 50px rgba(0,0,0,.65)}
+.mz-ph .ps{position:absolute;inset:0;border-radius:24px;background:linear-gradient(160deg,#4a4a50,#1b1b1f 35%,#2d2d33 70%,#55555c)}
+.mz-ph .ps.s1{transform:translateZ(-6px)}.mz-ph .ps.s2{transform:translateZ(-3px)}
+.mz-ph .pbody{position:absolute;inset:0;border-radius:24px;background:linear-gradient(150deg,#2a2a2e,#0b0b0d 45%,#1c1c20);padding:5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 0 0 2.5px #050506}
+.mz-ph .pscr{position:relative;width:100%;height:100%;border-radius:20px;overflow:hidden;background:#0a0a0b}
+.mz-ph .pnotch{position:absolute;top:5px;left:50%;width:30px;height:9px;margin-left:-15px;border-radius:6px;background:#000;z-index:5}
+.mz-ph .cam{position:absolute;inset:0;background:radial-gradient(90% 60% at 50% 35%,#2b2a28,#121211 70%)}
+.mz-ph .ttl{position:absolute;top:20px;left:0;right:0;text-align:center;font:600 7px/1 'IBM Plex Sans Arabic',sans-serif;color:#fff}
+.mz-ph .prev{position:absolute;left:50%;top:50%;width:50px;margin:-34px 0 0 -25px;border-radius:5px;background:#fff;padding:3px;opacity:0;transform:scale(.55);transition:opacity .35s,transform .55s cubic-bezier(.2,.8,.2,1);box-shadow:0 8px 16px rgba(0,0,0,.5)}
+.mz-ph .prev .h{height:7px;border-radius:2px;background:#1F1A16;margin-bottom:3px}
+.mz-ph .prev svg{width:44px;height:44px;display:block}
+.mz-ph.scan .prev,.mz-ph.done .prev{opacity:1;transform:scale(1)}
+.mz-ph .frm{position:absolute;left:12px;right:12px;top:46px;height:86px}
+.mz-ph .frm b{position:absolute;width:12px;height:12px;border:2px solid rgba(255,255,255,.9);transition:border-color .3s,transform .3s}
+.mz-ph .frm b:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:4px 0 0 0}
+.mz-ph .frm b:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 4px 0 0}
+.mz-ph .frm b:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 4px}
+.mz-ph .frm b:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 4px 0}
+.mz-ph.done .frm b{transform:scale(.8)}
+.mz-ph .lz{position:absolute;left:14px;right:14px;top:50px;height:1.5px;background:#fff;box-shadow:0 0 8px #fff;opacity:0}
 .mz-ph.scan .lz{opacity:1;animation:mzLz 1s ease-in-out infinite}
-@keyframes mzLz{50%{top:76px}}
-.mz-ph .ok{position:absolute;left:50%;top:52px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#fff;color:#111;display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.6,.4,1)}
-.mz-ph .ok svg{width:12px;height:12px}
-.mz-ph.done .ok{transform:scale(1)}.mz-ph.done .lz{animation:none;opacity:0}.mz-ph.done .fr{border-color:var(--brand)}
-.mz-ph .av{position:absolute;bottom:8px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;color:#1F1A16;font:600 9px/18px 'IBM Plex Sans Arabic',sans-serif;text-align:center}
-.mz-ph.scan{transform:translate3d(var(--sx),var(--sy),60px) rotateY(0deg) scale(1.05)}
-.mz-ph.done{transform:translate3d(var(--sx),var(--sy),60px) rotateY(0deg) scale(1.05)}
+@keyframes mzLz{50%{top:126px}}
+.mz-ph .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:4}
+.mz-ph.done .flash{animation:mzFlash .55s ease-out}
+@keyframes mzFlash{0%{opacity:.85}100%{opacity:0}}
+.mz-ph .ok{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#fff;color:#111;display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.6,.4,1);z-index:3;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.mz-ph .ok svg{width:14px;height:14px}
+.mz-ph.done .ok{transform:scale(1)}.mz-ph.done .lz{animation:none;opacity:0}
+.mz-ph .hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;font:500 6.5px/1.3 'IBM Plex Sans Arabic',sans-serif;color:rgba(255,255,255,.6)}
+.mz-ph .gl{position:absolute;inset:0;pointer-events:none;z-index:6;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.1) 48%,transparent 56%)}
+.mz-ph.scan,.mz-ph.done{transform:translate3d(var(--sx),var(--sy),90px) rotateY(0) rotateX(0) scale(1.12)}
 .mz-chip{position:absolute;left:0;top:0;padding:6px 10px;border-radius:999px;background:#fff;color:#1F1A16;font:600 10px/1 'IBM Plex Sans Arabic',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;z-index:6;direction:rtl;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .mz-chip i{width:8px;height:8px;border-radius:50%;background:#1F1A16}
 .mz-chip.fly{animation:mzChip .8s cubic-bezier(.3,.7,.2,1) forwards}
 @keyframes mzChip{0%{opacity:0;transform:translate(var(--ax),var(--ay)) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.5)}}
 /* scene B: store page preview card */
-.mz-prev{position:absolute;left:430px;top:380px;width:120px;height:240px;border-radius:22px;background:#1a1a1c;padding:5px;box-shadow:0 0 0 1.5px #2c2c30,0 40px 60px rgba(0,0,0,.6);transform:translateY(60px) rotateY(-12deg);opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .4s;z-index:4}
+.mz-prev{position:absolute;left:430px;top:400px;width:120px;height:240px;border-radius:22px;background:#1a1a1c;padding:5px;box-shadow:0 0 0 1.5px #2c2c30,0 40px 60px rgba(0,0,0,.6);transform:translateY(60px) rotateY(-12deg);opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .4s;z-index:4}
 .mz-ar .mz-prev{left:30px;transform:translateY(60px) rotateY(12deg)}
 .mz-portrait .mz-prev,.mz-ar.mz-portrait .mz-prev{left:420px;top:300px}
 .mz-prev.on{opacity:1;transform:translateY(0) rotateY(-12deg)}.mz-ar .mz-prev.on{transform:translateY(0) rotateY(12deg)}
@@ -278,7 +297,8 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
   }};
   var S=STRS[LANG];
   // phones (customers) and nodes are created once; strings re-applied on language change
-  var PH=[0,1,2].map(function(i){var d=document.createElement('div');d.className='mz-ph';d.innerHTML='<div class="scr"><div class="fr"></div><div class="lz"></div><div class="ok">'+I.check.replace('stroke="#fff"','stroke="#111"')+'</div><div class="av"></div></div>';$('mzPhones').appendChild(d);return d});
+  var qrMini=$('mzTent').querySelector('svg.qr').outerHTML;
+  var PH=[0,1,2].map(function(i){var d=document.createElement('div');d.className='mz-ph';d.innerHTML='<div class="pb"></div><div class="ps s1"></div><div class="ps s2"></div><div class="pbody"><div class="pscr"><div class="pnotch"></div><div class="cam"><div class="ttl"></div><div class="prev"><div class="h"></div>'+qrMini+'</div><div class="frm"><b></b><b></b><b></b><b></b></div><div class="lz"></div><div class="flash"></div><div class="ok">'+I.check.replace('stroke="#fff"','stroke="#111"')+'</div><div class="hint"></div></div><div class="gl"></div></div></div>';$('mzPhones').appendChild(d);return d});
   var ND=[0,1,2,3,4].map(function(i){var d=document.createElement('div');d.className='mz-node';d.innerHTML='<i></i><div><b></b><small></small></div>';$('mzNodes').appendChild(d);return d});
 
   var portrait=false,scale=1;
@@ -287,15 +307,15 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
     var W=portrait?560:1100,H=portrait?1000:680;scale=w/W;
     stage.style.transform='scale('+scale+')';wrap.style.height=(H*scale)+'px';
     // customer phones: resting spots + scan spot (in front of the tent)
-    var tentX=portrait?214:(AR?60:380),tentY=portrait?0:70;
+    var tentX=portrait?214:(AR?60:380),tentY=portrait?0:40;
     var rest=portrait?[[20,60,0],[470,90,-20],[20,440,10]]:(AR?[[470,60,0],[480,500,-20],[20,500,10]]:[[20,60,0],[10,500,-20],[500,500,10]]);
-    var sx=tentX+33,sy=tentY+150;
+    var sx=portrait?tentX+138:(AR?tentX+140:tentX-112),sy=tentY+(portrait?6:16);
     PH.forEach(function(p,i){p.style.setProperty('--x',rest[i][0]+'px');p.style.setProperty('--y',rest[i][1]+'px');p.style.setProperty('--z',rest[i][2]+'px');p.style.setProperty('--ry',(rest[i][0]<280?18:-18)+'deg');p.style.setProperty('--sx',sx+'px');p.style.setProperty('--sy',sy+'px')});
     // chip path: tent → tablet list
     var chip=$('mzChip');chip.style.setProperty('--ax',(tentX+20)+'px');chip.style.setProperty('--ay',(tentY+90)+'px');chip.style.setProperty('--bx',(portrait?250:270)+'px');chip.style.setProperty('--by',(portrait?330:340)+'px');
     // integration nodes + wires
     var P=portrait?[[10,40],[400,40],[10,520],[400,520],[205,560]]:(AR?[[420,80],[420,560],[0,60],[0,580],[205,610]]:[[0,80],[0,560],[420,60],[420,580],[205,610]]);
-    var tx=portrait?80:90,ty=portrait?190:200,tw=400,th=290,d='';
+    var tx=portrait?80:90,ty=230,tw=400,th=290,d='';
     ND.forEach(function(n,i){var p=P[i];n.style.left=p[0]+'px';n.style.top=p[1]+'px';
       var cx=p[0]+75,cy=p[1]+27,ex,ey,path;
       if(cy<ty){ex=Math.max(tx+50,Math.min(tx+tw-50,cx));ey=ty;path='M'+cx+' '+(cy+27)+' C '+cx+' '+(cy+90)+', '+ex+' '+(ey-70)+', '+ex+' '+ey}
@@ -315,7 +335,7 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
     $('dzL1').textContent=S.dz[0];$('dzL2').textContent=S.dz[1];$('dzL3').textContent=S.dz[2];$('dzLive').textContent=S.dz[3];$('dzInc').textContent=S.dz[4];
     $('wzT').textContent=S.wzT;$('wzReadyT').textContent=S.wzReady;$('mzPrevTag').textContent=S.prevTag;$('mzPrevNm').textContent=S.store;
     $('wzItems').innerHTML=S.wzItems.map(function(x){return '<div class="wz-it"><span class="c">'+I.check+'</span><b>'+x[0]+'</b><small>'+x[1]+'</small></div>'}).join('');
-    ['س','م','ن'].forEach(function(a,i){PH[i].querySelector('.av').textContent=AR?a:['S','M','N'][i]});
+    PH.forEach(function(p){p.querySelector('.ttl').textContent=AR?'مسح الرمز':'Scan code';p.querySelector('.hint').textContent=AR?'وجّه الكاميرا نحو الرمز':'Point at the code'});
     ND.forEach(function(n,i){var x=S.nodes[i];n.style.setProperty('--c',x[3]);n.querySelector('i').innerHTML=I[x[2]];n.querySelector('b').textContent=x[0];n.querySelector('small').textContent=x[1]});
     var bts=$('mzLang').querySelectorAll('button');for(var k=0;k<bts.length;k++)bts[k].classList.toggle('on',bts[k].getAttribute('data-l')===l);
     layout();setLine(cur);
@@ -356,7 +376,7 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
     layout();
     [0,1,2].forEach(function(i){var t0=300+i*2000;
       at(t0,function(){PH[i].classList.add('scan')});
-      at(t0+900,function(){PH[i].classList.add('done');$('mzTent').classList.remove('hit');void $('mzTent').offsetWidth;$('mzTent').classList.add('hit')});
+      at(t0+1000,function(){PH[i].classList.add('done');$('mzTent').classList.remove('hit');void $('mzTent').offsetWidth;$('mzTent').classList.add('hit')});
       at(t0+1150,function(){var c=$('mzChip');c.querySelector('span').textContent=S.chipT[i];c.classList.remove('fly');void c.offsetWidth;c.classList.add('fly')});
       at(t0+1800,function(){addRow(S.scans[i],'#00BC6D','easy app',i===2,i===0?36:i===1?47:0);PH[i].classList.remove('scan','done')});
     });
