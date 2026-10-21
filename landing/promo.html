@@ -2,6 +2,7 @@
 <section class="promo-section" id="promo" data-lang="en">
 <style>
 .promo-section{padding:48px 0 64px;background:var(--white,#fff)}
+.promo-section.embedded{padding:0}.promo-section.embedded .pz-head,.promo-section.embedded .pz-lang{display:none}
 .promo-section .pz-head{text-align:center;margin:0 auto 26px;max-width:720px}
 .promo-section .pz-head h2{font-size:clamp(26px,3.4vw,40px);font-weight:600;color:var(--text-dark,#0f0f1a);letter-spacing:-.8px;margin:0 0 10px}
 .promo-section .pz-head p{font-size:16px;color:var(--text-muted,#6b6b7b);margin:0;line-height:1.7}
@@ -357,6 +358,7 @@
     fit();$('pzWord').textContent=BIZ[idx].word;for(var k2=0;k2<lineEls.length;k2++)lineEls[k2].classList.toggle('on',k2===idx);
   }
   $('pzLang').addEventListener('click',function(e){var b=e.target.closest('button');if(b)applyLang(b.getAttribute('data-l'))});
+  window.pzSetLang=applyLang;
   var cam=$('pzCam'),biz=$('pzBiz'),tent=$('pzTent');
 
   function fit(){
