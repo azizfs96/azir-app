@@ -114,8 +114,8 @@ self-contained file (inline + data-URI assets), so there is nothing else to copy
 ```bash
 sudo mkdir -p /var/www/azir/landing
 sudo cp /var/www/azir/src/landing/index.html    /var/www/azir/landing/index.html
-# promo clip pages: azir.sa/promo.html (EN) and azir.sa/promo-ar.html (AR)
-sudo cp /var/www/azir/src/landing/promo*.html   /var/www/azir/landing/
+# promo clip pages (azir.sa/promo.html, /promo-ar.html) + merchants page (/merchants.html)
+sudo cp /var/www/azir/src/landing/promo*.html /var/www/azir/src/landing/merchants.html /var/www/azir/landing/
 ```
 
 ## 5. Nginx + SSL
