@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>easy app — للتجار</title>
+<meta name="description" content="لوحة تحكم واحدة لكل طلباتك وحجوزاتك: ربط مع Foodics وأنظمة POS وبرامج الولاء وأنظمة الحجوزات، صفحة متجر خاصة بك داخل التطبيق، وتواصل مباشر مع عملائك بدون عمولات.">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--white:#fff;--off-white:#f5faf7;--green:#00BC6D;--green-dark:#009958;--green-soft:#e0f7ed;--text-dark:#0a0f0d;--text-mid:#2a3830;--text-muted:#6b8078;--border:#d4e8dd;--border-soft:#e2f0e9;--radius-md:14px;--radius-lg:24px;--radius-xl:40px;--ink:#0a0a0b}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans Arabic','Bricolage Grotesque',sans-serif;color:var(--text-dark);background:var(--white);line-height:1.6;-webkit-font-smoothing:antialiased}
+html[lang=en] body{font-family:'Bricolage Grotesque','IBM Plex Sans Arabic',sans-serif}
+a{color:inherit;text-decoration:none}
+.container{width:100%;max-width:1200px;margin:0 auto;padding:0 40px}
+h1,h2,h3{font-weight:600;line-height:1.2;letter-spacing:0}
+html[lang=en] h1,html[lang=en] h2{letter-spacing:-.8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;border-radius:100px;font-weight:600;font-size:15px;border:1.5px solid transparent;cursor:pointer;transition:.2s;font-family:inherit}
+.btn-solid{background:var(--green);color:#fff;border-color:var(--green)}.btn-solid:hover{background:var(--green-dark);border-color:var(--green-dark)}
+.btn-outline{background:transparent;color:var(--text-dark);border-color:var(--border)}.btn-outline:hover{border-color:var(--green);color:var(--green)}
+.btn-dark{background:var(--ink);color:#fff;border-color:var(--ink)}.btn-dark:hover{opacity:.9}
+.btn svg{width:16px;height:16px}
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-soft)}
+.nav .container{display:flex;align-items:center;justify-content:space-between;height:72px;gap:16px}
+.logo svg{height:52px;width:auto;display:block}
+.seg{display:inline-flex;background:var(--off-white);border:1.5px solid var(--border);border-radius:100px;padding:3px}
+.seg a{padding:8px 18px;border-radius:100px;font-size:14px;font-weight:600;color:var(--text-muted);transition:.2s}
+.seg a.on{background:var(--ink);color:#fff}
+.nav-right{display:flex;align-items:center;gap:10px}
+.lang{appearance:none;border:1.5px solid var(--border);background:#fff;border-radius:100px;padding:8px 14px;font:600 13px/1 'IBM Plex Sans Arabic',sans-serif;cursor:pointer;color:var(--text-dark);display:inline-flex;align-items:center;gap:6px}
+.lang:hover{border-color:var(--green);color:var(--green)}
+.lang svg{width:14px;height:14px}
+.burger{display:none;width:42px;height:42px;border:1.5px solid var(--border);border-radius:12px;background:#fff;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer}
+.burger span{width:18px;height:2px;background:var(--text-dark);border-radius:2px}
+.drawer{display:none;border-top:1px solid var(--border-soft);background:#fff;padding:14px 20px 20px}
+.drawer.open{display:block}
+.drawer a,.drawer button{display:flex;width:100%;padding:12px 4px;border-bottom:1px solid var(--border-soft);font-size:15px;font-weight:500;background:none;border-left:0;border-right:0;border-top:0;font-family:inherit;cursor:pointer;text-align:start}
+.drawer .btn{justify-content:center;margin-top:12px;border:1.5px solid var(--green)}
+/* hero */
+.hero{padding:64px 0 40px;text-align:center;position:relative;overflow:hidden}
+.hero:before{content:'';position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 0%,rgba(0,188,109,.10),transparent 70%);pointer-events:none}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-soft);border:1px solid var(--border);border-radius:100px;padding:7px 16px;font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:22px}
+.hero h1{font-size:clamp(32px,4.6vw,58px);max-width:900px;margin:0 auto 18px}
+.hero h1 b{color:var(--green);font-weight:600}
+.hero p.lead{font-size:clamp(16px,1.4vw,19px);color:var(--text-muted);max-width:720px;margin:0 auto 30px}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:44px}
+.hero-note{font-size:13px;color:var(--text-muted);margin-top:-30px;margin-bottom:40px}
+/* hub stage */
+.hub-wrap{position:relative;width:100%;max-width:1100px;margin:0 auto;border-radius:28px;overflow:hidden;background:#050506;box-shadow:0 30px 90px rgba(0,0,0,.25)}
+.hub{position:absolute;top:0;left:0;width:1100px;height:540px;transform-origin:0 0;background:#050506;color:#fff;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif;overflow:hidden}
+.hub.portrait{width:560px;height:900px}
+.hub .glow{position:absolute;width:800px;height:800px;left:50%;top:50%;margin:-400px 0 0 -400px;border-radius:50%;background:radial-gradient(circle,rgba(0,188,109,.18),transparent 60%);filter:blur(30px)}
+.hub .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at 50% 50%,#000 20%,transparent 75%);-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 20%,transparent 75%)}
+.hub svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hub svg.wires path{fill:none;stroke:rgba(255,255,255,.14);stroke-width:1.5}
+.hub svg.wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6 10;animation:hubFlow .9s linear infinite;filter:drop-shadow(0 0 6px var(--c,#00BC6D))}
+@keyframes hubFlow{to{stroke-dashoffset:-32}}
+.src{position:absolute;width:168px;height:62px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:10px;padding:0 12px;transition:.35s;backdrop-filter:blur(6px)}
+.src i{width:36px;height:36px;border-radius:11px;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.src i svg{width:18px;height:18px}
+.src b{display:block;font-size:12.5px;font-weight:600;line-height:1.2}
+.src small{display:block;font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+.src.live{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset,0 0 30px color-mix(in srgb,var(--c) 45%,transparent);transform:scale(1.04)}
+.src .ping{position:absolute;top:-6px;inset-inline-end:-6px;width:14px;height:14px;border-radius:50%;background:var(--c);opacity:0}
+.src.live .ping{animation:hubPing 1.2s ease-out}
+@keyframes hubPing{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(2.4)}}
+.dash{position:absolute;width:440px;height:330px;left:330px;top:105px;border-radius:18px;background:#F6F4F1;color:#1F1A16;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12)}
+.portrait .dash{left:60px;top:520px}
+.dash .top{height:44px;background:#fff;border-bottom:1px solid #ECE6DF;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:12px;font-weight:600}
+.dash .top .dots{display:flex;gap:5px;direction:ltr}.dash .top .dots i{width:9px;height:9px;border-radius:50%;background:#ECE6DF}
+.dash .bell{position:relative;width:28px;height:28px;border-radius:9px;background:#F1EDE8;display:flex;align-items:center;justify-content:center;color:#7A7068}
+.dash .bell svg{width:14px;height:14px}
+.dash .bell em{position:absolute;top:-6px;inset-inline-end:-6px;min-width:17px;height:17px;border-radius:9px;background:#D8412F;color:#fff;font-size:9.5px;font-style:normal;font-weight:600;line-height:17px;text-align:center;padding:0 4px;transition:transform .25s}
+.dash .bell em.bump{transform:scale(1.35)}
+.dash .stats{display:flex;gap:8px;padding:10px 12px 0}
+.dash .stat{flex:1;background:#fff;border:1px solid #ECE6DF;border-radius:12px;padding:8px 10px}
+.dash .stat small{display:block;font-size:9.5px;color:#7A7068}
+.dash .stat b{display:block;font-size:16px;font-weight:600;margin-top:2px;direction:ltr;text-align:start}
+.dash .stat b.ok{color:#2E9A5E}
+.dash .sec{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 6px;font-size:11.5px;font-weight:600}
+.dash .sec span{font-size:9.5px;color:#2E9A5E;display:inline-flex;align-items:center;gap:5px}
+.dash .sec span:before{content:'';width:6px;height:6px;border-radius:50%;background:#2E9A5E;animation:hubDot 1.4s ease-in-out infinite}
+@keyframes hubDot{50%{opacity:.3}}
+.dash .list{padding:0 12px;display:flex;flex-direction:column;gap:6px;overflow:hidden;height:170px}
+.row{background:#fff;border:1px solid #ECE6DF;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:10px;font-size:10.5px;animation:hubRow .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes hubRow{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.row .tag{font-size:9px;font-weight:600;color:#fff;background:var(--c);padding:3px 8px;border-radius:999px;white-space:nowrap}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{color:#7A7068;font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.row .amt{font-weight:600;direction:ltr;white-space:nowrap}
+.row .ok{background:#1F1A16;color:#fff;font-size:9.5px;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.hub-head{position:absolute;top:28px;left:0;right:0;text-align:center;z-index:2}
+.hub-head .l{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);font-size:13px;font-weight:600;transition:.3s}
+.hub-head .l i{width:8px;height:8px;border-radius:50%;background:var(--c,#00BC6D);box-shadow:0 0 10px var(--c,#00BC6D)}
+/* sections */
+section{padding:88px 0}
+.sec-head{text-align:center;max-width:760px;margin:0 auto 44px}
+.sec-head .kicker{color:var(--green-dark);font-weight:600;font-size:13px;letter-spacing:.3px;margin-bottom:10px;display:block}
+.sec-head h2{font-size:clamp(26px,3.2vw,40px);margin-bottom:12px}
+.sec-head p{color:var(--text-muted);font-size:16.5px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{background:var(--off-white);border:1px solid var(--border-soft);border-radius:var(--radius-lg);padding:28px 26px;position:relative}
+.step .n{width:36px;height:36px;border-radius:12px;background:var(--ink);color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-family:'Bricolage Grotesque',sans-serif}
+.step h3{font-size:19px;margin-bottom:8px}
+.step p{color:var(--text-muted);font-size:14.5px}
+.int-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.int{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;transition:.25s}
+.int:hover{border-color:var(--green);box-shadow:0 18px 50px rgba(0,188,109,.10);transform:translateY(-2px)}
+.int i{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:16px;background:var(--c)}
+.int i svg{width:22px;height:22px}
+.int h3{font-size:17px;margin-bottom:6px}
+.int p{font-size:14px;color:var(--text-muted)}
+.int .how{margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:12.5px;color:var(--text-mid);display:flex;gap:6px;flex-wrap:wrap}
+.int .how span{background:var(--off-white);border:1px solid var(--border-soft);border-radius:100px;padding:3px 10px}
+.dark{background:var(--ink);color:#fff;border-radius:var(--radius-xl);padding:72px 48px;position:relative;overflow:hidden}
+.dark:before{content:'';position:absolute;width:700px;height:700px;right:-250px;top:-300px;border-radius:50%;background:radial-gradient(circle,rgba(0,188,109,.22),transparent 60%);filter:blur(20px)}
+.own{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center;position:relative}
+.own h2{font-size:clamp(26px,3vw,38px);margin-bottom:14px}
+.own h2 b{color:var(--green);font-weight:600}
+.own p{color:rgba(255,255,255,.7);font-size:16px;margin-bottom:22px}
+.own ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.own li{display:flex;gap:12px;align-items:flex-start;font-size:15px}
+.own li i{width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex:none;color:#fff}
+.own li i svg{width:14px;height:14px}
+.own li b{display:block;font-weight:600}.own li span{color:rgba(255,255,255,.6);font-size:13.5px}
+.zero{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:28px;text-align:center}
+.zero .big{font:600 clamp(56px,7vw,96px)/1 'Bricolage Grotesque',sans-serif;color:var(--green);letter-spacing:-3px}
+.zero .big small{font-size:.4em;letter-spacing:0;vertical-align:top;margin-inline-start:4px}
+.zero p{color:rgba(255,255,255,.75);margin:8px 0 0;font-size:15px}
+.zero .line{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.1);margin-top:18px;padding-top:14px;font-size:13.5px;color:rgba(255,255,255,.75)}
+.zero .line b{color:#fff}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat{background:var(--off-white);border:1px solid var(--border-soft);border-radius:var(--radius-lg);padding:24px}
+.feat i{width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--green-dark);margin-bottom:14px}
+.feat i svg{width:18px;height:18px}
+.feat h3{font-size:16.5px;margin-bottom:6px}.feat p{font-size:14px;color:var(--text-muted)}
+.support{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sup-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px;display:flex;gap:16px;align-items:flex-start}
+.sup-card i{width:46px;height:46px;border-radius:14px;background:var(--green-soft);color:var(--green-dark);display:flex;align-items:center;justify-content:center;flex:none}
+.sup-card i svg{width:20px;height:20px}
+.sup-card h3{font-size:17px;margin-bottom:4px}.sup-card p{font-size:14px;color:var(--text-muted);margin-bottom:10px}
+.sup-card a.l{font-weight:600;color:var(--green-dark);font-size:14px;direction:ltr;display:inline-block}
+.faq{max-width:820px;margin:44px auto 0}
+.faq details{border-bottom:1px solid var(--border-soft);padding:16px 0}
+.faq summary{cursor:pointer;font-weight:600;font-size:16px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:after{content:'+';font-size:22px;color:var(--text-muted);font-family:'Bricolage Grotesque',sans-serif}
+.faq details[open] summary:after{content:'–'}
+.faq p{color:var(--text-muted);font-size:14.5px;margin-top:8px;max-width:720px}
+.join{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.join h2{font-size:clamp(26px,3vw,38px);margin-bottom:12px}
+.join p{color:var(--text-muted);font-size:16px;margin-bottom:18px}
+.join ul{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.join li{display:flex;gap:10px;align-items:center}
+.join li:before{content:'';width:22px;height:22px;border-radius:50%;background:var(--green);flex:none;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/14px no-repeat,linear-gradient(#000,#000);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/14px no-repeat;background:var(--green)}
+.form{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px;box-shadow:0 24px 80px rgba(0,188,109,.10)}
+.form .g{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-mid)}
+.form .f{margin-bottom:14px}
+.form input,.form select{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font:500 14.5px/1.3 inherit;font-family:inherit;background:var(--off-white);color:var(--text-dark);outline:none;transition:.2s}
+.form input:focus,.form select:focus{border-color:var(--green);background:#fff}
+.form .btn{width:100%;margin-top:6px}
+.form .hint{font-size:12px;color:var(--text-muted);text-align:center;margin-top:10px}
+footer{border-top:1px solid var(--border-soft);padding:30px 0;font-size:13.5px;color:var(--text-muted)}
+footer .container{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+footer a{margin-inline-start:16px}
+/* responsive */
+@media (max-width:980px){.container{padding:0 28px}.steps,.int-grid,.feat-grid{grid-template-columns:1fr 1fr}.own,.join,.support{grid-template-columns:1fr}.dark{padding:48px 28px}}
+@media (max-width:720px){.container{padding:0 18px}.nav .seg{display:none}.nav .nav-right .btn,.nav .nav-right .lang{display:none}.burger{display:flex}.steps,.int-grid,.feat-grid{grid-template-columns:1fr}section{padding:60px 0}.hero{padding:40px 0 24px}.hero-actions .btn{width:100%}.form .g{grid-template-columns:1fr}.logo svg{height:44px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <a class="logo" href="index.html" aria-label="easy app"><svg viewBox="0 0 1400 800" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <defs>
+              <linearGradient id="ng1" x1="782.84" y1="645.99" x2="1240.12" y2="217.43" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#00BC6D"/><stop offset="1" stop-color="#00BC6D"/>
+              </linearGradient>
+              <linearGradient id="ng2" x1="786.95" y1="650.37" x2="1244.23" y2="221.82" xlink:href="#ng1"/>
+            </defs>
+            <path fill="#0f0f1a" d="M613.56,487.42h26l-.11,23.37a111.66,111.66,0,0,1,68.38-23.37V514.9c-25,0-44.69,7-67.3,20.08V614.3h-27Z"/>
+            <path fill="#0f0f1a" d="M309.89,493.11a358.4,358.4,0,0,0-76.07-8.59c-41.31,0-69.33,16.17-69.33,67.23,0,46.76,20.74,65.46,54.59,65.46,23.29,0,45.86-10.11,64.79-21.74a21.64,21.64,0,0,0,21.51,19.21H324.5V587.16H309.89Zm-27.3,77.09c-20.2,9.35-40,15.67-58.41,15.67-22.93,0-32.58-9.86-32.58-35.39,0-25.78,14.2-35.38,39.49-35.38a343.26,343.26,0,0,1,51.5,4.3Z"/>
+            <path fill="#0f0f1a" d="M365,513.58H471.67c-11.28,5.31-35.66,16.69-54.23,30.08l-54.23,44.48v26.54H503V588.14H396.88c10.19-5.3,33.85-15.92,56.41-33.1L503,513.58V487H365Z"/>
+            <rect fill="#0f0f1a" x="546.22" y="487.04" width="27.12" height="127.64"/>
+            <rect fill="#0f0f1a" x="546.22" y="441.78" width="27.12" height="27.83"/>
+            <path fill="#0f0f1a" d="M271.39,299.28c-20.59-.09-43.61-20.33-46.89-47.77v50.06l2.62-.23s7.69,26.39,42.24,26.39H540.74V299.28Z"/>
+            <rect fill="#0f0f1a" x="679.66" y="136.92" width="28.79" height="191.8"/>
+            <rect fill="#0f0f1a" x="617.81" y="178.34" width="28.48" height="28.48"/>
+            <rect fill="#0f0f1a" x="531.91" y="345.96" width="28.48" height="28.48"/>
+            <rect fill="#0f0f1a" x="489.75" y="345.96" width="28.48" height="28.48"/>
+            <path fill="#0f0f1a" d="M596.91,394.85h-8.79V366.29h8.79a23.54,23.54,0,0,0,23.52-23.51V229.91H649V342.78A52.13,52.13,0,0,1,596.91,394.85Z"/>
+            <path fill="#0f0f1a" d="M537.23,327.85H525.07V299.28h12.16a23.53,23.53,0,0,0,23.51-23.51V229.91H589.3v45.86A52.14,52.14,0,0,1,537.23,327.85Z"/>
+            <path fill="#0f0f1a" d="M173.28,394.85h-8.79V366.29h8.79a23.53,23.53,0,0,0,23.51-23.51V229.91h28.57V342.78A52.14,52.14,0,0,1,173.28,394.85Z"/>
+            <path fill="url(#ng1)" d="M1214.74,153.92H1023.48a81.28,81.28,0,0,0-81.29,81.29v68.47h187.3a16.9,16.9,0,0,1,16.9,16.9V507.75h68.35A81.29,81.29,0,0,0,1296,426.47V235.21A81.29,81.29,0,0,0,1214.74,153.92Z"/>
+            <path fill="url(#ng2)" d="M942.19,490.85V303.68H914.61A81.28,81.28,0,0,0,833.32,385V535.46a81.28,81.28,0,0,0,81.29,81.29H1065.1a81.29,81.29,0,0,0,81.29-81.29V507.75H959.09A16.9,16.9,0,0,1,942.19,490.85Z"/>
+          </svg>
+        </a>
+    <div class="seg" id="segNav">
+      <a href="index.html" data-t="navCustomers">للعملاء</a>
+      <a href="merchants.html" class="on" data-t="navMerchants">للتجار</a>
+    </div>
+    <div class="nav-right">
+      <button class="lang" id="langBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span id="langLbl">English</span></button>
+      <a href="#join" class="btn btn-solid" data-t="navJoin">انضم الآن</a>
+      <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div class="drawer" id="drawer">
+    <a href="index.html" data-t="navCustomers">للعملاء</a>
+    <a href="merchants.html" data-t="navMerchants">للتجار</a>
+    <a href="#integrations" data-t="navInt">الربط والتكامل</a>
+    <a href="#support" data-t="navSupport">الدعم</a>
+    <button type="button" id="langBtn2"><span id="langLbl2">English</span></button>
+    <a href="#join" class="btn btn-solid" data-t="navJoin">انضم الآن</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <span class="eyebrow" data-t="eyebrow">لوحة تحكم واحدة لكل قنواتك</span>
+    <h1 data-t="h1" data-html="1">كل طلباتك وحجوزاتك<br>من كل القنوات… <b>في لوحة واحدة</b></h1>
+    <p class="lead" data-t="lead">عميلك يطلب من تطبيق easy app أو من الكاشير أو من نظام الحجوزات أو ببرنامج الولاء — ويصلك كل شيء لحظياً في لوحة تحكمك، ومتزامن مع Foodics وأنظمة POS التي تستخدمها.</p>
+    <div class="hero-actions">
+      <a href="#join" class="btn btn-solid btn-lg" data-t="ctaJoin">ابدأ مع easy app</a>
+      <a href="#integrations" class="btn btn-outline btn-lg" data-t="ctaInt">شاهد الربط والتكامل</a>
+    </div>
+
+    <div class="hub-wrap" id="hubWrap">
+      <div class="hub" id="hub">
+        <div class="glow"></div><div class="grid"></div>
+        <svg class="wires" id="wires"></svg>
+        <div class="hub-head"><span class="l" id="hubLabel"><i></i><span data-t="hubIdle">بانتظار الطلبات…</span></span></div>
+        <div id="srcs"></div>
+        <div class="dash" id="dash">
+          <div class="top"><span><span data-t="dashTitle">لوحة التحكم</span> — <span data-t="dashStore">برجر لاب</span></span><span class="dots"><i></i><i></i><i></i></span><span class="bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><em id="bellN">0</em></span></div>
+          <div class="stats">
+            <div class="stat"><small data-t="stOrders">طلبات اليوم</small><b id="stOrders">42</b></div>
+            <div class="stat"><small data-t="stBook">حجوزات</small><b id="stBook">9</b></div>
+            <div class="stat"><small data-t="stRev">إيراد اليوم</small><b class="ok" id="stRev">3,120</b></div>
+          </div>
+          <div class="sec"><span data-t="dashLive">مباشر</span><span style="font-weight:600;font-size:11.5px;color:#1F1A16" data-t="dashIncoming">الطلبات الواردة</span></div>
+          <div class="list" id="list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker" data-t="howK">كيف يصلك الطلب</span>
+      <h2 data-t="howT">ثلاث خطوات… ولا شيء يضيع</h2>
+      <p data-t="howP">سواء جاء الطلب من تطبيق العميل أو من الكاشير أو من شريك خارجي، يمرّ من نفس المسار ويظهر في نفس المكان.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3 data-t="s1T">العميل يمسح رمزك</h3><p data-t="s1P">رمز QR مطبوع على الطاولة أو الكاونتر أو الواجهة. يفتح متجرك داخل easy app مباشرة — بدون تحميل تطبيق خاص بك.</p></div>
+      <div class="step"><div class="n">2</div><h3 data-t="s2T">يطلب أو يحجز</h3><p data-t="s2P">قائمة حقيقية تحدّثها أنت، أوضاع استلام/داخل المحل/توصيل، أو حجز موعد وطاولة — كلها بنفس التجربة.</p></div>
+      <div class="step"><div class="n">3</div><h3 data-t="s3T">يصلك فوراً… في كل مكان</h3><p data-t="s3P">إشعار لحظي في لوحة التحكم، وينعكس على Foodics أو نظام POS الذي تستخدمه، ويتحدّث العميل بحالة طلبه تلقائياً.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<section id="integrations" style="background:var(--off-white);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft)">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker" data-t="intK">الربط والتكامل</span>
+      <h2 data-t="intT">يشتغل مع الأنظمة التي تستخدمها اليوم</h2>
+      <p data-t="intP">لا تغيّر طريقة عملك. easy app يربط قنوات الطلب والحجز والولاء بنظامك الحالي عبر واجهات برمجية (API) وWebhooks.</p>
+    </div>
+    <div class="int-grid" id="intGrid"></div>
+  </div>
+</section>
+
+<!-- OWN YOUR PAGE -->
+<section>
+  <div class="container">
+    <div class="dark">
+      <div class="own">
+        <div>
+          <h2 data-t="ownT" data-html="1">صفحتك… وعملاؤك… <b>بدون وسيط وبدون عمولات</b></h2>
+          <p data-t="ownP">تملك صفحة متجرك داخل التطبيق كأنها تطبيقك الخاص: قائمتك، فروعك، أوقاتك، عروضك — وتتواصل مع عملائك مباشرة من لوحة التحكم.</p>
+          <ul id="ownList"></ul>
+        </div>
+        <div class="zero">
+          <div class="big">0<small>%</small></div>
+          <p data-t="zeroP">عمولة على كل طلب أو حجز يصلك عبر easy app</p>
+          <div class="line"><span data-t="z1">صفحة متجر + رمز QR</span><b data-t="z1v">مشمول</b></div>
+          <div class="line"><span data-t="z2">إشعارات مباشرة للعملاء</span><b data-t="z2v">مشمول</b></div>
+          <div class="line"><span data-t="z3">لوحة التحكم والفواتير</span><b data-t="z3v">مشمول</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD FEATURES -->
+<section id="dashboard" style="padding-top:0">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker" data-t="dK">لوحة التحكم</span>
+      <h2 data-t="dT">كل ما تحتاجه لإدارة متجرك… من مكان واحد</h2>
+      <p data-t="dP">من الجوال أو الكمبيوتر، لك ولفريقك، لكل فرع.</p>
+    </div>
+    <div class="feat-grid" id="featGrid"></div>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section id="support" style="background:var(--off-white);border-top:1px solid var(--border-soft)">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker" data-t="supK">الدعم</span>
+      <h2 data-t="supT">فريق يرد عليك… لا بوت</h2>
+      <p data-t="supP">من التجهيز الأول وطباعة الرمز إلى ربط نظامك — نحن معك.</p>
+    </div>
+    <div class="support">
+      <div class="sup-card"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-13.3 7.9L3 21l1.1-4.7A9 9 0 1 1 21 12z"/></svg></i><div><h3 data-t="wT">واتساب الدعم</h3><p data-t="wP">الأسرع للأسئلة اليومية ومتابعة التجهيز.</p><a class="l" id="waLink" href="#">+966 5X XXX XXXX</a></div></div>
+      <div class="sup-card"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></i><div><h3 data-t="eT">البريد</h3><p data-t="eP">للربط التقني والعقود والفواتير.</p><a class="l" id="mailLink" href="#">support@azir.sa</a></div></div>
+      <div class="sup-card"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i><div><h3 data-t="hT">أوقات الدعم</h3><p data-t="hP">السبت – الخميس، 9 صباحاً – 11 مساءً. الحالات العاجلة للمتاجر المفعّلة: على مدار الساعة.</p></div></div>
+      <div class="sup-card"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></i><div><h3 data-t="oT">تجهيز مجاني</h3><p data-t="oP">نرفع قائمتك وفروعك ونطبع رموزك ونربط نظامك قبل أول طلب.</p></div></div>
+    </div>
+    <div class="faq" id="faq"></div>
+  </div>
+</section>
+
+<!-- JOIN -->
+<section id="join">
+  <div class="container">
+    <div class="join">
+      <div>
+        <span class="kicker" style="color:var(--green-dark);font-weight:600;font-size:13px;display:block;margin-bottom:10px" data-t="jK">انضمام</span>
+        <h2 data-t="jT">جهّز متجرك خلال يوم عمل</h2>
+        <p data-t="jP">عبّئ البيانات ويتواصل معك فريقنا لتفعيل متجرك، رفع قائمتك، وربط نظامك.</p>
+        <ul id="joinList"></ul>
+      </div>
+      <form class="form" id="joinForm">
+        <div class="g">
+          <div class="f"><label data-t="fName">اسمك</label><input name="name" required data-ph="phName" placeholder="محمد العلي"></div>
+          <div class="f"><label data-t="fPhone">رقم الجوال</label><input name="phone" required inputmode="tel" dir="ltr" placeholder="05XXXXXXXX"></div>
+        </div>
+        <div class="f"><label data-t="fStore">اسم النشاط</label><input name="store" required data-ph="phStore" placeholder="برجر لاب"></div>
+        <div class="g">
+          <div class="f"><label data-t="fType">نوع النشاط</label><select name="type" id="typeSel"></select></div>
+          <div class="f"><label data-t="fCity">المدينة</label><input name="city" required data-ph="phCity" placeholder="الرياض"></div>
+        </div>
+        <div class="f"><label data-t="fPos">النظام المستخدم حالياً (اختياري)</label><input name="pos" data-ph="phPos" placeholder="Foodics / نظام آخر / لا يوجد"></div>
+        <button class="btn btn-solid btn-lg" type="submit" data-t="fSend">أرسل طلب الانضمام</button>
+        <div class="hint" data-t="fHint">يفتح واتساب برسالة جاهزة ببياناتك — ما نشارك بياناتك مع أي طرف.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span>© <span id="yr"></span> easy app</span>
+    <span><a href="index.html" data-t="navCustomers">للعملاء</a><a href="#support" data-t="navSupport">الدعم</a><a href="#join" data-t="navJoin">انضم الآن</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---- contact placeholders: set these before launch ----
+  var WHATSAPP='9665XXXXXXXX';      // digits only, international format
+  var EMAIL='support@azir.sa';
+
+  var $=function(id){return document.getElementById(id)};
+  var I={
+    qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v1M17 20h4M14 20v1"/></svg>',
+    pos:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
+    cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>',
+    star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+    cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+    truck:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>',
+    doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>',
+    bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
+    users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 4.5"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4z"/></svg>',
+    shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+    link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
+  };
+
+  var T={ar:{
+    navCustomers:'للعملاء',navMerchants:'للتجار',navJoin:'انضم الآن',navInt:'الربط والتكامل',navSupport:'الدعم',langLbl:'English',
+    eyebrow:'لوحة تحكم واحدة لكل قنواتك',
+    h1:'كل طلباتك وحجوزاتك<br>من كل القنوات… <b>في لوحة واحدة</b>',
+    lead:'عميلك يطلب من تطبيق easy app أو من الكاشير أو من نظام الحجوزات أو ببرنامج الولاء — ويصلك كل شيء لحظياً في لوحة تحكمك، ومتزامن مع Foodics وأنظمة POS التي تستخدمها.',
+    ctaJoin:'ابدأ مع easy app',ctaInt:'شاهد الربط والتكامل',hubIdle:'بانتظار الطلبات…',
+    dashTitle:'لوحة التحكم',dashStore:'برجر لاب',stOrders:'طلبات اليوم',stBook:'حجوزات',stRev:'إيراد اليوم',dashLive:'مباشر',dashIncoming:'الطلبات الواردة',
+    srcs:[['easyapp','easy app','مسح QR → طلب',I.qr,'#00BC6D'],['foodics','Foodics','كاشير ومطبخ',I.cash,'#7C3AED'],['pos','أنظمة POS','نقاط البيع الأخرى',I.pos,'#1E6FD9'],['loyalty','برنامج الولاء','نقاط واستبدال',I.star,'#F0A83A'],['booking','نظام الحجوزات','طاولات ومواعيد',I.cal,'#C2399B']],
+    orders:[
+      ['easyapp','طلب #1043 · كابتشينو ×2، كورتادو','استلام · طاولة 12 · عبر easy app','36 ر.س','قبول'],
+      ['foodics','طلب #F-2291 · من كاشير Foodics','تزامن تلقائي مع المطبخ','84 ر.س','تم'],
+      ['pos','طلب #P-118 · نقطة البيع — الفرع الرئيسي','سجّل في لوحة التحكم تلقائياً','52 ر.س','تم'],
+      ['loyalty','نورة س. — استبدال 200 نقطة','خصم 20 ر.س طُبّق على طلبها','20 ر.س-','تم'],
+      ['booking','حجز طاولة لـ 4 أشخاص','اليوم 8:30 م · أحمد م.','—','تأكيد']],
+    hubLabels:['طلب جديد من easy app','طلب من كاشير Foodics','طلب من نقطة البيع','عميل ولاء استبدل نقاطه','حجز جديد من نظام الحجوزات'],
+    howK:'كيف يصلك الطلب',howT:'ثلاث خطوات… ولا شيء يضيع',howP:'سواء جاء الطلب من تطبيق العميل أو من الكاشير أو من شريك خارجي، يمرّ من نفس المسار ويظهر في نفس المكان.',
+    s1T:'العميل يمسح رمزك',s1P:'رمز QR مطبوع على الطاولة أو الكاونتر أو الواجهة. يفتح متجرك داخل easy app مباشرة — بدون تحميل تطبيق خاص بك.',
+    s2T:'يطلب أو يحجز',s2P:'قائمة حقيقية تحدّثها أنت، أوضاع استلام/داخل المحل/توصيل، أو حجز موعد وطاولة — كلها بنفس التجربة.',
+    s3T:'يصلك فوراً… في كل مكان',s3P:'إشعار لحظي في لوحة التحكم، وينعكس على Foodics أو نظام POS الذي تستخدمه، ويتحدّث العميل بحالة طلبه تلقائياً.',
+    intK:'الربط والتكامل',intT:'يشتغل مع الأنظمة التي تستخدمها اليوم',intP:'لا تغيّر طريقة عملك. easy app يربط قنوات الطلب والحجز والولاء بنظامك الحالي عبر واجهات برمجية (API) وWebhooks.',
+    ints:[
+      [I.cash,'#7C3AED','Foodics','طلبات easy app تنزل مباشرة في Foodics كطلب عادي: الكاشير والمطبخ والتقارير كلها كما هي.',['مزامنة القائمة','الطلبات','الحالات']],
+      [I.pos,'#1E6FD9','أنظمة POS الأخرى','ربط عبر API أو Webhooks مع نظام نقاط البيع الذي تستخدمه، أو تشغيل easy app كنقطة بيع مستقلة.',['API','Webhooks','طباعة الطلب']],
+      [I.star,'#F0A83A','برامج الولاء','العميل يكسب ويستبدل نقاطه من داخل صفحتك، والخصم ينعكس على الطلب والفاتورة تلقائياً.',['نقاط','استبدال','عروض']],
+      [I.cal,'#C2399B','أنظمة الحجوزات','حجز الطاولات والمواعيد من نفس الصفحة، مع مزامنة التقويم وتذكير العميل قبل موعده.',['طاولات','مواعيد','تذكير']],
+      [I.truck,'#2E9A5E','شركاء التوصيل','إرسال طلبات التوصيل لمزوّد التوصيل الذي تتعامل معه وتتبّعها من لوحة التحكم.',['إسناد تلقائي','تتبّع']],
+      [I.doc,'#1F1A16','الفوترة الإلكترونية','فواتير متوافقة مع هيئة الزكاة والضريبة (ZATCA) تُصدر مع كل طلب مدفوع — اختيارياً.',['ZATCA','QR الفاتورة']]],
+    ownT:'صفحتك… وعملاؤك… <b>بدون وسيط وبدون عمولات</b>',
+    ownP:'تملك صفحة متجرك داخل التطبيق كأنها تطبيقك الخاص: قائمتك، فروعك، أوقاتك، عروضك — وتتواصل مع عملائك مباشرة من لوحة التحكم.',
+    own:[[I.qr,'رمز QR خاص بمتجرك','يفتح صفحتك مباشرة — على الطاولة، الكاونتر، أو حسابك في التواصل الاجتماعي.'],[I.bell,'إشعارات مباشرة لعملائك','حالة الطلب، تذكير الموعد، عرض اليوم — تصلهم على جوالهم بدون رسائل مدفوعة.'],[I.users,'عملاؤك يبقون عملاءك','بياناتهم وطلباتهم عندك، وليست عند منصة توصيل تنافسك عليهم.'],[I.shield,'سعرك هو سعرك','لا هامش مخفي ولا عمولة على الطلب — سعر القائمة يصل للعميل كما هو.']],
+    zeroP:'عمولة على كل طلب أو حجز يصلك عبر easy app',z1:'صفحة متجر + رمز QR',z1v:'مشمول',z2:'إشعارات مباشرة للعملاء',z2v:'مشمول',z3:'لوحة التحكم والفواتير',z3v:'مشمول',
+    dK:'لوحة التحكم',dT:'كل ما تحتاجه لإدارة متجرك… من مكان واحد',dP:'من الجوال أو الكمبيوتر، لك ولفريقك، لكل فرع.',
+    feats:[[I.bell,'الطلبات الحية','قبول، تجهيز، جاهز، مكتمل — بضغطة، والعميل يتحدّث فوراً.'],[I.cal,'الحجوزات والمواعيد','جدول الطاولات والمواعيد لكل فرع، مع عدد الأشخاص والملاحظات.'],[I.menu,'القائمة والعروض','أصناف، خيارات، صور، أوقات توفر، ونفاد المخزون — يتحدّث مباشرة عند العميل.'],[I.pin,'الفروع والأوقات','فروع متعددة، أوقات عمل، أوضاع الاستلام والتوصيل لكل فرع.'],[I.chart,'التقارير','المبيعات بالساعة والصنف والقناة — لتعرف من أين يأتي طلبك.'],[I.doc,'الفواتير','فواتير ضريبية متوافقة مع ZATCA، اختيارياً، من نفس الشاشة.']],
+    supK:'الدعم',supT:'فريق يرد عليك… لا بوت',supP:'من التجهيز الأول وطباعة الرمز إلى ربط نظامك — نحن معك.',
+    wT:'واتساب الدعم',wP:'الأسرع للأسئلة اليومية ومتابعة التجهيز.',eT:'البريد',eP:'للربط التقني والعقود والفواتير.',hT:'أوقات الدعم',hP:'السبت – الخميس، 9 صباحاً – 11 مساءً. الحالات العاجلة للمتاجر المفعّلة: على مدار الساعة.',oT:'تجهيز مجاني',oP:'نرفع قائمتك وفروعك ونطبع رموزك ونربط نظامك قبل أول طلب.',
+    faq:[['هل أحتاج تطبيقاً خاصاً بي؟','لا. متجرك يعيش داخل easy app الذي يستخدمه العميل لكل المتاجر، وصفحتك فيه بهويتك ولونك وقائمتك.'],['هل يعمل مع Foodics؟','نعم، طلبات easy app تظهر في Foodics كطلب عادي وتتزامن حالاته. تواصل معنا لتفعيل الربط لحسابك.'],['كم العمولة؟','لا عمولة على الطلبات أو الحجوزات. اشتراك ثابت بحسب عدد الفروع — تواصل معنا للتفاصيل.'],['كم يستغرق التفعيل؟','عادة يوم عمل واحد: نرفع قائمتك ونطبع رموزك ونربط نظامك ثم نسلمك لوحة التحكم.']],
+    jK:'انضمام',jT:'جهّز متجرك خلال يوم عمل',jP:'عبّئ البيانات ويتواصل معك فريقنا لتفعيل متجرك، رفع قائمتك، وربط نظامك.',
+    join:['بدون رسوم تأسيس أو عمولات','رفع القائمة وطباعة الرموز علينا','ربط Foodics / POS / الحجوزات','إلغاء في أي وقت'],
+    fName:'اسمك',fPhone:'رقم الجوال',fStore:'اسم النشاط',fType:'نوع النشاط',fCity:'المدينة',fPos:'النظام المستخدم حالياً (اختياري)',fSend:'أرسل طلب الانضمام',fHint:'يفتح واتساب برسالة جاهزة ببياناتك — ما نشارك بياناتك مع أي طرف.',
+    phName:'محمد العلي',phStore:'برجر لاب',phCity:'الرياض',phPos:'Foodics / نظام آخر / لا يوجد',
+    types:['مطعم','مقهى / محمصة','مغسلة سيارات','صالون / حلاق','عيادة','نشاط آخر'],
+    waMsg:'مرحباً، أرغب بالانضمام إلى easy app.\nالاسم: {name}\nالجوال: {phone}\nالنشاط: {store} ({type})\nالمدينة: {city}\nالنظام الحالي: {pos}'
+  },en:{
+    navCustomers:'For customers',navMerchants:'For merchants',navJoin:'Join now',navInt:'Integrations',navSupport:'Support',langLbl:'عربي',
+    eyebrow:'One dashboard for every channel',
+    h1:'Every order and booking,<br>from every channel… <b>in one dashboard</b>',
+    lead:'Your customer orders from the easy app, from the cashier, from your booking system or with their loyalty points — and everything lands live in your dashboard, in sync with Foodics and the POS you already use.',
+    ctaJoin:'Start with easy app',ctaInt:'See integrations',hubIdle:'Waiting for orders…',
+    dashTitle:'Dashboard',dashStore:'Burger Lab',stOrders:'Orders today',stBook:'Bookings',stRev:'Revenue today',dashLive:'Live',dashIncoming:'Incoming',
+    srcs:[['easyapp','easy app','Scan QR → order',I.qr,'#00BC6D'],['foodics','Foodics','Cashier & kitchen',I.cash,'#7C3AED'],['pos','POS systems','Other registers',I.pos,'#1E6FD9'],['loyalty','Loyalty program','Points & rewards',I.star,'#F0A83A'],['booking','Booking system','Tables & slots',I.cal,'#C2399B']],
+    orders:[
+      ['easyapp','Order #1043 · Cappuccino ×2, Cortado','Pickup · Table 12 · via easy app','SAR 36','Accept'],
+      ['foodics','Order #F-2291 · from Foodics cashier','Auto-synced to the kitchen','SAR 84','Done'],
+      ['pos','Order #P-118 · POS — main branch','Logged to the dashboard automatically','SAR 52','Done'],
+      ['loyalty','Noura S. — redeemed 200 points','SAR 20 discount applied to her order','-SAR 20','Done'],
+      ['booking','Table for 4','Today 8:30 PM · Ahmed M.','—','Confirm']],
+    hubLabels:['New order from easy app','Order from Foodics cashier','Order from the POS','Loyalty customer redeemed points','New booking from the booking system'],
+    howK:'How an order reaches you',howT:'Three steps… nothing gets lost',howP:'Whether it comes from the customer app, the cashier or an external partner, every order takes the same path and shows up in the same place.',
+    s1T:'The customer scans your QR',s1P:'A printed QR on the table, the counter or the window opens your store inside easy app — no app of your own to download.',
+    s2T:'They order or book',s2P:'A real menu you keep updated, pickup / dine-in / delivery modes, or a table and appointment booking — all in one experience.',
+    s3T:'It reaches you instantly… everywhere',s3P:'A live notification in your dashboard, mirrored to Foodics or your POS, and the customer gets status updates automatically.',
+    intK:'Integrations',intT:'Works with the systems you use today',intP:'Don\'t change how you work. easy app connects ordering, booking and loyalty channels to your current system through APIs and webhooks.',
+    ints:[
+      [I.cash,'#7C3AED','Foodics','easy app orders drop into Foodics as regular orders: cashier, kitchen and reports stay exactly as they are.',['Menu sync','Orders','Statuses']],
+      [I.pos,'#1E6FD9','Other POS systems','Connect via API or webhooks to the register you use, or run easy app as a standalone POS.',['API','Webhooks','Ticket printing']],
+      [I.star,'#F0A83A','Loyalty programs','Customers earn and redeem points inside your page; the discount is applied to the order and invoice automatically.',['Points','Redemption','Offers']],
+      [I.cal,'#C2399B','Booking systems','Tables and appointments from the same page, with calendar sync and customer reminders.',['Tables','Appointments','Reminders']],
+      [I.truck,'#2E9A5E','Delivery partners','Hand delivery orders to the courier you work with and track them from the dashboard.',['Auto-dispatch','Tracking']],
+      [I.doc,'#1F1A16','E-invoicing','ZATCA-compliant tax invoices issued with every paid order — optional.',['ZATCA','Invoice QR']]],
+    ownT:'Your page… your customers… <b>no middleman, no commissions</b>',
+    ownP:'Own your store page inside the app as if it were your own app: your menu, branches, hours and offers — and talk to your customers directly from the dashboard.',
+    own:[[I.qr,'Your own store QR','Opens your page directly — on the table, the counter or your social profile.'],[I.bell,'Direct notifications to customers','Order status, booking reminders, today\'s offer — on their phone, no paid SMS.'],[I.users,'Your customers stay yours','Their data and orders live with you, not with a delivery platform competing for them.'],[I.shield,'Your price is your price','No hidden margin, no per-order commission — the menu price reaches the customer as is.']],
+    zeroP:'commission on every order or booking that reaches you through easy app',z1:'Store page + QR',z1v:'Included',z2:'Direct customer notifications',z2v:'Included',z3:'Dashboard & invoices',z3v:'Included',
+    dK:'Dashboard',dT:'Everything you need to run your store… in one place',dP:'From phone or desktop, for you and your team, per branch.',
+    feats:[[I.bell,'Live orders','Accept, preparing, ready, completed — one tap, and the customer is updated instantly.'],[I.cal,'Bookings & appointments','Table and appointment schedule per branch, with party size and notes.'],[I.menu,'Menu & offers','Items, options, photos, availability windows and sold-out — updated live for the customer.'],[I.pin,'Branches & hours','Multiple branches, opening hours, pickup and delivery modes per branch.'],[I.chart,'Reports','Sales by hour, item and channel — know where your orders come from.'],[I.doc,'Invoices','ZATCA-compliant tax invoices, optional, from the same screen.']],
+    supK:'Support',supT:'A team that answers… not a bot',supP:'From first setup and printing your QR to connecting your system — we\'re with you.',
+    wT:'WhatsApp support',wP:'Fastest for day-to-day questions and setup follow-up.',eT:'Email',eP:'For technical integration, contracts and invoices.',hT:'Support hours',hP:'Saturday – Thursday, 9 AM – 11 PM. Urgent cases for live stores: around the clock.',oT:'Free onboarding',oP:'We upload your menu and branches, print your QR codes and connect your system before the first order.',
+    faq:[['Do I need my own app?','No. Your store lives inside easy app, the one app customers use for every store, with your own brand, colour and menu.'],['Does it work with Foodics?','Yes — easy app orders show up in Foodics as regular orders and statuses sync. Contact us to enable it for your account.'],['What is the commission?','No commission on orders or bookings. A flat subscription based on the number of branches — contact us for details.'],['How long does activation take?','Usually one business day: we upload your menu, print your QR codes, connect your system and hand you the dashboard.']],
+    jK:'Join',jT:'Set up your store in one business day',jP:'Fill in your details and our team will contact you to activate your store, upload your menu and connect your system.',
+    join:['No setup fees, no commissions','We upload the menu and print the QR codes','Foodics / POS / booking integration','Cancel anytime'],
+    fName:'Your name',fPhone:'Mobile number',fStore:'Business name',fType:'Business type',fCity:'City',fPos:'Current system (optional)',fSend:'Send join request',fHint:'Opens WhatsApp with a ready message containing your details — we never share your data.',
+    phName:'Mohammed Alali',phStore:'Burger Lab',phCity:'Riyadh',phPos:'Foodics / other / none',
+    types:['Restaurant','Café / roastery','Car wash','Salon / barber','Clinic','Other'],
+    waMsg:'Hi, I\'d like to join easy app.\nName: {name}\nPhone: {phone}\nBusiness: {store} ({type})\nCity: {city}\nCurrent system: {pos}'
+  }};
+
+  var LANG=(location.hash==='#en'||localStorage.getItem('ea_lang')==='en')?'en':'ar';
+  var S=T[LANG];
+  function render(){
+    S=T[LANG];
+    document.documentElement.lang=LANG;document.documentElement.dir=LANG==='ar'?'rtl':'ltr';
+    document.title=LANG==='ar'?'easy app — للتجار':'easy app — For merchants';
+    document.querySelectorAll('[data-t]').forEach(function(el){var k=el.getAttribute('data-t');if(S[k]==null)return;if(el.getAttribute('data-html'))el.innerHTML=S[k];else el.textContent=S[k]});
+    document.querySelectorAll('[data-ph]').forEach(function(el){el.placeholder=S[el.getAttribute('data-ph')]||''});
+    $('langLbl').textContent=S.langLbl;$('langLbl2').textContent=S.langLbl;
+    $('intGrid').innerHTML=S.ints.map(function(x){return '<div class="int" style="--c:'+x[1]+'"><i>'+x[0]+'</i><h3>'+x[2]+'</h3><p>'+x[3]+'</p><div class="how">'+x[4].map(function(s){return '<span>'+s+'</span>'}).join('')+'</div></div>'}).join('');
+    $('ownList').innerHTML=S.own.map(function(x){return '<li><i>'+x[0]+'</i><div><b>'+x[1]+'</b><span>'+x[2]+'</span></div></li>'}).join('');
+    $('featGrid').innerHTML=S.feats.map(function(x){return '<div class="feat"><i>'+x[0]+'</i><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div>'}).join('');
+    $('faq').innerHTML=S.faq.map(function(x,i){return '<details'+(i===0?' open':'')+'><summary>'+x[0]+'</summary><p>'+x[1]+'</p></details>'}).join('');
+    $('joinList').innerHTML=S.join.map(function(x){return '<li>'+x+'</li>'}).join('');
+    $('typeSel').innerHTML=S.types.map(function(x){return '<option>'+x+'</option>'}).join('');
+    $('srcs').innerHTML=S.srcs.map(function(s,i){return '<div class="src" data-i="'+i+'" style="--c:'+s[4]+'"><i>'+s[3]+'</i><div><b>'+s[1]+'</b><small>'+s[2]+'</small></div><span class="ping"></span></div>'}).join('');
+    layout();
+  }
+  function setLang(l){LANG=l;try{localStorage.setItem('ea_lang',l)}catch(e){}render()}
+  $('langBtn').onclick=function(){setLang(LANG==='ar'?'en':'ar')};
+  $('langBtn2').onclick=function(){setLang(LANG==='ar'?'en':'ar')};
+  $('burger').onclick=function(){$('drawer').classList.toggle('open')};
+  $('drawer').addEventListener('click',function(e){if(e.target.tagName==='A')$('drawer').classList.remove('open')});
+  $('yr').textContent=new Date().getFullYear();
+  $('waLink').href='https://wa.me/'+WHATSAPP;$('waLink').textContent='+'+WHATSAPP.replace(/(\d{3})(\d{2})(\d{3})(\d{4})/,'$1 $2 $3 $4');
+  $('mailLink').href='mailto:'+EMAIL;$('mailLink').textContent=EMAIL;
+  $('joinForm').addEventListener('submit',function(e){
+    e.preventDefault();var f=e.target;
+    var msg=S.waMsg.replace('{name}',f.name.value).replace('{phone}',f.phone.value).replace('{store}',f.store.value).replace('{type}',f.type.value).replace('{city}',f.city.value).replace('{pos}',f.pos.value||'—');
+    window.open('https://wa.me/'+WHATSAPP+'?text='+encodeURIComponent(msg),'_blank');
+  });
+
+  // ---- hub animation ----
+  var wrap=$('hubWrap'),hub=$('hub'),wires=$('wires'),list=$('list');
+  var scale=1,portrait=false;
+  function layout(){
+    var w=wrap.clientWidth;portrait=w<760;hub.classList.toggle('portrait',portrait);
+    var W=portrait?560:1100,H=portrait?900:540;scale=w/W;
+    hub.style.transform='scale('+scale+')';wrap.style.height=(H*scale)+'px';
+    wires.setAttribute('viewBox','0 0 '+W+' '+H);
+    var srcs=hub.querySelectorAll('.src');
+    var P=portrait?[[28,110],[204,110],[380,110],[116,200],[292,200]]:[[60,120],[60,240],[60,360],[872,170],[872,320]];
+    var dash=$('dash'),dx=portrait?60:330,dy=portrait?520:105,dw=440,dh=330;
+    var d='';
+    for(var i=0;i<srcs.length;i++){var p=P[i];srcs[i].style.left=p[0]+'px';srcs[i].style.top=p[1]+'px';
+      var sx,sy,ex,ey,path;
+      if(portrait){sx=p[0]+84;sy=p[1]+62;ex=dx+60+i*80;ey=dy;path='M'+sx+' '+sy+' C '+sx+' '+(sy+120)+', '+ex+' '+(ey-120)+', '+ex+' '+ey}
+      else if(p[0]<500){sx=p[0]+168;sy=p[1]+31;ex=dx;ey=dy+60+i*90;path='M'+sx+' '+sy+' C '+(sx+60)+' '+sy+', '+(ex-60)+' '+ey+', '+ex+' '+ey}
+      else{sx=p[0];sy=p[1]+31;ex=dx+dw;ey=dy+90+(i-3)*120;path='M'+sx+' '+sy+' C '+(sx-60)+' '+sy+', '+(ex+60)+' '+ey+', '+ex+' '+ey}
+      d+='<path id="w'+i+'" d="'+path+'"/>';}
+    wires.innerHTML=d;
+  }
+  window.addEventListener('resize',layout);
+  render();
+
+  var seq=[0,1,4,0,3,2,0];var k=0,bell=0,orders=42,books=9,rev=3120;
+  function fmt(n){return n.toLocaleString('en-US')}
+  function tick(){
+    var i=seq[k%seq.length];k++;var s=S.srcs[i],o=S.orders[i];
+    var srcs=hub.querySelectorAll('.src');for(var j=0;j<srcs.length;j++)srcs[j].classList.toggle('live',j===i);
+    var paths=wires.querySelectorAll('path');for(j=0;j<paths.length;j++){paths[j].classList.toggle('flow',j===i);paths[j].style.setProperty('--c',s[4])}
+    var lab=$('hubLabel');lab.style.setProperty('--c',s[4]);lab.querySelector('span').textContent=S.hubLabels[i];
+    setTimeout(function(){
+      var row=document.createElement('div');row.className='row';row.style.setProperty('--c',s[4]);
+      row.innerHTML='<span class="tag">'+s[1]+'</span><div class="t"><b>'+o[1]+'</b><small>'+o[2]+'</small></div><span class="amt">'+o[3]+'</span><span class="ok">'+o[4]+'</span>';
+      list.insertBefore(row,list.firstChild);while(list.children.length>4)list.removeChild(list.lastChild);
+      bell++;var b=$('bellN');b.textContent=bell;b.classList.add('bump');setTimeout(function(){b.classList.remove('bump')},300);
+      if(i===4){books++;$('stBook').textContent=books}else{orders++;$('stOrders').textContent=orders;if(i!==3){rev+=parseInt((o[3].match(/\d+/)||['0'])[0]);$('stRev').textContent=fmt(rev)}}
+    },700);
+  }
+  var started=false;
+  function start(){if(started)return;started=true;tick();setInterval(tick,2600)}
+  function check(){var r=wrap.getBoundingClientRect();if(r.bottom>0&&r.top<window.innerHeight)start()}
+  check();window.addEventListener('scroll',check,{passive:true});
+})();
+</script>
+</body>
+</html>
