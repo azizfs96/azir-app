@@ -173,9 +173,9 @@ footer a{margin-inline-start:16px}
 @media (max-width:720px){.container{padding:0 18px}.nav .seg{display:none}.nav .nav-right .btn,.nav .nav-right .lang{display:none}.burger{display:flex}.steps,.int-grid,.feat-grid{grid-template-columns:1fr}section{padding:60px 0}.hero{padding:40px 0 24px}.hero-actions .btn{width:100%}.form .g{grid-template-columns:1fr}.logo svg{height:44px}}
 
 /* customer page extras */
-.hero{padding:56px 0 24px}
-.hero .hero-actions{margin-bottom:36px}
-.promo-section.embedded{margin-top:0}
+.hero{padding:40px 0 24px}
+section.hero .promo-section.embedded .pz-head{display:block;margin-bottom:26px}
+.promo-section.embedded{padding:0}
 .types{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:-8px}
 .type{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;border:1.5px solid var(--border);background:#fff;font-weight:600;font-size:14px}
 .type i{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;background:var(--c)}
@@ -233,31 +233,19 @@ footer a{margin-inline-start:16px}
     </div>
     <div class="nav-right">
       <button class="lang" id="langBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span id="langLbl">English</span></button>
-      <a href="#download" class="btn btn-solid" data-t="navDl">حمّل التطبيق</a>
+      <a href="merchants.html" class="btn btn-solid" data-t="navMerchCta">للتجار: انضم الآن</a>
       <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
   <div class="drawer" id="drawer">
     <a href="index.html" data-t="navCustomers">للعملاء</a>
     <a href="merchants.html" data-t="navMerchants">للتجار</a>
-    <a href="#how" data-t="navHow">كيف يعمل</a>
-    <a href="#faq" data-t="navFaq">الأسئلة الشائعة</a>
     <button type="button" id="langBtn2"><span id="langLbl2">English</span></button>
-    <a href="#download" class="btn btn-solid" data-t="navDl">حمّل التطبيق</a>
   </div>
 </nav>
 
-<!-- HERO + CLIP -->
+<!-- CLIP -->
 <section class="hero">
-  <div class="container">
-    <span class="eyebrow" data-t="eyebrow">تطبيق واحد لكل المتاجر</span>
-    <h1 data-t="h1" data-html="1">امسح الرمز…<br>وادخل أي متجر <b>مباشرة</b></h1>
-    <p class="lead" data-t="lead">مطعم، مقهى، مغسلة سيارات، صالون أو عيادة — امسح رمز easy app الموجود عندهم، وتفتح لك صفحتهم فوراً: تطلب أو تحجز وتتابع من نفس المكان. بدون تحميل تطبيق لكل متجر، وبدون تسجيل حتى تُتمّ طلبك.</p>
-    <div class="hero-actions">
-      <a href="#download" class="btn btn-solid btn-lg" data-t="ctaDl">حمّل easy app</a>
-      <a href="#how" class="btn btn-outline btn-lg" data-t="ctaHow">كيف يعمل؟</a>
-    </div>
-  </div>
   <!-- ======= PROMO CLIP: one scan → any business ======= -->
 <section class="promo-section embedded" id="promo" data-lang="ar">
 <style>
@@ -673,79 +661,10 @@ footer a{margin-inline-start:16px}
 
 </section>
 
-<!-- HOW -->
-<section id="how">
-  <div class="container">
-    <div class="sec-head">
-      <span class="kicker" data-t="howK">كيف يعمل</span>
-      <h2 data-t="howT">ثلاث خطوات… وخلصت</h2>
-      <p data-t="howP">نفس التجربة في كل متجر — تتعلمها مرة وتستخدمها في كل مكان.</p>
-    </div>
-    <div class="steps">
-      <div class="step"><div class="n">1</div><h3 data-t="s1T">امسح الرمز</h3><p data-t="s1P">افتح easy app ووجّه الكاميرا نحو رمز المتجر — على الطاولة أو الكاونتر أو الواجهة.</p></div>
-      <div class="step"><div class="n">2</div><h3 data-t="s2T">ادخل المتجر</h3><p data-t="s2P">تفتح صفحة المتجر بهويته: القائمة الحقيقية، الفروع، الأوقات، والعروض الحالية.</p></div>
-      <div class="step"><div class="n">3</div><h3 data-t="s3T">اطلب أو احجز… وتابع</h3><p data-t="s3P">أضف للسلة واطلب استلاماً أو توصيلاً أو داخل المحل، أو احجز موعدك — وتابع الحالة لحظياً مع إشعارات.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- TYPES -->
-<section style="padding-top:0">
-  <div class="container">
-    <div class="sec-head" style="margin-bottom:24px">
-      <span class="kicker" data-t="tyK">أي نشاط</span>
-      <h2 data-t="tyT">مو بس مطاعم</h2>
-    </div>
-    <div class="types" id="types"></div>
-  </div>
-</section>
-
-<!-- WHY -->
-<section style="background:var(--off-white);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft)">
-  <div class="container">
-    <div class="sec-head">
-      <span class="kicker" data-t="whyK">ليش easy app</span>
-      <h2 data-t="whyT">كل طلباتك وحجوزاتك… في مكان واحد</h2>
-    </div>
-    <div class="why" id="why"></div>
-  </div>
-</section>
-
-<!-- DOWNLOAD -->
-<section id="download">
-  <div class="container">
-    <div class="dark">
-      <div class="dl">
-        <div>
-          <h2 data-t="dlT" data-html="1">حمّل التطبيق… <b>أو امسح وافتحه من المتصفح</b></h2>
-          <p data-t="dlP">easy app متاح على iPhone وAndroid. وإذا ما حمّلته، أي رمز easy app يفتح صفحة المتجر في المتصفح مباشرة.</p>
-          <div class="stores">
-            <a class="store-btn" href="#" id="iosLink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.4 12.6c0-2.5 2-3.7 2.1-3.8-1.2-1.7-3-1.9-3.6-2-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4.1 2.5-1.8 3-.5 7.6 1.3 10.1.9 1.2 1.9 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.2-1.2 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.9-1.1-3-4.3zM14 5.2c.7-.8 1.1-2 1-3.2-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.5 2.9-1.3z"/></svg><span><small data-t="dlOn">حمّله من</small><b>App Store</b></span></a>
-            <a class="store-btn" href="#" id="androidLink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 2.4l10.9 10.9-10.9 10.3c-.4-.2-.6-.6-.6-1.1V3.5c0-.5.2-.9.6-1.1zM15.6 14.4l3.2 1.8-3.2 1.8-2.3-2.3 2.3-1.3zm0-4.8l-2.3 2.2L5.1 3.6l10.5 6zM19.9 12.9l-3.1 1.8-2.5-2.5 2.5-2.4 3.1 1.8c.6.3.6 1 0 1.3z"/></svg><span><small data-t="dlOn">حمّله من</small><b>Google Play</b></span></a>
-          </div>
-          <div class="web-note" data-t="dlNote">تجربة الآن؟ امسح الرمز بكاميرا جوالك — يفتح متجر استروف كمثال.</div>
-        </div>
-        <div class="qr-card"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges"><g fill="#111"><rect x="0" y="0" width="1" height="1"/><rect x="1" y="0" width="1" height="1"/><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/><rect x="8" y="0" width="1" height="1"/><rect x="9" y="0" width="1" height="1"/><rect x="10" y="0" width="1" height="1"/><rect x="12" y="0" width="1" height="1"/><rect x="14" y="0" width="1" height="1"/><rect x="15" y="0" width="1" height="1"/><rect x="18" y="0" width="1" height="1"/><rect x="19" y="0" width="1" height="1"/><rect x="20" y="0" width="1" height="1"/><rect x="21" y="0" width="1" height="1"/><rect x="22" y="0" width="1" height="1"/><rect x="23" y="0" width="1" height="1"/><rect x="24" y="0" width="1" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="6" y="1" width="1" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="11" y="1" width="1" height="1"/><rect x="16" y="1" width="1" height="1"/><rect x="18" y="1" width="1" height="1"/><rect x="24" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="2" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/><rect x="6" y="2" width="1" height="1"/><rect x="9" y="2" width="1" height="1"/><rect x="12" y="2" width="1" height="1"/><rect x="14" y="2" width="1" height="1"/><rect x="16" y="2" width="1" height="1"/><rect x="18" y="2" width="1" height="1"/><rect x="20" y="2" width="1" height="1"/><rect x="21" y="2" width="1" height="1"/><rect x="22" y="2" width="1" height="1"/><rect x="24" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="3" y="3" width="1" height="1"/><rect x="4" y="3" width="1" height="1"/><rect x="6" y="3" width="1" height="1"/><rect x="8" y="3" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="10" y="3" width="1" height="1"/><rect x="11" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/><rect x="14" y="3" width="1" height="1"/><rect x="15" y="3" width="1" height="1"/><rect x="18" y="3" width="1" height="1"/><rect x="20" y="3" width="1" height="1"/><rect x="21" y="3" width="1" height="1"/><rect x="22" y="3" width="1" height="1"/><rect x="24" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="3" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="6" y="4" width="1" height="1"/><rect x="8" y="4" width="1" height="1"/><rect x="9" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="12" y="4" width="1" height="1"/><rect x="13" y="4" width="1" height="1"/><rect x="14" y="4" width="1" height="1"/><rect x="15" y="4" width="1" height="1"/><rect x="16" y="4" width="1" height="1"/><rect x="18" y="4" width="1" height="1"/><rect x="20" y="4" width="1" height="1"/><rect x="21" y="4" width="1" height="1"/><rect x="22" y="4" width="1" height="1"/><rect x="24" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="6" y="5" width="1" height="1"/><rect x="8" y="5" width="1" height="1"/><rect x="10" y="5" width="1" height="1"/><rect x="12" y="5" width="1" height="1"/><rect x="13" y="5" width="1" height="1"/><rect x="14" y="5" width="1" height="1"/><rect x="16" y="5" width="1" height="1"/><rect x="18" y="5" width="1" height="1"/><rect x="24" y="5" width="1" height="1"/><rect x="0" y="6" width="1" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="2" y="6" width="1" height="1"/><rect x="3" y="6" width="1" height="1"/><rect x="4" y="6" width="1" height="1"/><rect x="5" y="6" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="12" y="6" width="1" height="1"/><rect x="14" y="6" width="1" height="1"/><rect x="16" y="6" width="1" height="1"/><rect x="18" y="6" width="1" height="1"/><rect x="19" y="6" width="1" height="1"/><rect x="20" y="6" width="1" height="1"/><rect x="21" y="6" width="1" height="1"/><rect x="22" y="6" width="1" height="1"/><rect x="23" y="6" width="1" height="1"/><rect x="24" y="6" width="1" height="1"/><rect x="8" y="7" width="1" height="1"/><rect x="9" y="7" width="1" height="1"/><rect x="11" y="7" width="1" height="1"/><rect x="12" y="7" width="1" height="1"/><rect x="14" y="7" width="1" height="1"/><rect x="0" y="8" width="1" height="1"/><rect x="4" y="8" width="1" height="1"/><rect x="6" y="8" width="1" height="1"/><rect x="7" y="8" width="1" height="1"/><rect x="8" y="8" width="1" height="1"/><rect x="13" y="8" width="1" height="1"/><rect x="15" y="8" width="1" height="1"/><rect x="17" y="8" width="1" height="1"/><rect x="18" y="8" width="1" height="1"/><rect x="19" y="8" width="1" height="1"/><rect x="20" y="8" width="1" height="1"/><rect x="21" y="8" width="1" height="1"/><rect x="24" y="8" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="5" y="9" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/><rect x="15" y="9" width="1" height="1"/><rect x="17" y="9" width="1" height="1"/><rect x="20" y="9" width="1" height="1"/><rect x="21" y="9" width="1" height="1"/><rect x="23" y="9" width="1" height="1"/><rect x="0" y="10" width="1" height="1"/><rect x="1" y="10" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/><rect x="6" y="10" width="1" height="1"/><rect x="8" y="10" width="1" height="1"/><rect x="9" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/><rect x="13" y="10" width="1" height="1"/><rect x="15" y="10" width="1" height="1"/><rect x="17" y="10" width="1" height="1"/><rect x="18" y="10" width="1" height="1"/><rect x="19" y="10" width="1" height="1"/><rect x="21" y="10" width="1" height="1"/><rect x="22" y="10" width="1" height="1"/><rect x="1" y="11" width="1" height="1"/><rect x="2" y="11" width="1" height="1"/><rect x="3" y="11" width="1" height="1"/><rect x="7" y="11" width="1" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="10" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/><rect x="15" y="11" width="1" height="1"/><rect x="16" y="11" width="1" height="1"/><rect x="17" y="11" width="1" height="1"/><rect x="18" y="11" width="1" height="1"/><rect x="22" y="11" width="1" height="1"/><rect x="23" y="11" width="1" height="1"/><rect x="1" y="12" width="1" height="1"/><rect x="3" y="12" width="1" height="1"/><rect x="4" y="12" width="1" height="1"/><rect x="5" y="12" width="1" height="1"/><rect x="6" y="12" width="1" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="8" y="12" width="1" height="1"/><rect x="9" y="12" width="1" height="1"/><rect x="10" y="12" width="1" height="1"/><rect x="12" y="12" width="1" height="1"/><rect x="13" y="12" width="1" height="1"/><rect x="17" y="12" width="1" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="19" y="12" width="1" height="1"/><rect x="21" y="12" width="1" height="1"/><rect x="22" y="12" width="1" height="1"/><rect x="23" y="12" width="1" height="1"/><rect x="24" y="12" width="1" height="1"/><rect x="0" y="13" width="1" height="1"/><rect x="4" y="13" width="1" height="1"/><rect x="7" y="13" width="1" height="1"/><rect x="12" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/><rect x="16" y="13" width="1" height="1"/><rect x="20" y="13" width="1" height="1"/><rect x="23" y="13" width="1" height="1"/><rect x="3" y="14" width="1" height="1"/><rect x="4" y="14" width="1" height="1"/><rect x="5" y="14" width="1" height="1"/><rect x="6" y="14" width="1" height="1"/><rect x="10" y="14" width="1" height="1"/><rect x="11" y="14" width="1" height="1"/><rect x="14" y="14" width="1" height="1"/><rect x="15" y="14" width="1" height="1"/><rect x="17" y="14" width="1" height="1"/><rect x="18" y="14" width="1" height="1"/><rect x="19" y="14" width="1" height="1"/><rect x="20" y="14" width="1" height="1"/><rect x="21" y="14" width="1" height="1"/><rect x="22" y="14" width="1" height="1"/><rect x="4" y="15" width="1" height="1"/><rect x="5" y="15" width="1" height="1"/><rect x="8" y="15" width="1" height="1"/><rect x="10" y="15" width="1" height="1"/><rect x="12" y="15" width="1" height="1"/><rect x="16" y="15" width="1" height="1"/><rect x="19" y="15" width="1" height="1"/><rect x="20" y="15" width="1" height="1"/><rect x="22" y="15" width="1" height="1"/><rect x="23" y="15" width="1" height="1"/><rect x="0" y="16" width="1" height="1"/><rect x="1" y="16" width="1" height="1"/><rect x="3" y="16" width="1" height="1"/><rect x="4" y="16" width="1" height="1"/><rect x="5" y="16" width="1" height="1"/><rect x="6" y="16" width="1" height="1"/><rect x="7" y="16" width="1" height="1"/><rect x="9" y="16" width="1" height="1"/><rect x="10" y="16" width="1" height="1"/><rect x="12" y="16" width="1" height="1"/><rect x="13" y="16" width="1" height="1"/><rect x="16" y="16" width="1" height="1"/><rect x="17" y="16" width="1" height="1"/><rect x="18" y="16" width="1" height="1"/><rect x="19" y="16" width="1" height="1"/><rect x="20" y="16" width="1" height="1"/><rect x="21" y="16" width="1" height="1"/><rect x="22" y="16" width="1" height="1"/><rect x="8" y="17" width="1" height="1"/><rect x="13" y="17" width="1" height="1"/><rect x="15" y="17" width="1" height="1"/><rect x="16" y="17" width="1" height="1"/><rect x="20" y="17" width="1" height="1"/><rect x="0" y="18" width="1" height="1"/><rect x="1" y="18" width="1" height="1"/><rect x="2" y="18" width="1" height="1"/><rect x="3" y="18" width="1" height="1"/><rect x="4" y="18" width="1" height="1"/><rect x="5" y="18" width="1" height="1"/><rect x="6" y="18" width="1" height="1"/><rect x="8" y="18" width="1" height="1"/><rect x="10" y="18" width="1" height="1"/><rect x="11" y="18" width="1" height="1"/><rect x="12" y="18" width="1" height="1"/><rect x="13" y="18" width="1" height="1"/><rect x="16" y="18" width="1" height="1"/><rect x="18" y="18" width="1" height="1"/><rect x="20" y="18" width="1" height="1"/><rect x="0" y="19" width="1" height="1"/><rect x="6" y="19" width="1" height="1"/><rect x="9" y="19" width="1" height="1"/><rect x="10" y="19" width="1" height="1"/><rect x="11" y="19" width="1" height="1"/><rect x="16" y="19" width="1" height="1"/><rect x="20" y="19" width="1" height="1"/><rect x="21" y="19" width="1" height="1"/><rect x="22" y="19" width="1" height="1"/><rect x="23" y="19" width="1" height="1"/><rect x="24" y="19" width="1" height="1"/><rect x="0" y="20" width="1" height="1"/><rect x="2" y="20" width="1" height="1"/><rect x="3" y="20" width="1" height="1"/><rect x="4" y="20" width="1" height="1"/><rect x="6" y="20" width="1" height="1"/><rect x="8" y="20" width="1" height="1"/><rect x="9" y="20" width="1" height="1"/><rect x="12" y="20" width="1" height="1"/><rect x="13" y="20" width="1" height="1"/><rect x="16" y="20" width="1" height="1"/><rect x="17" y="20" width="1" height="1"/><rect x="18" y="20" width="1" height="1"/><rect x="19" y="20" width="1" height="1"/><rect x="20" y="20" width="1" height="1"/><rect x="21" y="20" width="1" height="1"/><rect x="22" y="20" width="1" height="1"/><rect x="0" y="21" width="1" height="1"/><rect x="2" y="21" width="1" height="1"/><rect x="3" y="21" width="1" height="1"/><rect x="4" y="21" width="1" height="1"/><rect x="6" y="21" width="1" height="1"/><rect x="10" y="21" width="1" height="1"/><rect x="13" y="21" width="1" height="1"/><rect x="14" y="21" width="1" height="1"/><rect x="16" y="21" width="1" height="1"/><rect x="17" y="21" width="1" height="1"/><rect x="18" y="21" width="1" height="1"/><rect x="19" y="21" width="1" height="1"/><rect x="22" y="21" width="1" height="1"/><rect x="23" y="21" width="1" height="1"/><rect x="24" y="21" width="1" height="1"/><rect x="0" y="22" width="1" height="1"/><rect x="2" y="22" width="1" height="1"/><rect x="3" y="22" width="1" height="1"/><rect x="4" y="22" width="1" height="1"/><rect x="6" y="22" width="1" height="1"/><rect x="9" y="22" width="1" height="1"/><rect x="11" y="22" width="1" height="1"/><rect x="12" y="22" width="1" height="1"/><rect x="13" y="22" width="1" height="1"/><rect x="14" y="22" width="1" height="1"/><rect x="18" y="22" width="1" height="1"/><rect x="21" y="22" width="1" height="1"/><rect x="23" y="22" width="1" height="1"/><rect x="0" y="23" width="1" height="1"/><rect x="6" y="23" width="1" height="1"/><rect x="15" y="23" width="1" height="1"/><rect x="17" y="23" width="1" height="1"/><rect x="19" y="23" width="1" height="1"/><rect x="20" y="23" width="1" height="1"/><rect x="21" y="23" width="1" height="1"/><rect x="22" y="23" width="1" height="1"/><rect x="23" y="23" width="1" height="1"/><rect x="0" y="24" width="1" height="1"/><rect x="1" y="24" width="1" height="1"/><rect x="2" y="24" width="1" height="1"/><rect x="3" y="24" width="1" height="1"/><rect x="4" y="24" width="1" height="1"/><rect x="5" y="24" width="1" height="1"/><rect x="6" y="24" width="1" height="1"/><rect x="8" y="24" width="1" height="1"/><rect x="12" y="24" width="1" height="1"/><rect x="13" y="24" width="1" height="1"/><rect x="22" y="24" width="1" height="1"/><rect x="23" y="24" width="1" height="1"/><rect x="24" y="24" width="1" height="1"/></g></svg><b data-t="qrT">جرّبه الآن</b><small data-t="qrP">امسح بكاميرا الجوال — بدون تحميل</small></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FAQ -->
-<section id="faq" style="padding-top:0">
-  <div class="container">
-    <div class="sec-head">
-      <span class="kicker" data-t="faqK">الأسئلة الشائعة</span>
-      <h2 data-t="faqT">أسئلة تتكرر</h2>
-    </div>
-    <div class="faq" id="faqList" style="margin-top:0"></div>
-  </div>
-</section>
-
 <footer>
   <div class="container">
     <span>© <span id="yr"></span> easy app</span>
-    <span><a href="merchants.html" data-t="navMerchants">للتجار</a><a href="merchants.html#support" data-t="navSupport">الدعم</a><a href="#download" data-t="navDl">حمّل التطبيق</a></span>
+    <span><a href="merchants.html" data-t="navMerchants">للتجار</a><a href="merchants.html#support" data-t="navSupport">الدعم</a></span>
   </div>
 </footer>
 
@@ -768,7 +687,7 @@ footer a{margin-inline-start:16px}
     list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>'
   };
   var T={ar:{
-    navCustomers:'للعملاء',navMerchants:'للتجار',navDl:'حمّل التطبيق',navHow:'كيف يعمل',navFaq:'الأسئلة الشائعة',navSupport:'الدعم',langLbl:'English',
+    navCustomers:'للعملاء',navMerchants:'للتجار',navMerchCta:'للتجار: انضم الآن',navDl:'حمّل التطبيق',navHow:'كيف يعمل',navFaq:'الأسئلة الشائعة',navSupport:'الدعم',langLbl:'English',
     eyebrow:'تطبيق واحد لكل المتاجر',h1:'امسح الرمز…<br>وادخل أي متجر <b>مباشرة</b>',
     lead:'مطعم، مقهى، مغسلة سيارات، صالون أو عيادة — امسح رمز easy app الموجود عندهم، وتفتح لك صفحتهم فوراً: تطلب أو تحجز وتتابع من نفس المكان. بدون تحميل تطبيق لكل متجر، وبدون تسجيل حتى تُتمّ طلبك.',
     ctaDl:'حمّل easy app',ctaHow:'كيف يعمل؟',
@@ -784,7 +703,7 @@ footer a{margin-inline-start:16px}
     faqK:'الأسئلة الشائعة',faqT:'أسئلة تتكرر',
     faq:[['هل أحتاج حساباً؟','لا للتصفّح. عند إتمام أول طلب تسجّل برقم جوالك فقط (رمز تحقق) — بدون كلمة مرور.'],['هل التطبيق مجاني؟','نعم، مجاني للعملاء بالكامل، وبدون أي رسوم إضافية على الطلب — السعر هو سعر المتجر.'],['كيف أدفع؟','حسب المتجر: عند الاستلام أو داخل المحل، أو بالدفع الإلكتروني إن كان المتجر يوفّره.'],['ما حمّلت التطبيق… هل يشتغل الرمز؟','نعم. امسح الرمز بكاميرا جوالك وتفتح صفحة المتجر في المتصفح بنفس التجربة.']]
   },en:{
-    navCustomers:'For customers',navMerchants:'For merchants',navDl:'Get the app',navHow:'How it works',navFaq:'FAQ',navSupport:'Support',langLbl:'عربي',
+    navCustomers:'For customers',navMerchants:'For merchants',navMerchCta:'Merchants: join now',navDl:'Get the app',navHow:'How it works',navFaq:'FAQ',navSupport:'Support',langLbl:'عربي',
     eyebrow:'One app for every store',h1:'Scan the code…<br>and walk into any store <b>instantly</b>',
     lead:'Restaurant, café, car wash, salon or clinic — scan the easy app code they display and their page opens right away: order or book and track it from the same place. No app per store, no sign-up until you check out.',
     ctaDl:'Get easy app',ctaHow:'How it works',
@@ -807,9 +726,6 @@ footer a{margin-inline-start:16px}
     document.title=LANG==='ar'?'easy app — تطبيق واحد لكل المتاجر':'easy app — One app for every store';
     document.querySelectorAll('[data-t]').forEach(function(el){var k=el.getAttribute('data-t');if(S[k]==null)return;if(el.getAttribute('data-html'))el.innerHTML=S[k];else el.textContent=S[k]});
     $('langLbl').textContent=S.langLbl;$('langLbl2').textContent=S.langLbl;
-    $('types').innerHTML=S.types.map(function(x){return '<span class="type" style="--c:'+x[1]+'"><i>'+x[0]+'</i>'+x[2]+'</span>'}).join('');
-    $('why').innerHTML=S.why.map(function(x){return '<div class="feat"><i>'+x[0]+'</i><h3>'+x[1]+'</h3><p>'+x[2]+'</p></div>'}).join('');
-    $('faqList').innerHTML=S.faq.map(function(x,i){return '<details'+(i===0?' open':'')+'><summary>'+x[0]+'</summary><p>'+x[1]+'</p></details>'}).join('');
     if(window.pzSetLang)window.pzSetLang(LANG);
   }
   function setLang(l){LANG=l;try{localStorage.setItem('ea_lang',l)}catch(e){}render()}
@@ -818,7 +734,6 @@ footer a{margin-inline-start:16px}
   $('burger').onclick=function(){$('drawer').classList.toggle('open')};
   $('drawer').addEventListener('click',function(e){if(e.target.tagName==='A')$('drawer').classList.remove('open')});
   $('yr').textContent=new Date().getFullYear();
-  $('iosLink').href=IOS_URL;$('androidLink').href=ANDROID_URL;
   render();
 })();
 </script>
