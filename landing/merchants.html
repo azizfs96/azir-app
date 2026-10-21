@@ -123,7 +123,7 @@
 .wz .ready i{width:20px;height:20px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .wz .ready i svg{width:11px;height:11px}
 /* scene A: QR tent + customer phones */
-.mz-tent{position:absolute;left:380px;top:40px;width:132px;border-radius:12px;background:#fff;color:#1F1A16;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.6);text-align:center;transform:rotateY(-14deg) translateZ(40px);transition:opacity .4s,transform .8s;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
+.mz-tent{position:absolute;left:380px;top:40px;width:132px;border-radius:12px;background:#fff;color:#1F1A16;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.6);text-align:center;transform:rotateY(-14deg) translateZ(40px);visibility:visible;transition:opacity .4s,transform .8s,visibility 0s;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
 .mz-ar .mz-tent{left:60px;transform:rotateY(14deg) translateZ(40px)}
 .mz-portrait .mz-tent,.mz-ar.mz-portrait .mz-tent{left:214px;top:0;transform:translateZ(40px)}
 .mz-tent .hd{height:28px;background:#1F1A16;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
@@ -133,7 +133,7 @@
 .mz-tent .ring{position:absolute;inset:-6px;border-radius:16px;border:2px solid var(--brand);opacity:0}
 .mz-tent.hit .ring{animation:mzRing .9s ease-out}
 @keyframes mzRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
-.mz-ph{position:absolute;width:92px;height:190px;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .4s;transform:translate3d(var(--x),var(--y),var(--z)) rotateY(var(--ry)) rotateX(4deg);z-index:3}
+.mz-ph{position:absolute;width:92px;height:190px;transform-style:preserve-3d;visibility:visible;transition:transform .9s cubic-bezier(.2,.8,.2,1),opacity .4s,visibility 0s;transform:translate3d(var(--x),var(--y),var(--z)) rotateY(var(--ry)) rotateX(4deg);z-index:3}
 .mz-ph .pb{position:absolute;inset:0;border-radius:24px;background:#101013;transform:translateZ(-8px);box-shadow:0 30px 50px rgba(0,0,0,.65)}
 .mz-ph .ps{position:absolute;inset:0;border-radius:24px;background:linear-gradient(160deg,#4a4a50,#1b1b1f 35%,#2d2d33 70%,#55555c)}
 .mz-ph .ps.s1{transform:translateZ(-6px)}.mz-ph .ps.s2{transform:translateZ(-3px)}
@@ -173,7 +173,8 @@
 .mz-prev{position:absolute;left:430px;top:400px;width:120px;height:240px;border-radius:22px;background:#1a1a1c;padding:5px;box-shadow:0 0 0 1.5px #2c2c30,0 40px 60px rgba(0,0,0,.6);transform:translateY(60px) rotateY(-12deg);opacity:0;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .4s;z-index:4}
 .mz-ar .mz-prev{left:30px;transform:translateY(60px) rotateY(12deg)}
 .mz-portrait .mz-prev,.mz-ar.mz-portrait .mz-prev{left:420px;top:300px}
-.mz-prev.on{opacity:1;transform:translateY(0) rotateY(-12deg)}.mz-ar .mz-prev.on{transform:translateY(0) rotateY(12deg)}
+.mz-prev{visibility:hidden;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .4s,visibility 0s .4s}
+.mz-prev.on{opacity:1;visibility:visible;transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .4s,visibility 0s;transform:translateY(0) rotateY(-12deg)}.mz-ar .mz-prev.on{transform:translateY(0) rotateY(12deg)}
 .mz-prev .s{width:100%;height:100%;border-radius:18px;overflow:hidden;background:#F6F4F1;color:#1F1A16;font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl;font-size:7px}
 .mz-prev .cv{height:70px;background:#1F1A16;position:relative;display:flex;align-items:center;justify-content:center}
 .mz-prev .cv i{width:26px;height:26px;border-radius:8px;background:#fff;display:block}
@@ -198,7 +199,7 @@ svg.mz-wires{display:none}
 svg.mz-wires path{fill:none;stroke:rgba(255,255,255,.14);stroke-width:1.5}
 svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6 10;animation:mzFlow .9s linear infinite;filter:drop-shadow(0 0 6px var(--c,#00BC6D))}
 @keyframes mzFlow{to{stroke-dashoffset:-32}}
-.mz-s-int .mz-tent,.mz-s-int .mz-ph,.mz-s-setup .mz-tent,.mz-s-setup .mz-ph{opacity:0;pointer-events:none}
+.mz-s-int .mz-tent,.mz-s-int .mz-ph,.mz-s-setup .mz-tent,.mz-s-setup .mz-ph{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s,visibility 0s .4s,transform .9s}
 @media (prefers-reduced-motion:reduce){.mz-float,.mz-glare,.mz-ph .lz,svg.mz-wires path{animation:none}}
 </style>
 
