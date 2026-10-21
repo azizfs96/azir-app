@@ -8,9 +8,9 @@
 .mz-section[data-lang="en"] .mz-head{font-family:'Bricolage Grotesque',sans-serif}
 .mz-section[data-lang="en"] .mz-head h2{letter-spacing:-.8px}
 .mz-wrap{position:relative;width:100%;max-width:1100px;margin:0 auto;overflow:hidden;border-radius:28px;background:#050506;box-shadow:0 30px 90px rgba(0,0,0,.28)}
-.mz{position:absolute;top:0;left:0;width:1100px;height:680px;transform-origin:0 0;background:#050506;color:#fff;overflow:hidden;--brand:#00BC6D;font-family:'Bricolage Grotesque','IBM Plex Sans Arabic',sans-serif}
+.mz{position:absolute;top:0;left:0;width:1100px;height:680px;transform-origin:0 0;background:#050506;color:#fff;overflow:hidden;--brand:#fff;font-family:'Bricolage Grotesque','IBM Plex Sans Arabic',sans-serif}
 .mz.mz-portrait{width:560px;height:1000px}
-.mz-glow{position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,var(--brand) 0%,transparent 60%);opacity:.2;top:-200px;right:-240px;filter:blur(30px);transition:background 1s}
+.mz-glow{position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,#fff 0%,transparent 60%);opacity:.07;top:-200px;right:-240px;filter:blur(30px);transition:background 1s}
 .mz-portrait .mz-glow{top:auto;bottom:-300px;right:50%;margin-right:-450px}
 .mz-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at 70% 55%,#000 10%,transparent 70%);-webkit-mask-image:radial-gradient(circle at 70% 55%,#000 10%,transparent 70%)}
 /* language pill */
@@ -29,8 +29,8 @@
 .mz-portrait .mz-lines{height:170px}
 .mz-line{position:absolute;inset:0;opacity:0;transform:translateY(12px);transition:opacity .22s,transform .22s}
 .mz-line.on{opacity:1;transform:none;transition-duration:.5s;transition-delay:.1s}
-.mz-line h3{font-size:44px;line-height:1.1;font-weight:600;letter-spacing:-1.4px;margin:0 0 12px}
-.mz-line h3 b{font-weight:600;color:var(--brand)}
+.mz-line h3{font-size:44px;line-height:1.1;font-weight:600;letter-spacing:-1.4px;margin:0 0 12px;color:rgba(255,255,255,.55)}
+.mz-line h3 b{font-weight:600;color:#fff}
 .mz-line p{font-size:17px;line-height:1.5;color:rgba(255,255,255,.7);margin:0}
 .mz-ar .mz-line h3,.mz-ar .mz-line p,.mz-ar .mz-feat,.mz-ar .mz-brand{font-family:'IBM Plex Sans Arabic',sans-serif;letter-spacing:0}
 .mz-ar .mz-line h3{font-size:40px;line-height:1.3}
@@ -75,7 +75,7 @@
 /* dashboard */
 .dz-top{height:34px;background:#fff;border-bottom:1px solid #ECE6DF;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11px;font-weight:600}
 .dz-top .st{display:inline-flex;align-items:center;gap:6px}
-.dz-top .st i{width:18px;height:18px;border-radius:6px;background:var(--brand);display:inline-block}
+.dz-top .st i{width:18px;height:18px;border-radius:6px;background:#1F1A16;display:inline-block}
 .dz-top .bell{position:relative;width:24px;height:24px;border-radius:8px;background:#F1EDE8;display:flex;align-items:center;justify-content:center;color:#7A7068}
 .dz-top .bell svg{width:12px;height:12px}
 .dz-top .bell em{position:absolute;top:-6px;inset-inline-end:-6px;min-width:16px;height:16px;border-radius:8px;background:#D8412F;color:#fff;font-size:9px;font-style:normal;font-weight:600;line-height:16px;text-align:center;padding:0 4px;transition:transform .25s}
@@ -84,15 +84,15 @@
 .dz-stat{flex:1;background:#fff;border:1px solid #ECE6DF;border-radius:10px;padding:6px 8px}
 .dz-stat small{display:block;font-size:8.5px;color:#7A7068}
 .dz-stat b{display:block;font-size:14px;font-weight:600;margin-top:1px;direction:ltr;text-align:start;transition:transform .2s}
-.dz-stat b.ok{color:#2E9A5E}
+.dz-stat b.ok{color:#1F1A16}
 .dz-sec{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 5px;font-size:10px;font-weight:600}
-.dz-sec span{font-size:8.5px;color:#2E9A5E;display:inline-flex;align-items:center;gap:5px;font-weight:600}
-.dz-sec span:before{content:'';width:5px;height:5px;border-radius:50%;background:#2E9A5E;animation:mzDot 1.4s ease-in-out infinite}
+.dz-sec span{font-size:8.5px;color:#1F1A16;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.dz-sec span:before{content:'';width:5px;height:5px;border-radius:50%;background:#1F1A16;animation:mzDot 1.4s ease-in-out infinite}
 @keyframes mzDot{50%{opacity:.3}}
 .dz-list{padding:0 10px;display:flex;flex-direction:column;gap:5px;overflow:hidden;height:150px}
 .dz-row{background:#fff;border:1px solid #ECE6DF;border-radius:10px;padding:6px 8px;display:flex;align-items:center;gap:8px;font-size:9.5px;animation:mzRow .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes mzRow{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
-.dz-row .tag{font-size:8px;font-weight:600;color:#fff;background:var(--c);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.dz-row .tag{font-size:8px;font-weight:600;color:#fff;background:#1F1A16;padding:2px 7px;border-radius:999px;white-space:nowrap}
 .dz-row .t{flex:1;min-width:0}
 .dz-row .t b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dz-row .t small{color:#7A7068;font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
@@ -105,23 +105,23 @@
 .wz .timer{font:600 12px/1 'Bricolage Grotesque',sans-serif;background:#1F1A16;color:#fff;padding:6px 10px;border-radius:999px;direction:ltr;display:inline-flex;align-items:center;gap:6px}
 .wz .timer i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:mzDot 1s infinite}
 .wz .bar{height:6px;border-radius:6px;background:#ECE6DF;overflow:hidden;margin-bottom:10px}
-.wz .bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.wz .bar i{display:block;height:100%;width:0;background:#1F1A16;transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .wz-it{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ECE6DF;border-radius:10px;padding:6px 9px;margin-bottom:5px;font-size:10px;color:#7A7068;transition:.3s}
 .wz-it .c{width:16px;height:16px;border-radius:50%;border:1.5px solid #D9D2CA;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;transition:.3s}
 .wz-it .c svg{width:9px;height:9px;opacity:0}
 .wz-it.on{color:#1F1A16;border-color:#D9E9DF}
-.wz-it.on .c{background:#2E9A5E;border-color:#2E9A5E}.wz-it.on .c svg{opacity:1}
+.wz-it.on .c{background:#1F1A16;border-color:#1F1A16}.wz-it.on .c svg{opacity:1}
 .wz-it b{font-weight:600}.wz-it small{margin-inline-start:auto;font-size:8.5px;color:#ABA29A}
 .wz .ready{position:absolute;left:14px;right:14px;bottom:12px;background:#1F1A16;color:#fff;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;transform:translateY(80px);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
 .wz .ready.on{transform:none}
-.wz .ready i{width:20px;height:20px;border-radius:50%;background:#2E9A5E;display:flex;align-items:center;justify-content:center;flex:none}
+.wz .ready i{width:20px;height:20px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:none}
 .wz .ready i svg{width:11px;height:11px}
 /* scene A: QR tent + customer phones */
 .mz-tent{position:absolute;left:380px;top:70px;width:132px;border-radius:12px;background:#fff;color:#1F1A16;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.6);text-align:center;transform:rotateY(-14deg) translateZ(40px);transition:opacity .4s,transform .8s;direction:rtl;font-family:'IBM Plex Sans Arabic',sans-serif}
 .mz-ar .mz-tent{left:60px;transform:rotateY(14deg) translateZ(40px)}
 .mz-portrait .mz-tent,.mz-ar.mz-portrait .mz-tent{left:214px;top:0;transform:translateZ(40px)}
 .mz-tent .hd{height:28px;background:#1F1A16;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px}
-.mz-tent .hd i{width:14px;height:14px;border-radius:4px;background:var(--brand);display:inline-block}
+.mz-tent .hd i{width:14px;height:14px;border-radius:4px;background:#fff;display:inline-block}
 .mz-tent svg.qr{width:84px;height:84px;display:block;margin:10px auto 4px}
 .mz-tent small{display:block;font-size:8px;color:#7A7068;padding-bottom:8px}
 .mz-tent .ring{position:absolute;inset:-6px;border-radius:16px;border:2px solid var(--brand);opacity:0}
@@ -134,14 +134,14 @@
 .mz-ph .lz{position:absolute;left:14px;right:14px;top:44px;height:1.5px;background:var(--brand);box-shadow:0 0 6px var(--brand);opacity:0}
 .mz-ph.scan .lz{opacity:1;animation:mzLz 1s ease-in-out infinite}
 @keyframes mzLz{50%{top:76px}}
-.mz-ph .ok{position:absolute;left:50%;top:52px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.6,.4,1)}
+.mz-ph .ok{position:absolute;left:50%;top:52px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:#fff;color:#111;display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.6,.4,1)}
 .mz-ph .ok svg{width:12px;height:12px}
 .mz-ph.done .ok{transform:scale(1)}.mz-ph.done .lz{animation:none;opacity:0}.mz-ph.done .fr{border-color:var(--brand)}
 .mz-ph .av{position:absolute;bottom:8px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;color:#1F1A16;font:600 9px/18px 'IBM Plex Sans Arabic',sans-serif;text-align:center}
 .mz-ph.scan{transform:translate3d(var(--sx),var(--sy),60px) rotateY(0deg) scale(1.05)}
 .mz-ph.done{transform:translate3d(var(--sx),var(--sy),60px) rotateY(0deg) scale(1.05)}
 .mz-chip{position:absolute;left:0;top:0;padding:6px 10px;border-radius:999px;background:#fff;color:#1F1A16;font:600 10px/1 'IBM Plex Sans Arabic',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;z-index:6;direction:rtl;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.mz-chip i{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+.mz-chip i{width:8px;height:8px;border-radius:50%;background:#1F1A16}
 .mz-chip.fly{animation:mzChip .8s cubic-bezier(.3,.7,.2,1) forwards}
 @keyframes mzChip{0%{opacity:0;transform:translate(var(--ax),var(--ay)) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.5)}}
 /* scene B: store page preview card */
@@ -150,7 +150,7 @@
 .mz-portrait .mz-prev,.mz-ar.mz-portrait .mz-prev{left:420px;top:300px}
 .mz-prev.on{opacity:1;transform:translateY(0) rotateY(-12deg)}.mz-ar .mz-prev.on{transform:translateY(0) rotateY(12deg)}
 .mz-prev .s{width:100%;height:100%;border-radius:18px;overflow:hidden;background:#F6F4F1;color:#1F1A16;font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl;font-size:7px}
-.mz-prev .cv{height:70px;background:var(--brand);position:relative;display:flex;align-items:center;justify-content:center}
+.mz-prev .cv{height:70px;background:#1F1A16;position:relative;display:flex;align-items:center;justify-content:center}
 .mz-prev .cv i{width:26px;height:26px;border-radius:8px;background:#fff;display:block}
 .mz-prev .nm{font-size:9px;font-weight:600;text-align:center;margin:6px 0 2px}
 .mz-prev .md{display:flex;gap:3px;padding:0 6px 6px}
@@ -158,17 +158,18 @@
 .mz-prev .md i:first-child{background:#1F1A16;border-color:#1F1A16}
 .mz-prev .it{display:flex;gap:4px;padding:0 6px 4px}
 .mz-prev .it i{flex:1;aspect-ratio:1;border-radius:6px;background:#E9DCCB}
-.mz-prev .tag{position:absolute;top:-10px;inset-inline-end:-6px;background:#2E9A5E;color:#fff;font-size:8px;font-weight:600;padding:3px 7px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.mz-prev .tag{position:absolute;top:-10px;inset-inline-end:-6px;background:#fff;color:#111 !important;color:#fff;font-size:8px;font-weight:600;padding:3px 7px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
 /* scene C: integration nodes + wires */
 .mz-node{position:absolute;width:150px;height:54px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:8px;padding:0 10px;backdrop-filter:blur(6px);transition:.35s;opacity:0;transform:scale(.9);z-index:3;direction:rtl}
 .mz-s-int .mz-node{opacity:1;transform:none}
-.mz-node i{width:30px;height:30px;border-radius:9px;background:var(--c);display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.mz-node i{width:30px;height:30px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;color:#111;flex:none;transition:.35s}
 .mz-node i svg{width:15px;height:15px}
 .mz-node b{display:block;font-size:11px;font-weight:600;line-height:1.2;font-family:'IBM Plex Sans Arabic',sans-serif}
 .mz-node small{display:block;font-size:9px;color:rgba(255,255,255,.55);margin-top:1px;font-family:'IBM Plex Sans Arabic',sans-serif}
-.mz-node.live{border-color:var(--c);box-shadow:0 0 0 1px var(--c) inset,0 0 30px color-mix(in srgb,var(--c) 45%,transparent);transform:scale(1.04)}
-svg.mz-wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .4s;z-index:1}
-.mz-s-int svg.mz-wires{opacity:1}
+.mz-node.live{background:#fff;color:#111;border-color:#fff;transform:scale(1.06) translateZ(30px);box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.mz-node.live i{background:#111;color:#fff}
+.mz-node.live small{color:#555}
+svg.mz-wires{display:none}
 svg.mz-wires path{fill:none;stroke:rgba(255,255,255,.14);stroke-width:1.5}
 svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6 10;animation:mzFlow .9s linear infinite;filter:drop-shadow(0 0 6px var(--c,#00BC6D))}
 @keyframes mzFlow{to{stroke-dashoffset:-32}}
@@ -214,7 +215,7 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
                   <div class="h"><b id="wzT"></b><span class="timer"><i></i><span id="wzTimer">00:00</span></span></div>
                   <div class="bar"><i id="wzBar"></i></div>
                   <div id="wzItems"></div>
-                  <div class="ready" id="wzReady"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></i><span id="wzReadyT"></span></div>
+                  <div class="ready" id="wzReady"><i><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></i><span id="wzReadyT"></span></div>
                 </div>
               </div>
             </div></div>
@@ -273,7 +274,7 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
   }};
   var S=STRS[LANG];
   // phones (customers) and nodes are created once; strings re-applied on language change
-  var PH=[0,1,2].map(function(i){var d=document.createElement('div');d.className='mz-ph';d.innerHTML='<div class="scr"><div class="fr"></div><div class="lz"></div><div class="ok">'+I.check+'</div><div class="av"></div></div>';$('mzPhones').appendChild(d);return d});
+  var PH=[0,1,2].map(function(i){var d=document.createElement('div');d.className='mz-ph';d.innerHTML='<div class="scr"><div class="fr"></div><div class="lz"></div><div class="ok">'+I.check.replace('stroke="#fff"','stroke="#111"')+'</div><div class="av"></div></div>';$('mzPhones').appendChild(d);return d});
   var ND=[0,1,2,3,4].map(function(i){var d=document.createElement('div');d.className='mz-node';d.innerHTML='<i></i><div><b></b><small></small></div>';$('mzNodes').appendChild(d);return d});
 
   var portrait=false,scale=1;
@@ -341,13 +342,14 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
     PH.forEach(function(p){p.classList.remove('scan','done')});$('mzTent').classList.remove('hit');
     $('mzDash').classList.remove('hide');$('mzWiz').classList.add('hide');$('mzPrev').classList.remove('on');$('wzReady').classList.remove('on');$('wzBar').style.width='0';$('wzTimer').textContent='00:00';
     var its=$('wzItems').children;for(var i=0;i<its.length;i++)its[i].classList.remove('on');
-    ND.forEach(function(n){n.classList.remove('live')});var ps=$('mzWires').querySelectorAll('path');for(i=0;i<ps.length;i++)ps[i].classList.remove('flow');
+    ND.forEach(function(n){n.classList.remove('live')});
     list.innerHTML='';bell=0;$('dzBell').textContent='0';
   }
   function run(){
     resetAll();
     // Scene A — customers scan the QR (0–6.4s)
     setLine(0,6400);
+    layout();
     [0,1,2].forEach(function(i){var t0=300+i*2000;
       at(t0,function(){PH[i].classList.add('scan')});
       at(t0+900,function(){PH[i].classList.add('done');$('mzTent').classList.remove('hit');void $('mzTent').offsetWidth;$('mzTent').classList.add('hit')});
@@ -364,8 +366,9 @@ svg.mz-wires path.flow{stroke:var(--c,#00BC6D);stroke-width:2;stroke-dasharray:6
     // Scene C — integrations (13.2–21s)
     at(13200,function(){setLine(2,7800);stage.classList.remove('mz-s-setup');stage.classList.add('mz-s-int');$('mzWiz').classList.add('hide');$('mzDash').classList.remove('hide');$('mzPrev').classList.remove('on')});
     [0,1,2,3,4].forEach(function(i){var t0=13700+i*1450;
-      at(t0,function(){ND.forEach(function(n,k){n.classList.toggle('live',k===i)});var ps=$('mzWires').querySelectorAll('path');for(var k=0;k<ps.length;k++){ps[k].classList.toggle('flow',k===i);ps[k].style.setProperty('--c',S.nodes[i][3])}});
-      at(t0+650,function(){var o=S.ints[i];addRow(o,S.nodes[i][3],S.nodes[i][0],i===3,[84,52,0,0,63][i])});
+      at(t0,function(){ND.forEach(function(n,k){n.classList.toggle('live',k===i)})});
+      at(t0+350,function(){var c=$('mzChip'),n=ND[i];c.style.setProperty('--ax',(parseFloat(n.style.left)+20)+'px');c.style.setProperty('--ay',(parseFloat(n.style.top)+14)+'px');c.querySelector('span').textContent=S.nodes[i][0];c.classList.remove('fly');void c.offsetWidth;c.classList.add('fly')});
+      at(t0+950,function(){var o=S.ints[i];addRow(o,S.nodes[i][3],S.nodes[i][0],i===3,[84,52,0,0,63][i])});
     });
     at(21000,run);
   }
