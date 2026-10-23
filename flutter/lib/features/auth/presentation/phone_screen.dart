@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/session_cache.dart';
 
 import '../../../core/localization/strings.dart';
 import '../../../core/network/api_client.dart';
@@ -59,7 +60,10 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
             phone: _phone.text,
             code: _code.text,
           );
-      ref.invalidate(isSignedInProvider);
+      // A (possibly different) person just signed in: drop every user-scoped
+      // cache, including anything that errored with 401 while browsing as a
+      // guest — otherwise those providers stay parked on the old error/data.
+      invalidateUserCaches(ref);
 
       // Now that there's an account, register this device for order-update push.
       unawaited(ref.read(pushServiceProvider).registerIfSignedIn());

@@ -3,10 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/session_cache.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/riyal_price.dart';
+import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/top_banner.dart';
+import '../stores/data/store_repository.dart';
 import 'order_repository.dart';
 import 'reorder_action.dart';
 
@@ -17,9 +22,13 @@ import 'reorder_action.dart';
 /// guessing.
 /// ============================================================================
 class OrderStatusScreen extends ConsumerStatefulWidget {
-  const OrderStatusScreen({super.key, required this.orderId});
+  const OrderStatusScreen({super.key, required this.orderId, this.justPlaced = false});
 
   final int orderId;
+
+  /// True when reached straight from checkout: the screen opens on a clear
+  /// confirmation of the just-placed order, which then settles into tracking.
+  final bool justPlaced;
 
   @override
   ConsumerState<OrderStatusScreen> createState() => _OrderStatusScreenState();
@@ -32,6 +41,10 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
   static const _terminal = {'completed', 'rejected', 'cancelled'};
 
   Timer? _poll;
+
+  /// The just-placed confirmation is shown once, as a top notification banner
+  /// rather than an inline card — guarded so a refetch/rebuild can't repeat it.
+  bool _placedBannerShown = false;
 
   @override
   void initState() {
@@ -80,7 +93,9 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
         title: Text(s.trackOrder),
       ),
       body: order.when(
-        loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        // A skeleton in the shape of the tracker, not a bare spinner — it keeps
+        // the layout stable so the real content swaps in without a white flash.
+        loading: () => const _TrackingSkeleton(),
         error: (_, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -94,22 +109,51 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
             ],
           ),
         ),
-        data: (data) => RefreshIndicator(
-          onRefresh: () async => ref.invalidate(orderProvider(orderId)),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _Hero(order: data, s: s),
+        data: (data) {
+          // Confirmation as a top notification banner (not an inline card):
+          // shown once, only when we arrived from checkout on a freshly placed
+          // order. It states one true fact — we have the order — and points to
+          // the next step, never claiming the restaurant has accepted it yet.
+          if (widget.justPlaced && !_placedBannerShown && data.status == 'placed') {
+            _placedBannerShown = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              showTopBanner(context, title: s.orderPlaced, message: s.orderReceivedHint);
+            });
+          }
+          // While the restaurant hasn't accepted yet, the screen wears a
+          // distinct "waiting" design; once accepted, it becomes the live
+          // tracking timeline. The two cross-fade as the status flips.
+          final waiting = data.status == 'placed';
+          return RefreshIndicator(
+            onRefresh: () async => ref.invalidate(orderProvider(orderId)),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                AnimatedSwitcher(
+                  duration: AppMotion.dur(context, AppMotion.base),
+                  child: KeyedSubtree(
+                    key: ValueKey(waiting),
+                    child: waiting ? _WaitingHero(order: data, s: s) : _Hero(order: data, s: s),
+                  ),
+                ),
               const SizedBox(height: 14),
               _RestaurantCard(order: data, s: s),
-              const SizedBox(height: 14),
-              if (data.status != 'rejected' && data.status != 'cancelled')
+              if (!waiting && data.status != 'rejected' && data.status != 'cancelled') ...[
+                const SizedBox(height: 14),
                 _Timeline(order: data, s: s),
+              ],
               if (data.items.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 _ItemsCard(order: data, s: s),
               ],
-              if (data.invoice?.qr != null) ...[
+              // The invoice appears only once the restaurant has accepted the
+              // order — not while it's still waiting, and not for a rejected or
+              // cancelled order (which never became a sale).
+              if (!waiting &&
+                  data.status != 'rejected' &&
+                  data.status != 'cancelled' &&
+                  data.invoice?.qr != null) ...[
                 const SizedBox(height: 14),
                 _ViewInvoiceTile(orderId: data.id, s: s),
               ],
@@ -130,6 +174,7 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
                   onPressed: () async {
                     await ref.read(orderRepositoryProvider).cancel(orderId);
                     ref.invalidate(orderProvider(orderId));
+                    invalidateOrderCaches(ref);
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.bad,
@@ -139,12 +184,126 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
                   ),
                   child: Text(s.cancelOrder),
                 ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// The waiting state — shown while the order is placed but not yet accepted.
+/// A deliberately different, calmer design from the tracking timeline: an
+/// hourglass inside softly pulsing rings that say "the restaurant is looking at
+/// this now", with the order reference. No timeline and no ETA — there is
+/// nothing real to time until the kitchen accepts.
+class _WaitingHero extends StatefulWidget {
+  const _WaitingHero({required this.order, required this.s});
+  final OrderResult order;
+  final Strings s;
+
+  @override
+  State<_WaitingHero> createState() => _WaitingHeroState();
+}
+
+class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 2200))..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s;
+    final reduce = AppMotion.reduced(context);
+
+    // Boxless and airy: the animation sits directly on the page's cream canvas,
+    // large and calm, with a minimal step indicator underneath.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 156,
+            height: 156,
+            child: reduce
+                ? Center(child: _center())
+                : AnimatedBuilder(
+                    animation: _c,
+                    builder: (_, _) => Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        for (var i = 0; i < 3; i++) _ring((_c.value + i / 3) % 1.0),
+                        _center(),
+                      ],
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 26),
+          Text(
+            s.waitingAcceptTitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink900),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            s.waitingAcceptHint,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppColors.ink500),
+          ),
+          const SizedBox(height: 22),
+          // Minimal progress: four segments, the first active while we wait.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < 4; i++)
+                Container(
+                  width: 22,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: i == 0 ? AppColors.flame : AppColors.ink200,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  /// One expanding, fading ring on the cream canvas. [t] runs 0→1: it grows
+  /// outward and dissolves.
+  Widget _ring(double t) {
+    return Opacity(
+      opacity: (1 - t) * 0.5,
+      child: Container(
+        width: 66 + t * 88,
+        height: 66 + t * 88,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.flame, width: 1.6),
         ),
       ),
     );
   }
+
+  Widget _center() => Container(
+        width: 66,
+        height: 66,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.flame.withValues(alpha: 0.14),
+          border: Border.all(color: AppColors.flame.withValues(alpha: 0.45)),
+        ),
+        child: const Icon(Icons.hourglass_top_rounded, color: AppColors.flame, size: 32),
+      );
 }
 
 /// The dark status hero: fulfilment + current status on the start, an ETA ring
@@ -220,13 +379,18 @@ class _Hero extends StatelessWidget {
 }
 
 /// The restaurant + pickup-code card, with a call action.
-class _RestaurantCard extends StatelessWidget {
+class _RestaurantCard extends ConsumerWidget {
   const _RestaurantCard({required this.order, required this.s});
   final OrderResult order;
   final Strings s;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The store's phone comes from its (already-cached) storefront; the call
+    // button only appears when there is actually a number to dial.
+    final token = order.storeToken;
+    final phone = token == null ? null : ref.watch(storefrontProvider(token)).value?.phone;
+
     final isDelivery = order.fulfillmentType == 'delivery';
     final subtitle = isDelivery
         ? (order.deliveryAddress ?? '')
@@ -267,18 +431,19 @@ class _RestaurantCard extends StatelessWidget {
               ],
             ),
           ),
-          Material(
-            color: AppColors.ink100,
-            shape: const CircleBorder(),
-            child: InkWell(
-              onTap: () {},
-              customBorder: const CircleBorder(),
-              child: const Padding(
-                padding: EdgeInsets.all(11),
-                child: Icon(Icons.call_rounded, size: 20, color: AppColors.ink900),
+          if (phone != null && phone.isNotEmpty)
+            Material(
+              color: AppColors.ink100,
+              shape: const CircleBorder(),
+              child: InkWell(
+                onTap: () => launchUrl(Uri(scheme: 'tel', path: phone)),
+                customBorder: const CircleBorder(),
+                child: const Padding(
+                  padding: EdgeInsets.all(11),
+                  child: Icon(Icons.call_rounded, size: 20, color: AppColors.ink900),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -491,6 +656,28 @@ class _Step extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The loading placeholder: the tracker's own silhouette — hero, restaurant card,
+/// timeline — in the same paddings as the real content, so data swaps in without
+/// the layout shifting.
+class _TrackingSkeleton extends StatelessWidget {
+  const _TrackingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      physics: const NeverScrollableScrollPhysics(),
+      children: const [
+        SkeletonBox(height: 108, radius: 24, color: AppColors.ink200),
+        SizedBox(height: 14),
+        SkeletonCard(height: 74),
+        SizedBox(height: 14),
+        SkeletonCard(height: 220),
+      ],
     );
   }
 }

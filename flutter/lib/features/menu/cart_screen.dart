@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/session_cache.dart';
 
 import '../../core/haptics.dart';
 import '../../core/localization/strings.dart';
@@ -888,6 +889,9 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
   void _confirm(int orderId) {
     AppHaptics.success();
     ref.read(cartProvider.notifier).clear();
+    // The orders list and the home "reorder" shortcut are cached for the
+    // session — refresh them so the new order shows up without a restart.
+    invalidateOrderCaches(ref);
     context.pushReplacement('/orders/$orderId?placed=1');
   }
 

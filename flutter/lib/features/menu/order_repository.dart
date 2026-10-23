@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
+import '../auth/data/auth_repository.dart';
 import '../stores/data/store_repository.dart';
 import 'cart_controller.dart';
 
@@ -62,6 +63,7 @@ class OrderRepository {
     int? addressId,
     int? carId,
     int? branchId,
+    int? partySize,
   }) async {
     final json = await _api.post('/orders', body: {
       'store_token': storeToken,
@@ -69,6 +71,7 @@ class OrderRepository {
       if (tableNumber != null && tableNumber.trim().isNotEmpty) 'table_number': tableNumber.trim(),
       'address_id': ?addressId,
       'car_id': ?carId,
+      'party_size': ?partySize,
       'branch_id': ?branchId,
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
       'items': [
@@ -260,6 +263,54 @@ class OrderLineResult {
   final List<int> optionIds;
 }
 
+/// After a checkout whose result is UNKNOWN — the connection dropped before the
+/// server answered, so the order may or may not have been created — look for the
+/// order among the customer's active orders instead of blindly retrying (which
+/// would risk a duplicate). Returns the matching order to open, or null when no
+/// such order exists (then it is safe to let the customer try again).
+///
+/// A match is a very recent active order for the same store whose exact line-up
+/// (item + chosen options + quantity, order-independent) equals [lines].
+Future<OrderResult?> findRecentMatchingOrder(
+  OrderRepository repo, {
+  required String storeToken,
+  required List<CartLine> lines,
+}) async {
+  final List<OrderResult> active;
+  try {
+    active = await repo.myOrders('active');
+  } catch (_) {
+    // Still offline — we genuinely don't know. Caller keeps the cart intact and
+    // surfaces a retry rather than pretending success.
+    return null;
+  }
+
+  final wanted = _lineSignature([
+    for (final l in lines) (l.item.id, l.selectedOptionIds.toList(), l.quantity),
+  ]);
+  final now = DateTime.now();
+
+  for (final o in active) {
+    if (o.storeToken != storeToken) continue;
+    final created = o.createdAt;
+    if (created == null || now.difference(created).inMinutes.abs() > 5) continue;
+    final got = _lineSignature([
+      for (final it in o.items) (it.itemId ?? -1, it.optionIds, it.quantity),
+    ]);
+    if (got == wanted) return o;
+  }
+  return null;
+}
+
+/// An order-independent fingerprint of a set of lines, so the same cart placed
+/// once matches the order it created regardless of item or option ordering.
+String _lineSignature(List<(int, List<int>, int)> lines) {
+  final parts = [
+    for (final (id, opts, qty) in lines) '$id:${(opts.toList()..sort()).join(",")}x$qty',
+  ]..sort();
+  return parts.join('|');
+}
+
 final orderRepositoryProvider =
     Provider<OrderRepository>((ref) => OrderRepository(ref.watch(apiClientProvider)));
 
@@ -272,3 +323,26 @@ final orderProvider = FutureProvider.family<OrderResult, int>(
 final myOrdersProvider = FutureProvider.family<List<OrderResult>, String>(
   (ref, filter) => ref.watch(orderRepositoryProvider).myOrders(filter),
 );
+
+/// The most recent completed order that can be re-ordered, or null. Powers the
+/// one-tap "reorder your last order" shortcut on the home screen. Returns null
+/// for guests (no identity, nothing to reorder) — never triggers a 401 fetch.
+final lastReorderableOrderProvider = FutureProvider<OrderResult?>((ref) async {
+  final signedIn = await ref.watch(isSignedInProvider.future);
+  if (!signedIn) return null;
+
+  // The newest order across BOTH lists (an order still being prepared is just
+  // as reorderable as a completed one), skipping ones that never happened.
+  final lists = await Future.wait([
+    ref.watch(myOrdersProvider('active').future),
+    ref.watch(myOrdersProvider('past').future),
+  ]);
+  final all = [for (final l in lists) ...l]
+    ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+  for (final order in all) {
+    if (order.storeToken == null) continue;
+    if (order.status == 'cancelled' || order.status == 'rejected') continue;
+    return order;
+  }
+  return null;
+});
