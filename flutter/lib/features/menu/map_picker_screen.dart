@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -110,7 +111,14 @@ class _MapPickerScreenState extends ConsumerState<MapPickerScreen> {
             longitude: _center.longitude,
           );
       ref.invalidate(addressesProvider);
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      // Reached via sign-in → go(next) there is nothing underneath to pop to;
+      // land on the address list instead of a blank route.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/addresses');
+      }
     } catch (_) {
       if (mounted) setState(() => _saving = false);
     }

@@ -38,6 +38,8 @@ class OrderController extends Controller
             'store_token' => ['required', 'string', 'max:20'],
             'fulfillment_type' => ['required', 'in:pickup,dine_in,delivery,curbside'],
             'table_number' => ['sometimes', 'nullable', 'string', 'max:20'],
+            // Dine-in requires how many people the order is for.
+            'party_size' => ['required_if:fulfillment_type,dine_in', 'integer', 'min:1', 'max:50'],
             // The chosen pickup branch; must belong to this store (checked below).
             'branch_id' => ['sometimes', 'nullable', 'integer'],
             // The customer's own saved address (central), required for delivery.
@@ -83,9 +85,15 @@ class OrderController extends Controller
         $branch = $store->defaultBranch();
         if (! empty($data['branch_id'])) {
             $chosen = $store->activeBranches()->whereKey($data['branch_id'])->first();
-            if ($chosen !== null) {
-                $branch = $chosen;
+            if ($chosen === null) {
+                // A stale choice from another store (or a guessed id) must not
+                // be rerouted to some other branch behind the customer's back.
+                return response()->json([
+                    'message' => __('errors.branch_not_found'),
+                    'error_code' => 'BRANCH_NOT_FOUND',
+                ], 422);
             }
+            $branch = $chosen;
         }
         $customer = $request->user()->customer;
 
@@ -130,10 +138,13 @@ class OrderController extends Controller
                 tableNumber: $data['table_number'] ?? null,
                 deliveryAddress: $deliveryAddress,
                 car: $car,
+                partySize: $data['party_size'] ?? null,
             );
         } catch (OrderNotPlaceable $e) {
+            $key = 'errors.order_'.strtolower($e->errorCode);
+
             return response()->json([
-                'message' => __('errors.order_not_placeable'),
+                'message' => \Illuminate\Support\Facades\Lang::has($key) ? __($key) : __('errors.order_not_placeable'),
                 'error_code' => $e->errorCode,
             ], 422);
         }
@@ -147,7 +158,7 @@ class OrderController extends Controller
         }
 
         return response()->json(
-            new OrderResource($order->load(['store', 'customer', 'items.options', 'items.menuItem'])),
+            new OrderResource($order->load(['store', 'customer.user', 'items.options', 'items.menuItem'])),
             201,
         );
     }
@@ -163,7 +174,7 @@ class OrderController extends Controller
         $query = Order::query()
             ->withoutTenancy()
             ->where('customer_id', $customer?->id)
-            ->with(['store', 'customer', 'items.options', 'items.menuItem'])
+            ->with(['store', 'customer.user', 'items.options', 'items.menuItem'])
             ->latest();
 
         $query = $filter === 'past'
@@ -187,7 +198,7 @@ class OrderController extends Controller
         $order = Order::query()
             ->withoutTenancy()
             ->where('customer_id', $request->user()->customer?->id)
-            ->with(['store', 'customer', 'items.options', 'items.menuItem'])
+            ->with(['store', 'customer.user', 'items.options', 'items.menuItem'])
             ->find($id);
 
         return $order === null
@@ -220,6 +231,6 @@ class OrderController extends Controller
             'cancelled_by' => 'customer',
         ]);
 
-        return response()->json(new OrderResource($order->load(['store', 'customer', 'items.options', 'items.menuItem'])));
+        return response()->json(new OrderResource($order->load(['store', 'customer.user', 'items.options', 'items.menuItem'])));
     }
 }

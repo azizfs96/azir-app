@@ -95,6 +95,18 @@ class OtpController extends Controller
 
         RateLimiter::clear($throttleKey);
 
+        // OTP is the CUSTOMER login only. A merchant or admin phone must never
+        // mint a token here — their role would open every /merchant or /admin
+        // route without a password. Answer exactly like a wrong code so the
+        // endpoint cannot be used to discover which phones belong to staff.
+        $existing = User::where('phone', $phone)->first();
+        if ($existing !== null && ! $existing->isCustomer()) {
+            return response()->json([
+                'message' => __('errors.otp_invalid'),
+                'error_code' => 'OTP_INVALID',
+            ], 422);
+        }
+
         $user = DB::transaction(fn () => $this->resolveCustomer($phone, $request->validated()));
 
         if (! $user->is_active) {

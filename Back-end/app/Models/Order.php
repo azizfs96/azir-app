@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * transitionTo(), which validates against OrderStatus.
  */
 #[Fillable([
-    'branch_id', 'customer_id', 'fulfillment_type', 'table_number',
+    'branch_id', 'customer_id', 'fulfillment_type', 'table_number', 'party_size',
     'customer_notes', 'source',
 ])]
 class Order extends Model
@@ -49,6 +49,7 @@ class Order extends Model
             'delivery_latitude' => 'decimal:8',
             'delivery_longitude' => 'decimal:8',
             'prep_minutes' => 'integer',
+            'party_size' => 'integer',
             'accepted_at' => 'immutable_datetime',
             'ready_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',

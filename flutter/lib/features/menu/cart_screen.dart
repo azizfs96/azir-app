@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/haptics.dart';
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_image.dart';
+import '../../core/widgets/inline_error.dart';
 import '../../core/widgets/riyal_price.dart';
 import '../stores/data/store_repository.dart';
 import '../stores/domain/storefront.dart';
 import '../stores/presentation/store_avatar.dart';
 import '../../core/network/api_client.dart';
+import '../auth/data/auth_repository.dart';
 import 'address_repository.dart';
 import 'car_repository.dart';
 import 'cart_controller.dart';
@@ -68,7 +72,6 @@ class CartScreen extends ConsumerWidget {
                       if (store != null) _FulfillmentCard(token: token, store: store, s: s),
                       const SizedBox(height: 12),
                       _ContextCard(token: token, s: s),
-                      _DiscountCard(s: s),
                       const SizedBox(height: 12),
                       _TotalsCard(
                         subtotal: cart.total,
@@ -158,13 +161,11 @@ class _CartItemCard extends StatelessWidget {
   }
 
   Widget _thumb(String? path) {
-    final url = logoUrlOf(path);
-    return url != null
-        ? Image.network(url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) =>
-                const Icon(Icons.restaurant_rounded, size: 26, color: AppColors.ink300))
-        : const Icon(Icons.restaurant_rounded, size: 26, color: AppColors.ink300);
+    return AppImage(
+      url: logoUrlOf(path),
+      fit: BoxFit.cover,
+      error: const Icon(Icons.restaurant_rounded, size: 26, color: AppColors.ink300),
+    );
   }
 }
 
@@ -181,14 +182,20 @@ class _Stepper extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sq(Icons.remove_rounded, AppColors.ink100, AppColors.ink900, () => onChanged(quantity - 1)),
+        _sq(Icons.remove_rounded, AppColors.ink100, AppColors.ink900, () {
+          AppHaptics.tick();
+          onChanged(quantity - 1);
+        }),
         SizedBox(
           width: 34,
           child: Text('$quantity',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         ),
-        _sq(Icons.add_rounded, AppColors.ink900, Colors.white, () => onChanged(quantity + 1)),
+        _sq(Icons.add_rounded, AppColors.ink900, Colors.white, () {
+          AppHaptics.tick();
+          onChanged(quantity + 1);
+        }),
       ],
     );
   }
@@ -244,15 +251,11 @@ class _FulfillmentCard extends ConsumerWidget {
           if (store.branches.isNotEmpty) ...[
             const Divider(height: 1, color: AppColors.ink100),
             Builder(builder: (context) {
-              final selId = ref.watch(selectedBranchIdProvider);
-              final branch = store.branches.firstWhere((b) => b.id == selId,
-                  orElse: () => store.branches.first);
-              final canChange = store.branches.length > 1;
-              return GestureDetector(
-                onTap: canChange ? () => _pickBranch(context, ref) : null,
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              // A single-branch store shows its only branch (used automatically).
+              if (store.branches.length == 1) {
+                final b = store.branches.first;
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
                   child: Row(
                     children: [
                       const Icon(Icons.storefront_rounded, size: 22, color: AppColors.ink900),
@@ -261,12 +264,12 @@ class _FulfillmentCard extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(branch.name,
+                            Text(b.name,
                                 style: const TextStyle(
                                     fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink900)),
-                            if ((branch.address ?? '').isNotEmpty) ...[
+                            if ((b.address ?? '').isNotEmpty) ...[
                               const SizedBox(height: 2),
-                              Text(branch.address!,
+                              Text(b.address!,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 12.5, color: AppColors.ink500)),
@@ -274,12 +277,37 @@ class _FulfillmentCard extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      if (canChange)
-                        Text(s.change,
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.flame)),
                     ],
                   ),
+                );
+              }
+
+              // Multiple branches: choose inline (no modal, no extra step) — the
+              // options are right there and one tap picks. Nothing is pre-selected
+              // so the customer can't miss it and order from the wrong branch.
+              final selId = ref.watch(selectedBranchIdProvider(token));
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                      child: Text(s.selectBranch,
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink500)),
+                    ),
+                    for (final b in store.branches)
+                      _BranchOption(
+                        name: b.name,
+                        address: b.address,
+                        selected: b.id == selId,
+                        onTap: () {
+                          AppHaptics.tick();
+                          ref.read(selectedBranchIdProvider(token).notifier).set(b.id);
+                        },
+                      ),
+                  ],
                 ),
               );
             }),
@@ -289,37 +317,80 @@ class _FulfillmentCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickBranch(BuildContext context, WidgetRef ref) {
-    return showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(s.pickupBranch,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink900)),
-              const SizedBox(height: 8),
-              for (final b in store.branches)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.storefront_rounded, color: AppColors.ink900),
-                  title: Text(b.name, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700)),
-                  subtitle: (b.address ?? '').isNotEmpty
-                      ? Text(b.address!, maxLines: 1, overflow: TextOverflow.ellipsis)
-                      : null,
-                  onTap: () {
-                    ref.read(selectedBranchIdProvider.notifier).set(b.id);
-                    Navigator.of(context).pop();
-                  },
-                ),
-            ],
+}
+
+/// One selectable branch, chosen inline in the cart (no modal). A clear radio +
+/// flame highlight makes the current choice obvious at a glance.
+class _BranchOption extends StatelessWidget {
+  const _BranchOption({
+    required this.name,
+    required this.address,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String name;
+  final String? address;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: AppMotion.dur(context, AppMotion.fast),
+        curve: AppMotion.curve,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.flame.withValues(alpha: 0.08) : AppColors.cream,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? AppColors.flame : AppColors.ink200,
+            width: selected ? 1.5 : 1,
           ),
+        ),
+        child: Row(
+          children: [
+            // Radio indicator.
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: selected ? AppColors.flame : AppColors.ink300, width: 2),
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(color: AppColors.flame, shape: BoxShape.circle),
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.ink900)),
+                  if ((address ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(address!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12.5, color: AppColors.ink500)),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -405,7 +476,73 @@ class _ContextCard extends ConsumerWidget {
       );
     }
 
+    // Dine-in requires the party size before the order can be placed.
+    if (mode == FulfillmentMode.dineIn) {
+      final size = ref.watch(partySizeProvider);
+      return _row(
+        context,
+        icon: Icons.groups_rounded,
+        title: size == null ? s.selectPartySize : '${s.partySize}: ${s.partySizeLabel(size)}',
+        actionLabel: size == null ? s.select : s.change,
+        onTap: () => _pickPartySize(context, ref),
+      );
+    }
+
     return const SizedBox.shrink();
+  }
+
+  Future<void> _pickPartySize(BuildContext context, WidgetRef ref) {
+    final current = ref.read(partySizeProvider);
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(s.partySize,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink900)),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (var n = 1; n <= 12; n++)
+                    GestureDetector(
+                      onTap: () {
+                        AppHaptics.tick();
+                        ref.read(partySizeProvider.notifier).set(n);
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        width: 54,
+                        height: 54,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: n == current ? AppColors.ink900 : AppColors.cream,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: n == current ? AppColors.ink900 : AppColors.ink200),
+                        ),
+                        child: Text('$n',
+                            style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: n == current ? Colors.white : AppColors.ink900)),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   /// The selected item (by id) or the default (first) one.
@@ -532,68 +669,8 @@ class _ContextCard extends ConsumerWidget {
   }
 }
 
-/// A discount-code field. (Promotions are a later backend feature; applying an
-/// unknown code reports it as invalid rather than dangling a dead button.)
-class _DiscountCard extends StatefulWidget {
-  const _DiscountCard({required this.s});
-  final Strings s;
-
-  @override
-  State<_DiscountCard> createState() => _DiscountCardState();
-}
-
-class _DiscountCardState extends State<_DiscountCard> {
-  final _code = TextEditingController();
-
-  @override
-  void dispose() {
-    _code.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.s;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: Row(
-        children: [
-          const Icon(Icons.confirmation_number_outlined, size: 20, color: AppColors.ink900),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _code,
-              textAlign: TextAlign.start,
-              decoration: InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: s.discountCode,
-                hintStyle: const TextStyle(color: AppColors.ink500, fontSize: 14.5),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              FocusScope.of(context).unfocus();
-              if (_code.text.trim().isEmpty) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(s.invalidCode), behavior: SnackBarBehavior.floating),
-              );
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: AppColors.ink900,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-            ),
-            child: Text(s.apply, style: const TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// The discount-code field is hidden until promotions exist on the server —
+// a code entry that can only ever say "invalid" is friction, not a feature.
 
 class _TotalsCard extends StatelessWidget {
   const _TotalsCard({required this.subtotal, required this.deliveryFee, required this.s});
@@ -655,13 +732,64 @@ class _CheckoutBar extends ConsumerStatefulWidget {
   ConsumerState<_CheckoutBar> createState() => _CheckoutBarState();
 }
 
+/// The place-order lifecycle the bar reflects. Kept explicit so the button label
+/// ("Sending" vs "Checking") and the double-submit guard read from one source.
+enum _CheckoutPhase { idle, sending, verifying }
+
 class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
-  bool _placing = false;
+  _CheckoutPhase _phase = _CheckoutPhase.idle;
+  String? _error;
+
+  bool get _busy => _phase != _CheckoutPhase.idle;
 
   Future<void> _place() async {
+    // Double-submit prevention: while a submission is in flight the button is
+    // already disabled, and this guards the programmatic retry path too.
+    if (_busy || _submitting) return;
+    // Claim the submission BEFORE the first await: the pre-flight checks below
+    // (sign-in, addresses, cars) take time, and a second tap during them used
+    // to reach `place()` as well — two real orders. Released on every exit.
+    _submitting = true;
+    try {
+      await _placeChecked();
+    } finally {
+      _submitting = false;
+    }
+  }
+
+  bool _submitting = false;
+
+  Future<void> _placeChecked() async {
     final s = widget.s;
+
+    // Sign-in is required only here, at checkout. A guest builds the cart
+    // freely; when they commit to ordering, send them to sign in and return
+    // to this same cart (the cart state survives the in-app navigation).
+    final signedIn = await ref.read(authRepositoryProvider).isSignedIn();
+    if (!signedIn) {
+      if (!mounted) return;
+      final next = Uri.encodeComponent('/s/${widget.token}/cart');
+      context.push('/signin?next=$next');
+      return;
+    }
+
     final mode = ref.read(modeForStoreProvider(widget.token)) ?? FulfillmentMode.pickup;
     final cart = ref.read(cartForStoreProvider(widget.token));
+
+    // Branch must be chosen explicitly when the store has more than one, so an
+    // order never silently goes to the wrong branch. One-branch stores are used
+    // automatically (nothing to choose).
+    final store = ref.read(storefrontProvider(widget.token)).value;
+    final branches = store?.branches ?? const [];
+    // Only a branch that belongs to THIS store counts as chosen; anything else
+    // (a stale id) is treated as "nothing chosen" and never sent.
+    final chosenBranch = ref.read(selectedBranchIdProvider(widget.token));
+    final branchId = branches.any((b) => b.id == chosenBranch) ? chosenBranch : null;
+    if (branches.length > 1 && branchId == null) {
+      if (!mounted) return;
+      setState(() => _error = s.selectBranchRequired);
+      return;
+    }
 
     // Delivery needs a saved address; curbside needs a saved car. Pull the
     // customer's default; prompt to add one if they have none.
@@ -690,7 +818,22 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
       carId = cars.any((c) => c.id == selId) ? selId : cars.first.id;
     }
 
-    setState(() => _placing = true);
+    // Dine-in: the party size is mandatory. Surface the requirement next to the
+    // button rather than silently placing an order without it.
+    int? partySize;
+    if (mode == FulfillmentMode.dineIn) {
+      partySize = ref.read(partySizeProvider);
+      if (partySize == null) {
+        if (!mounted) return;
+        setState(() => _error = s.partySizeRequired);
+        return;
+      }
+    }
+
+    setState(() {
+      _phase = _CheckoutPhase.sending;
+      _error = null;
+    });
     try {
       final order = await ref.read(orderRepositoryProvider).place(
             storeToken: widget.token,
@@ -698,22 +841,54 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
             lines: cart.lines,
             addressId: addressId,
             carId: carId,
-            branchId: ref.read(selectedBranchIdProvider),
+            partySize: partySize,
+            branchId: branchId,
           );
-      ref.read(cartProvider.notifier).clear();
       if (!mounted) return;
-      context.pushReplacement('/orders/${order.id}');
+      _confirm(order.id);
     } on Object catch (error) {
       final failure = ApiFailure.from(error);
+
+      // Unknown result: the connection dropped after we sent, so the order MAY
+      // have been created. Verify against the customer's active orders before
+      // letting them try again — a blind retry here is what creates duplicates.
+      if (failure.isConnectionIssue) {
+        if (!mounted) return;
+        setState(() => _phase = _CheckoutPhase.verifying);
+        final match = await findRecentMatchingOrder(
+          ref.read(orderRepositoryProvider),
+          storeToken: widget.token,
+          lines: cart.lines,
+        );
+        if (!mounted) return;
+        if (match != null) {
+          _confirm(match.id); // it went through after all — open it, don't resend
+          return;
+        }
+        setState(() {
+          _phase = _CheckoutPhase.idle;
+          _error = s.checkoutConnectionUnknown;
+        });
+        return;
+      }
+
       if (!mounted) return;
-      setState(() => _placing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(failure.fromServer ? failure.message : s.orderFailed),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      setState(() {
+        _phase = _CheckoutPhase.idle;
+        // A server-localized message is shown as-is; anything else falls back to
+        // our own wording rather than leaking transport/exception text.
+        _error = failure.fromServer ? failure.message : s.orderFailed;
+      });
     }
+  }
+
+  /// Move to the confirmation once we KNOW the order exists: clear the cart and
+  /// REPLACE this screen with tracking, so Back returns to the store and can
+  /// never re-submit. `placed=1` tells tracking to open on its confirmation.
+  void _confirm(int orderId) {
+    AppHaptics.success();
+    ref.read(cartProvider.notifier).clear();
+    context.pushReplacement('/orders/$orderId?placed=1');
   }
 
   @override
@@ -727,26 +902,60 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: FilledButton(
-            onPressed: _placing ? null : _place,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.ink900,
-              minimumSize: const Size.fromHeight(58),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-            ),
-            child: _placing
-                ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(s.placeOrder,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(width: 10),
-                      RiyalPrice(amount: total, size: 15, color: Colors.white),
-                    ],
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // The failure is shown right above the button that produced it,
+              // sliding in calmly, and the cart underneath is left untouched.
+              AnimatedSize(
+                duration: AppMotion.dur(context, AppMotion.base),
+                curve: AppMotion.curve,
+                alignment: Alignment.bottomCenter,
+                child: _error == null
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: InlineError(message: _error!, onRetry: _place),
+                      ),
+              ),
+              FilledButton(
+                onPressed: _busy ? null : _place,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.ink900,
+                  disabledBackgroundColor: AppColors.ink900.withValues(alpha: 0.72),
+                  disabledForegroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(58),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+                child: AnimatedSwitcher(
+                  duration: AppMotion.dur(context, AppMotion.fast),
+                  child: _busy
+                      ? Row(
+                          key: const ValueKey('busy'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                            const SizedBox(width: 12),
+                            Text(_phase == _CheckoutPhase.verifying ? s.verifyingOrder : s.sendingOrder,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                          ],
+                        )
+                      : Row(
+                          key: const ValueKey('idle'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(s.placeOrder,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 10),
+                            RiyalPrice(amount: total, size: 15, color: Colors.white),
+                          ],
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -782,8 +991,9 @@ class _EmptyCart extends StatelessWidget {
   }
 }
 
-/// The floating "review order · total" bar shown over the storefront while the
-/// cart for this store has anything in it.
+/// The floating "view cart" bar (`.viewcart`) shown over the storefront, above
+/// the nav, while the cart for this store has anything in it: count box, label,
+/// total — in the merchant's brand colour.
 class CartBar extends ConsumerWidget {
   const CartBar({super.key, required this.token, required this.brand});
 
@@ -797,31 +1007,34 @@ class CartBar extends ConsumerWidget {
 
     if (cart.isEmpty) return const SizedBox.shrink();
 
-    return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: FilledButton(
-        onPressed: () => context.push('/s/$token/cart'),
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.ink900,
-          minimumSize: const Size.fromHeight(56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ),
+    return GestureDetector(
+      onTap: () {
+        AppHaptics.tick();
+        context.push('/s/$token/cart');
+      },
+      child: Container(
+        height: 60,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(color: brand, borderRadius: BorderRadius.circular(18)),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(minWidth: 34),
+              height: 34,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(11),
               ),
               child: Text('${cart.count}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
-            const SizedBox(width: 10),
-            Text(s.reviewOrder,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 12),
+            Text(s.viewCart,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
             const Spacer(),
-            RiyalPrice(amount: cart.total, size: 15, color: Colors.white),
+            RiyalPrice(amount: cart.total, size: 16, color: Colors.white),
           ],
         ),
       ),

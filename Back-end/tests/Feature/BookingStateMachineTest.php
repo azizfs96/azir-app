@@ -40,6 +40,9 @@ class BookingStateMachineTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // The scenarios use fixed October-2026 dates; pin "now" before them so the
+        // lead-time rule keeps passing after those dates are behind us.
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-09-25 09:00:00', self::TZ));
 
         $merchant = Merchant::factory()->create();
         app(TenantContext::class)->setTenant($merchant);
@@ -93,6 +96,12 @@ class BookingStateMachineTest extends TestCase
     private function sara(): Staff
     {
         return Staff::with(['schedules', 'services'])->findOrFail($this->sara->id);
+    }
+
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+        parent::tearDown();
     }
 
     private function at(string $ymd, int $hour): CarbonImmutable

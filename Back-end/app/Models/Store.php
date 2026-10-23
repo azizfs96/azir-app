@@ -147,7 +147,7 @@ class Store extends Model
                 continue;
             }
             $anyConfigured = true;
-            if (\App\Domain\Merchant\OpeningHoursSummary::isBranchOpenNow($branch)) {
+            if (\App\Domain\Merchant\OpeningHoursSummary::isBranchOpenNow($branch, $this->timezone)) {
                 return true;
             }
         }

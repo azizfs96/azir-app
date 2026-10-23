@@ -46,6 +46,7 @@ class OrderService
         ?string $tableNumber = null,
         ?CustomerAddress $deliveryAddress = null,
         ?CustomerCar $car = null,
+        ?int $partySize = null,
     ): Order {
         if ($lines === []) {
             throw new OrderNotPlaceable('EMPTY_CART', 'An order must contain at least one item.');
@@ -56,6 +57,13 @@ class OrderService
 
         if ($engineKey !== 'restaurant') {
             throw new OrderNotPlaceable('NOT_A_RESTAURANT', 'This store does not take orders.');
+        }
+
+        // Opening hours are enforced here, not only on the storefront badge: a
+        // stale screen (or a crafted request) must not drop an order into a
+        // kitchen that is closed.
+        if (! $store->isOpenNow()) {
+            throw new OrderNotPlaceable('STORE_CLOSED', 'The store is closed right now.');
         }
 
         // Delivery needs a destination, and it must be the ordering customer's
@@ -93,15 +101,18 @@ class OrderService
 
         return DB::transaction(function () use (
             $store, $lines, $fulfillmentType, $branch, $customer, $notes, $tableNumber,
-            $settings, $deliveryAddress, $car,
+            $settings, $deliveryAddress, $car, $partySize,
         ): Order {
             $isDelivery = $fulfillmentType === 'delivery';
+            $isDineIn = $fulfillmentType === 'dine_in';
 
             $order = new Order([
                 'branch_id' => $branch?->id,
                 'customer_id' => $customer?->id,
                 'fulfillment_type' => $fulfillmentType,
-                'table_number' => $fulfillmentType === 'dine_in' ? $tableNumber : null,
+                'table_number' => $isDineIn ? $tableNumber : null,
+                // Party size only applies to dine-in; never carried for other types.
+                'party_size' => $isDineIn ? $partySize : null,
                 'customer_notes' => $notes,
                 'source' => 'app',
             ]);
@@ -237,7 +248,9 @@ class OrderService
             throw new OrderNotPlaceable('ITEM_UNAVAILABLE', "Line {$index}: '{$item->name_ar}' is sold out.");
         }
 
-        $chosenIds = array_map('intval', $line['option_ids'] ?? []);
+        // One vote per option: a repeated id must not count twice toward
+        // max_select, nor be charged (or discounted) twice.
+        $chosenIds = array_values(array_unique(array_map('intval', $line['option_ids'] ?? [])));
         $unitPrice = (float) $item->price;
 
         // Snapshots to write once the whole line validates: each entry already
@@ -292,6 +305,8 @@ class OrderService
             );
         }
 
+        // Negative deltas ("بدون جبن" -2) may never push a line below zero.
+        $unitPrice = max(0.0, $unitPrice);
         $lineTotal = round($unitPrice * $quantity, 2);
 
         $orderItem = $order->items()->create([

@@ -28,6 +28,11 @@ return [
     'otp_expired' => 'That code has expired. Please request a new one.',
     'otp_throttled' => 'Too many attempts. Please try again shortly.',
     'fulfillment_unavailable' => 'That order method is currently unavailable.',
+    'branch_not_found' => 'That branch does not belong to this store. Please choose a branch again.',
+    'order_store_closed' => 'The store is closed right now. You can order during opening hours.',
+    'order_below_min_order' => 'The amount is below the delivery minimum.',
+    'order_item_unavailable' => 'An item in your cart is currently unavailable.',
+    'order_option_unavailable' => 'One of the chosen options is currently unavailable.',
     'order_not_placeable' => 'Could not place the order. Check your cart and try again.',
     'order_not_cancellable' => 'The order can no longer be cancelled once the restaurant accepts it.',
 ];

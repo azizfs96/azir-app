@@ -24,7 +24,7 @@ class OpeningHoursSummary
     /**
      * @return array{days: string, hours: string, is_open_now: bool}|null
      */
-    public static function for(Branch $branch, string $locale = 'ar'): ?array
+    public static function for(Branch $branch, string $locale = 'ar', ?string $timezone = null): ?array
     {
         $rows = $branch->schedules->where('is_closed', false);
 
@@ -48,7 +48,7 @@ class OpeningHoursSummary
         return [
             'days' => self::describeDays($days, $labels),
             'hours' => self::formatTime($opens, $locale).' - '.self::formatTime($closes, $locale),
-            'is_open_now' => self::isBranchOpenNow($branch),
+            'is_open_now' => self::isBranchOpenNow($branch, $timezone),
         ];
     }
 
@@ -101,26 +101,37 @@ class OpeningHoursSummary
     /**
      * Whether the branch is open at this moment, in ITS timezone.
      */
-    public static function isBranchOpenNow(Branch $branch): bool
+    public static function isBranchOpenNow(Branch $branch, ?string $timezone = null): bool
     {
-        $timezone = $branch->store?->timezone ?? config('wasla.default_timezone');
+        // The caller (Store::isOpenNow) passes the store's timezone so this
+        // never lazy-loads branch->store (a LazyLoadingViolation outside
+        // production, an N+1 inside it).
+        $timezone ??= ($branch->relationLoaded('store') ? $branch->store?->timezone : null)
+            ?? config('wasla.default_timezone');
         $now = now($timezone);
 
         foreach ($branch->schedules->where('is_closed', false) as $row) {
-            if ((int) $row->day_of_week !== (int) $now->dayOfWeek) {
-                continue;
-            }
+            // Today's shift, plus yesterday's shift if it runs past midnight
+            // (Friday 20:00–02:00 is still open at Saturday 01:00).
+            foreach ([0, 1] as $daysAgo) {
+                $day = $now->copy()->subDays($daysAgo);
+                if ((int) $row->day_of_week !== (int) $day->dayOfWeek) {
+                    continue;
+                }
 
-            $opens = $now->copy()->setTimeFromTimeString((string) $row->opens_at);
-            $closes = $now->copy()->setTimeFromTimeString((string) $row->closes_at);
+                $opens = $day->copy()->setTimeFromTimeString((string) $row->opens_at);
+                $closes = $day->copy()->setTimeFromTimeString((string) $row->closes_at);
 
-            // A shift ending past midnight closes on the following day.
-            if ($closes->lessThanOrEqualTo($opens)) {
-                $closes = $closes->addDay();
-            }
+                // A shift ending past midnight closes on the following day.
+                if ($closes->lessThanOrEqualTo($opens)) {
+                    $closes = $closes->addDay();
+                } elseif ($daysAgo === 1) {
+                    continue; // yesterday's shift ended yesterday
+                }
 
-            if ($now->betweenIncluded($opens, $closes)) {
-                return true;
+                if ($now->betweenIncluded($opens, $closes)) {
+                    return true;
+                }
             }
         }
 

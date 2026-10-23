@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Clock, Phone, Printer, ShoppingBag } from 'lucide-react'
+import { Clock, Phone, Printer, ShoppingBag, Users } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { api } from '@/api/client'
 import { useT } from '@/app/i18n'
@@ -35,6 +35,7 @@ interface Order {
   status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'rejected' | 'cancelled'
   fulfillment_type: 'pickup' | 'dine_in' | 'delivery' | 'curbside'
   table_number: string | null
+  party_size: number | null
   subtotal: number
   delivery_fee: number
   tax_amount: number
@@ -166,6 +167,11 @@ function OrderCard({
           <div className="mt-1 flex items-center gap-2 text-xs text-ink-400">
             <span>{t.orders.fulfillment[order.fulfillment_type]}</span>
             {order.table_number && <span>· {order.table_number}</span>}
+            {order.fulfillment_type === 'dine_in' && order.party_size != null && (
+              <span className="flex items-center gap-1">
+                · <Users className="size-3" /> {order.party_size}
+              </span>
+            )}
             {time && (
               <span className="flex items-center gap-1">
                 · <Clock className="size-3" /> {time}
@@ -256,17 +262,24 @@ function InvoiceBlock({ invoice, order }: { invoice: Invoice; order: Order }) {
     const rate = invoice.tax_rate || 0
     const n = (v: number) => v.toFixed(2)
     const money = (v: number) => `${v.toFixed(2)} ${t.common.currency}`
+    // Everything interpolated below is written as HTML into a window on OUR
+    // origin. Customer names, dish names and seller details are user-supplied,
+    // so escape them — a `<img onerror>` in a customer's name must stay text.
+    const esc = (v: unknown) =>
+      String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
+    const safeUrl = (u: string | null | undefined) =>
+      u && /^(https?:|data:image\/)/i.test(u) ? esc(u) : ''
 
     const line = (name: string, qty: number, taxable: number) => {
       const vat = taxable * rate / 100
-      return `<tr><td class="name">${name}</td><td>${qty}</td><td>${n(taxable)}</td><td>${n(vat)}</td><td>${n(taxable + vat)}</td></tr>`
+      return `<tr><td class="name">${esc(name)}</td><td>${qty}</td><td>${n(taxable)}</td><td>${n(vat)}</td><td>${n(taxable + vat)}</td></tr>`
     }
     const rows =
       order.items.map((it) => line(it.name, it.quantity, it.line_total)).join('') +
       (order.delivery_fee > 0 ? line(t.orders.deliveryFee, 1, order.delivery_fee) : '')
 
     w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8">
-      <title>${t.orders.taxInvoice} ${invoice.number ?? order.reference}</title>
+      <title>${esc(t.orders.taxInvoice)} ${esc(invoice.number ?? order.reference)}</title>
       <style>
         *{font-family:-apple-system,'Segoe UI',Tahoma,sans-serif;color:#1a1512;box-sizing:border-box}
         body{margin:0;padding:28px;font-size:12px}
@@ -291,18 +304,18 @@ function InvoiceBlock({ invoice, order }: { invoice: Invoice; order: Order }) {
         .foot{text-align:center;color:#9a9a9a;font-size:10px;margin-top:8px}
       </style></head><body><div class="wrap">
       <h1>فاتورة ضريبية مبسطة</h1>
-      <div class="sub">${t.orders.taxInvoice}: ${invoice.number ?? order.reference} · ${invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString('ar') : ''}</div>
-      ${invoice.logo ? `<img class="logo" src="${invoice.logo}" alt="logo">` : ''}
+      <div class="sub">${esc(t.orders.taxInvoice)}: ${esc(invoice.number ?? order.reference)} · ${invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString('ar') : ''}</div>
+      ${safeUrl(invoice.logo) ? `<img class="logo" src="${safeUrl(invoice.logo)}" alt="logo">` : ''}
       <div class="seller">
-        ${invoice.seller_name ? `<div class="nm">${invoice.seller_name}</div>` : ''}
-        ${invoice.tax_number ? `<div class="muted">${t.orders.vatNumber}: ${invoice.tax_number}</div>` : ''}
-        ${invoice.commercial_registration ? `<div class="muted">سجل تجاري رقم: ${invoice.commercial_registration}</div>` : ''}
-        ${invoice.national_address ? `<div class="muted">العنوان: ${invoice.national_address}</div>` : ''}
+        ${invoice.seller_name ? `<div class="nm">${esc(invoice.seller_name)}</div>` : ''}
+        ${invoice.tax_number ? `<div class="muted">${esc(t.orders.vatNumber)}: ${esc(invoice.tax_number)}</div>` : ''}
+        ${invoice.commercial_registration ? `<div class="muted">سجل تجاري رقم: ${esc(invoice.commercial_registration)}</div>` : ''}
+        ${invoice.national_address ? `<div class="muted">العنوان: ${esc(invoice.national_address)}</div>` : ''}
       </div>
       <hr>
       ${order.customer?.name || order.customer?.phone ? `<div class="sec">معلومات العميل</div>
-        ${order.customer?.name ? `<div class="kv"><span class="k">الاسم</span><span>${order.customer.name}</span></div>` : ''}
-        ${order.customer?.phone ? `<div class="kv"><span class="k">الهاتف</span><span>${order.customer.phone}</span></div>` : ''}<hr>` : ''}
+        ${order.customer?.name ? `<div class="kv"><span class="k">الاسم</span><span>${esc(order.customer.name)}</span></div>` : ''}
+        ${order.customer?.phone ? `<div class="kv"><span class="k">الهاتف</span><span>${esc(order.customer.phone)}</span></div>` : ''}<hr>` : ''}
       <div class="sec">معلومات المنتجات</div>
       <table>
         <tr><th style="text-align:right">اسم المنتج</th><th>الكمية</th><th>الخاضع للضريبة</th><th>الضريبة</th><th>شامل الضريبة</th></tr>
@@ -317,8 +330,8 @@ function InvoiceBlock({ invoice, order }: { invoice: Invoice; order: Order }) {
       <hr>
       <div class="sec">طريقة الدفع</div>
       <div class="kv"><span class="k">الدفع عند الاستلام</span><span>${money(order.total)}</span></div>
-      <div class="qr"><img src="${qrDataUrl}" width="150" height="150" alt="QR"></div>
-      <div class="foot">© ${invoice.seller_name ?? ''} ${invoice.issued_at ? new Date(invoice.issued_at).getFullYear() : ''}</div>
+      <div class="qr"><img src="${safeUrl(qrDataUrl)}" width="150" height="150" alt="QR"></div>
+      <div class="foot">© ${esc(invoice.seller_name ?? '')} ${invoice.issued_at ? new Date(invoice.issued_at).getFullYear() : ''}</div>
       </div></body></html>`)
     w.document.close()
     w.focus()

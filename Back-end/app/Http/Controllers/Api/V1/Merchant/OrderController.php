@@ -29,7 +29,7 @@ class OrderController extends MerchantController
 
         $query = Order::query()
             ->where('store_id', $this->merchantStore()->id)
-            ->with(['customer', 'items.options'])
+            ->with(['customer.user', 'items.options'])
             ->latest();
 
         $query = $filter === 'past'
@@ -86,7 +86,7 @@ class OrderController extends MerchantController
         }
 
         return response()->json([
-            'order' => new OrderResource($order->load(['customer', 'items.options'])),
+            'order' => new OrderResource($order->load(['customer.user', 'items.options'])),
             'allowed_transitions' => array_map(
                 fn (OrderStatus $status) => $status->value,
                 $order->status->allowedTransitions(),

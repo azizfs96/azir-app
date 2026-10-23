@@ -194,7 +194,7 @@ class StorefrontResource extends JsonResource
 
         $branch->loadMissing('schedules');
 
-        return OpeningHoursSummary::for($branch, app()->getLocale());
+        return OpeningHoursSummary::for($branch, app()->getLocale(), $this->timezone);
     }
 
     /**

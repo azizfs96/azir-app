@@ -22,6 +22,7 @@ class OrderResource extends JsonResource
             'status' => $this->status->value,
             'fulfillment_type' => $this->fulfillment_type,
             'table_number' => $this->table_number,
+            'party_size' => $this->party_size,
             'subtotal' => (float) $this->subtotal,
             'delivery_fee' => (float) $this->delivery_fee,
             'tax_rate' => (float) $this->tax_rate,
@@ -61,8 +62,8 @@ class OrderResource extends JsonResource
                 'name' => $this->store->name_ar,
             ]),
             'customer' => $this->whenLoaded('customer', fn () => [
-                'name' => $this->customer?->name,
-                'phone' => $this->customer?->phone,
+                'name' => $this->customer?->fullName() ?: $this->customer?->user?->name,
+                'phone' => $this->customer?->user?->phone,
             ]),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
         ];
