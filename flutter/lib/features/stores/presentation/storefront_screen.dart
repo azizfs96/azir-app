@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../../../core/localization/strings.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../booking/data/store_bookings_provider.dart';
 import '../../home/data/my_stores_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/storefront.dart';
+import '../../menu/cart_screen.dart';
 import '../../menu/menu_view.dart';
 import '../../menu/restaurant_header.dart';
 import '../../menu/restaurant_nav_bar.dart';
@@ -67,9 +70,9 @@ class _StorefrontScreenState extends ConsumerState<StorefrontScreen> {
     final isRestaurant = store.value?.isRestaurant ?? false;
 
     return Scaffold(
-      backgroundColor: isRestaurant ? AppColors.cream : Colors.white,
+      backgroundColor: isRestaurant ? Ds.bg : Colors.white,
       body: store.when(
-        loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        loading: () => const _MenuSkeleton(),
         /*
          * A connection failure is NOT "no such store". Conflating them told a
          * customer their merchant's printed code was invalid when the real
@@ -82,6 +85,56 @@ class _StorefrontScreenState extends ConsumerState<StorefrontScreen> {
                 onRetry: () => ref.invalidate(storefrontProvider(widget.token)),
               ),
         data: (data) => _StoreView(store: data, s: s, token: widget.token),
+      ),
+    );
+  }
+}
+
+/// Loading placeholder shaped like the storefront (banner, filter chips, dish
+/// grid) so the real menu swaps in without a jarring blank-to-content jump.
+class _MenuSkeleton extends StatelessWidget {
+  const _MenuSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: const [
+                SkeletonBox(width: 130, height: 22, radius: 7),
+                Spacer(),
+                SkeletonBox(width: 40, height: 40, radius: 20),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const SkeletonBox(height: 150, radius: 20),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                for (var i = 0; i < 4; i++) ...[
+                  const SkeletonBox(width: 72, height: 34, radius: 18),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+            const SizedBox(height: 18),
+            for (var r = 0; r < 2; r++)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Expanded(child: SkeletonBox(height: 180, radius: 16, color: Colors.white)),
+                    SizedBox(width: 12),
+                    Expanded(child: SkeletonBox(height: 180, radius: 16, color: Colors.white)),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -100,6 +153,105 @@ class _StoreView extends ConsumerStatefulWidget {
 
 class _StoreViewState extends ConsumerState<_StoreView> {
   int _tab = 0;
+
+  // ---- the sticky category chips (restaurant) --------------------------------
+  // The chip row scrolls in its natural place; this copy follows it and pins
+  // under the status bar once it would scroll out — the design's `.menu-bar`
+  // `position: sticky; top: var(--top)` with the `.topcover` backdrop.
+  final _scroll = ScrollController();
+  final _chipsSlot = GlobalKey();
+  final Map<String, GlobalKey> _anchors = {};
+  int _activeChip = 0;
+  bool _slotMeasured = false;
+
+  GlobalKey _anchorFor(String id) => _anchors.putIfAbsent(id, GlobalKey.new);
+
+  void _onChipTap(int index, String id) {
+    setState(() => _activeChip = index);
+    jumpToMenuSection(_anchors[id]);
+  }
+
+  /// Where the in-flow chip row's top edge currently sits, relative to the
+  /// scroll view's top edge; null until it has been laid out.
+  double? _chipsScreenY() {
+    final box = _chipsSlot.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null || !_scroll.hasClients) return null;
+    return viewport.getOffsetToReveal(box, 0).offset - _scroll.offset;
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// The sticky copy of the chip row. It sits exactly over the in-flow row while
+  /// that row is on screen, then stops under the status bar and stays there
+  /// (with a canvas-coloured backdrop over the status bar) as the menu scrolls
+  /// beneath — `.menu-bar{position:sticky}` + `.topcover`.
+  Widget _stickyChips(BuildContext context) {
+    final menu = store.menu;
+    if (menu == null || menu.isEmpty) return const SizedBox.shrink();
+    final sections = menuSections(menu, s);
+    if (sections.isEmpty) return const SizedBox.shrink();
+
+    // Once docked, the chips sit under a compact header (back / name / actions)
+    // that stays with them — so the store identity and the actions never
+    // scroll away. The chips therefore pin below status bar + header.
+    final statusTop = MediaQuery.paddingOf(context).top;
+    final stickTop = statusTop + StoreTopBar.height;
+    final topBar = StoreTopBar(
+      store: store,
+      s: s,
+      onSearch: () => context.push('/s/${widget.token}/search'),
+      onNotifications: () => context.push('/notifications'),
+      onShare: _share,
+      onBack: context.canPop() ? () => context.pop() : null,
+    );
+
+    return AnimatedBuilder(
+      animation: _scroll,
+      builder: (context, _) {
+        final y = _chipsScreenY();
+        if (y == null) {
+          // First frame: the row isn't laid out yet — measure once it is.
+          if (!_slotMeasured) {
+            _slotMeasured = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }
+          return const SizedBox.shrink();
+        }
+        final pinned = y <= stickTop;
+        final bar = MenuChipBar(
+          titles: [for (final sec in sections) sec.title],
+          active: _activeChip.clamp(0, sections.length - 1),
+          brand: brand,
+          onTap: (i) => _onChipTap(i, sections[i].id),
+        );
+        return Positioned(
+          top: pinned ? 0 : y,
+          left: 0,
+          right: 0,
+          child: pinned
+              ? ColoredBox(
+                  color: Ds.bg,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: statusTop),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [topBar, bar],
+                    ),
+                  ),
+                )
+              : bar,
+        );
+      },
+    );
+  }
 
   Storefront get store => widget.store;
   Strings get s => widget.s;
@@ -145,20 +297,42 @@ class _StoreViewState extends ConsumerState<_StoreView> {
     // A restaurant browses a menu and builds a cart; a salon books an
     // appointment. Same screen shell, two journeys chosen by the engine.
     final scroll = CustomScrollView(
+      controller: store.isRestaurant ? _scroll : null,
       slivers: store.isRestaurant
           ? [
-              RestaurantTopBar(
-                store: store,
-                onShare: _share,
-                onSearch: () => context.push('/s/${widget.token}/search'),
-                onBack: context.canPop() ? () => context.pop() : null,
-              ),
+              // The cover photo is tall and the header climbs into its faded
+              // bottom, so the photo dissolves *behind* the mode bar rather
+              // than stopping at a line above it (the TikTok-profile blend).
               SliverToBoxAdapter(
-                child: RestaurantHeader(
-                  store: store,
-                  s: s,
-                  brand: brand,
-                  onOrderNow: () {},
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    final coverHeight = c.maxWidth / kCoverAspect;
+                    return Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: coverHeight,
+                          child: StoreCover(
+                            store: store,
+                            s: s,
+                            brand: brand,
+                            onSearch: () => context.push('/s/${widget.token}/search'),
+                            onNotifications: () => context.push('/notifications'),
+                            onShare: _share,
+                            onBack: context.canPop() ? () => context.pop() : null,
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            SizedBox(height: coverHeight - kCoverOverlap),
+                            RestaurantHeader(store: store, s: s, brand: brand),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               MenuView(
@@ -167,9 +341,13 @@ class _StoreViewState extends ConsumerState<_StoreView> {
                 brand: brand,
                 s: s,
                 prepMinutes: store.configuration.defaultPrepMinutes,
+                chipsSlotKey: _chipsSlot,
+                activeChip: _activeChip,
+                onChipTap: _onChipTap,
+                anchorFor: _anchorFor,
               ),
-              // Room so the floating cart bar never hides the last dish.
-              const SliverToBoxAdapter(child: SizedBox(height: 96)),
+              // Room so the floating cart bar + nav never hide the last dish.
+              const SliverToBoxAdapter(child: SizedBox(height: 140)),
             ]
           : [
               header,
@@ -217,17 +395,30 @@ class _StoreViewState extends ConsumerState<_StoreView> {
         ref.invalidate(storefrontProvider(widget.token));
         ref.invalidate(storeBookingsProvider(widget.token));
       },
-      // A warm cream canvas with the bottom nav FLOATING over the menu, so the
-      // dishes scroll behind the tabs (Jahez-style).
+      // The design canvas with the bottom nav and the "view cart" bar FLOATING
+      // over the menu, so the dishes scroll behind them.
       child: store.isRestaurant
           ? ColoredBox(
-              color: AppColors.cream,
+              color: Ds.bg,
               child: Stack(
                 children: [
                   scroll,
+                  _stickyChips(context),
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: RestaurantNavBar(token: widget.token, active: NavTab.home),
+                    child: RestaurantNavBar(token: widget.token, active: NavTab.home, brand: brand),
+                  ),
+                  // `.viewcart`: 14px in from the sides, sitting above the nav.
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(
+                      top: false,
+                      minimum: const EdgeInsets.only(bottom: 19),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 0, 14, 82),
+                        child: CartBar(token: widget.token, brand: brand),
+                      ),
+                    ),
                   ),
                 ],
               ),
