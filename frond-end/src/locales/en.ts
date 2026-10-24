@@ -28,6 +28,36 @@ export const en: Translated<typeof ar> = {
     signingIn: 'Signing in…',
     welcome: 'Welcome back',
     subtitle: 'Business dashboard',
+    noAccount: "Don't have an account?",
+    createAccount: 'Register your business',
+  },
+
+  register: {
+    title: 'Register your business on Azir',
+    subtitle: 'One minute: an account, a store, and a printable QR once approved.',
+    businessName: 'Business name',
+    businessType: 'Business type',
+    types: { restaurant: 'Restaurant / café', beauty_wellness: 'Salon / clinic / bookings' },
+    ownerName: 'Owner name',
+    phone: 'Mobile number',
+    passwordHint: 'At least 8 characters',
+    submit: 'Create account',
+    submitting: 'Creating account…',
+    haveAccount: 'Already have an account?',
+    pending: {
+      pending: {
+        title: 'Your request is under review',
+        body: "We received your registration and will activate the account within one business day. You'll get an email on approval; then you can upload your menu and print your QR.",
+      },
+      suspended: {
+        title: 'Account temporarily suspended',
+        body: 'This account has been suspended. Contact support to learn why and get reinstated.',
+      },
+      rejected: {
+        title: 'Account not approved',
+        body: 'The registration was not approved. Contact support if you believe this is a mistake.',
+      },
+    },
   },
 
   dashboard: {

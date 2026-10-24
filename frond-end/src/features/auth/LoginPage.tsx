@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/app/auth'
 import { useI18n } from '@/app/i18n'
 import { Button } from '@/components/ui/Button'
@@ -64,6 +64,12 @@ export function LoginPage() {
           <Button type="submit" className="w-full" loading={busy}>
             {busy ? t.auth.signingIn : t.auth.signIn}
           </Button>
+          <p className="text-center text-xs text-ink-500">
+            {t.auth.noAccount}{' '}
+            <Link to="/register" className="font-medium text-ink-900 underline-offset-2 hover:underline">
+              {t.auth.createAccount}
+            </Link>
+          </p>
         </form>
 
         <button

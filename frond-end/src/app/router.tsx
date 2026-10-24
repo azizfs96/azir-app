@@ -3,6 +3,7 @@ import { useAuth } from '@/app/auth'
 import { useT } from '@/app/i18n'
 import { AppShell } from '@/app/AppShell'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { PendingPage, RegisterPage } from '@/features/auth/RegisterPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { BookingsPage } from '@/features/bookings/BookingsPage'
 import { ServicesPage } from '@/features/services/ServicesPage'
@@ -54,6 +55,11 @@ function Protected({ children }: { children: React.ReactNode }) {
   // An admin has no tenant, so the merchant dashboard would query nothing.
   if (user.role === 'admin') return <Navigate to="/admin" replace />
 
+  // Not yet approved (or suspended/rejected): every /merchant/* call would 403,
+  // so explain the state instead of rendering an empty, erroring dashboard.
+  const status = user.merchant?.status
+  if (status && status !== 'approved') return <PendingPage status={status} />
+
   return <>{children}</>
 }
 
@@ -61,6 +67,7 @@ export function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route path="/admin" element={<AdminOnly><AdminShell /></AdminOnly>}>
         <Route index element={<AdminMerchantsPage />} />
