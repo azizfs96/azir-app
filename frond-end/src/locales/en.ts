@@ -3,7 +3,7 @@ import type { Translated } from './index'
 
 /** English mirrors the Arabic key shape exactly (spec §33). */
 export const en: Translated<typeof ar> = {
-  brand: { name: 'Wasla', tagline: 'Scan, and enter directly' },
+  brand: { name: 'Azir', tagline: 'Scan, and enter directly' },
 
   nav: {
     dashboard: 'Dashboard',
@@ -27,7 +27,7 @@ export const en: Translated<typeof ar> = {
     password: 'Password',
     signingIn: 'Signing in…',
     welcome: 'Welcome back',
-    subtitle: 'Business dashboard',
+    subtitle: 'Merchant dashboard — Azir',
     noAccount: "Don't have an account?",
     createAccount: 'Register your business',
   },
@@ -106,7 +106,7 @@ export const en: Translated<typeof ar> = {
 
   qr: {
     title: 'Your QR code',
-    subtitle: 'Print it and put it in your store. Scanning opens your store directly inside Wasla.',
+    subtitle: 'Print it and put it in your store. Scanning opens your store directly inside Azir.',
     download: 'Download PNG',
     downloadSvg: 'Download SVG for print',
     link: 'Link',

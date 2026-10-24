@@ -1,5 +1,5 @@
 export const ar = {
-  brand: { name: 'وصلة', tagline: 'امسح، وادخل مباشرة' },
+  brand: { name: 'Azir', tagline: 'امسح، وادخل مباشرة' },
 
   nav: {
     dashboard: 'الرئيسية',
@@ -23,7 +23,7 @@ export const ar = {
     password: 'كلمة المرور',
     signingIn: 'جارٍ تسجيل الدخول…',
     welcome: 'مرحباً بعودتك',
-    subtitle: 'لوحة تحكم النشاط التجاري',
+    subtitle: 'لوحة تحكم التاجر — Azir',
     noAccount: 'ما عندك حساب؟',
     createAccount: 'سجّل نشاطك',
   },
@@ -102,7 +102,7 @@ export const ar = {
 
   qr: {
     title: 'رمز QR الخاص بك',
-    subtitle: 'اطبعه وضعه في متجرك. المسح يفتح متجرك مباشرة داخل تطبيق وصلة.',
+    subtitle: 'اطبعه وضعه في متجرك. المسح يفتح متجرك مباشرة داخل تطبيق Azir.',
     download: 'تحميل PNG',
     downloadSvg: 'تحميل SVG للطباعة',
     link: 'الرابط',

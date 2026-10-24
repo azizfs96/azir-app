@@ -21,9 +21,7 @@ export function AdminShell() {
     <div className="flex min-h-dvh bg-ink-50">
       <aside className="hidden w-56 shrink-0 flex-col border-e border-ink-200 bg-white md:flex">
         <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-accent-600 text-sm font-semibold text-white">
-            و
-          </div>
+          <img src="/azir-logo.png" alt="Azir" className="size-8 rounded-lg" />
           <div className="text-sm font-semibold text-ink-900">{t.admin.title}</div>
         </div>
 

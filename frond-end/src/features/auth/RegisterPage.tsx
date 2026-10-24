@@ -65,9 +65,7 @@ export function RegisterPage() {
     <div className="flex min-h-dvh items-center justify-center bg-ink-50 px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-ink-900 text-lg font-semibold text-white">
-            و
-          </div>
+          <img src="/azir-logo.png" alt="Azir" className="mx-auto mb-3 h-16 w-auto" />
           <h1 className="text-lg font-semibold tracking-tight text-ink-900">{t.register.title}</h1>
           <p className="mt-1 text-sm text-ink-500">{t.register.subtitle}</p>
         </div>

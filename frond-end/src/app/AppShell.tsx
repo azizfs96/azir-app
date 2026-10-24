@@ -65,9 +65,7 @@ export function AppShell() {
     <div className="flex min-h-dvh bg-ink-50">
       <aside className="hidden w-60 shrink-0 flex-col border-e border-ink-200 bg-white md:flex">
         <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-ink-900 text-sm font-semibold text-white">
-            و
-          </div>
+          <img src="/azir-logo.png" alt="Azir" className="size-8 rounded-lg" />
           <div className="leading-tight">
             <div className="text-sm font-semibold text-ink-900">{t.brand.name}</div>
             <div className="text-[11px] text-ink-400">{user?.merchant?.display_name}</div>

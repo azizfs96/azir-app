@@ -34,9 +34,7 @@ export function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center bg-ink-50 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-ink-900 text-lg font-semibold text-white">
-            و
-          </div>
+          <img src="/azir-logo.png" alt="Azir" className="mx-auto mb-3 h-16 w-auto" />
           <h1 className="text-lg font-semibold tracking-tight text-ink-900">{t.auth.welcome}</h1>
           <p className="mt-1 text-sm text-ink-500">{t.auth.subtitle}</p>
         </div>
@@ -64,13 +62,17 @@ export function LoginPage() {
           <Button type="submit" className="w-full" loading={busy}>
             {busy ? t.auth.signingIn : t.auth.signIn}
           </Button>
-          <p className="text-center text-xs text-ink-500">
-            {t.auth.noAccount}{' '}
-            <Link to="/register" className="font-medium text-ink-900 underline-offset-2 hover:underline">
-              {t.auth.createAccount}
-            </Link>
-          </p>
         </form>
+
+        <div className="mt-4 rounded-xl border border-ink-200 bg-white p-4 text-center">
+          <p className="mb-3 text-sm text-ink-500">{t.auth.noAccount}</p>
+          <Link
+            to="/register"
+            className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-ink-900 text-sm font-medium text-ink-900 hover:bg-ink-50"
+          >
+            {t.auth.createAccount}
+          </Link>
+        </div>
 
         <button
           onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
