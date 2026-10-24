@@ -42,7 +42,10 @@ api.interceptors.response.use(
     // rather than leaving the dashboard in a half-broken state.
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY)
-      if (!window.location.pathname.startsWith('/login')) {
+      // Public auth pages must never be bounced: a stale token in storage makes
+      // /auth/me 401 on load, which used to throw /register visitors to /login.
+      const path = window.location.pathname
+      if (!path.startsWith('/login') && !path.startsWith('/register')) {
         window.location.href = '/login'
       }
     }
