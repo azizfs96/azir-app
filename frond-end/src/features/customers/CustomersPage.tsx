@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Users } from 'lucide-react'
 import { api } from '@/api/client'
 import { useT } from '@/app/i18n'
+import { useStoreType } from '@/features/menu/useStoreType'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -13,6 +14,7 @@ interface MerchantCustomer {
   name: string | null
   phone: string | null
   total_bookings: number
+  total_orders: number
   completed: number
   no_shows: number
   cancelled: number
@@ -28,6 +30,7 @@ interface MerchantCustomer {
  */
 export function CustomersPage() {
   const t = useT()
+  const { isRestaurant } = useStoreType()
   const [search, setSearch] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -62,7 +65,7 @@ export function CustomersPage() {
           <EmptyState
             icon={<Users className="size-8" />}
             title={t.customersPage.empty}
-            hint={t.customersPage.emptyHint}
+            hint={isRestaurant ? t.customersPage.emptyHintOrders : t.customersPage.emptyHint}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -70,7 +73,7 @@ export function CustomersPage() {
               <thead>
                 <tr className="border-b border-ink-200 text-xs text-ink-500">
                   <th className="px-5 py-2.5 text-start font-medium">{t.customersPage.name}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t.customersPage.bookings}</th>
+                  <th className="px-5 py-2.5 text-start font-medium">{isRestaurant ? t.customersPage.orders : t.customersPage.bookings}</th>
                   <th className="px-5 py-2.5 text-start font-medium">{t.customersPage.completed}</th>
                   <th className="px-5 py-2.5 text-start font-medium">{t.customersPage.noShows}</th>
                   <th className="px-5 py-2.5 text-start font-medium">{t.customersPage.spent}</th>
@@ -84,7 +87,7 @@ export function CustomersPage() {
                       <div className="text-ink-900">{customer.name ?? '—'}</div>
                       <div className="text-xs text-ink-400" dir="ltr">{customer.phone}</div>
                     </td>
-                    <td className="px-5 py-3 tabular-nums text-ink-700">{customer.total_bookings}</td>
+                    <td className="px-5 py-3 tabular-nums text-ink-700">{isRestaurant ? customer.total_orders : customer.total_bookings}</td>
                     <td className="px-5 py-3 tabular-nums text-ok-600">{customer.completed}</td>
                     <td className={`px-5 py-3 tabular-nums ${customer.no_shows > 0 ? 'text-bad-600' : 'text-ink-400'}`}>
                       {/* A merchant genuinely weighs this before giving someone
