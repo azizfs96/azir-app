@@ -16,6 +16,7 @@ export const en: Translated<typeof ar> = {
     branches: 'Branches',
     customers: 'Customers',
     qr: 'QR Code',
+    popups: 'Pop-up ads',
     reports: 'Reports',
     settings: 'Settings',
     signOut: 'Sign out',
@@ -30,6 +31,25 @@ export const en: Translated<typeof ar> = {
     subtitle: 'Merchant dashboard — Azir',
     noAccount: "Don't have an account?",
     createAccount: 'Register your business',
+  },
+
+  popups: {
+    title: 'Pop-up ads',
+    subtitle: 'An image your customer sees the moment they open your store in the app — an offer, a new product, an announcement. Like your own app.',
+    add: 'New pop-up',
+    empty: 'No pop-ups yet. Add one and upload its image to show it to your customers.',
+    upload: 'Upload image',
+    replaceImage: 'Replace image',
+    noImageHint: "The pop-up won't show until you upload an image (portrait 9:16 works best).",
+    titleAr: 'Title (optional)',
+    titleEn: 'English title (optional)',
+    frequency: 'How often should a customer see it?',
+    frequencies: { every_visit: 'Every visit', once_per_day: 'Once a day', once: 'Only once' },
+    startsAt: 'Starts',
+    endsAt: 'Ends',
+    active: 'Active',
+    inactive: 'Paused',
+    confirmDelete: 'Delete this pop-up?',
   },
 
   register: {

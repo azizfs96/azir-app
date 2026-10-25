@@ -132,6 +132,12 @@ class Store extends Model
      * set NO hours anywhere is treated as open — hours simply aren't restricting
      * it — so the badge never wrongly reads "closed" for an unconfigured store.
      */
+    /** @return HasMany<StorePopup, $this> */
+    public function popups(): HasMany
+    {
+        return $this->hasMany(StorePopup::class);
+    }
+
     public function isOpenNow(): bool
     {
         // Prefer already-loaded branches+schedules (list endpoints eager-load

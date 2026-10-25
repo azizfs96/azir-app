@@ -147,6 +147,12 @@ class StorefrontResource extends JsonResource
             'staff' => $exposeStaff
                 ? StaffResource::collection($this->whenLoaded('staff'))
                 : [],
+
+            // The merchant's pop-up ads for customers entering this store
+            // (already filtered to live ones by the resolver's eager load).
+            'popups' => $this->resource->relationLoaded('popups')
+                ? StorePopupResource::collection($this->resource->popups)
+                : [],
         ];
     }
 

@@ -14,6 +14,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage'
 import { StaffPage } from '@/features/staff/StaffPage'
 import { BranchesPage } from '@/features/branches/BranchesPage'
 import { CustomersPage } from '@/features/customers/CustomersPage'
+import { PopupsPage } from '@/features/popups/PopupsPage'
 import { AdminShell } from '@/admin/AdminShell'
 import { AdminMerchantsPage } from '@/admin/AdminMerchantsPage'
 import { AdminMetricsPage } from '@/admin/AdminMetricsPage'
@@ -84,6 +85,7 @@ export function AppRouter() {
         <Route path="staff" element={<StaffPage />} />
         <Route path="branches" element={<BranchesPage />} />
         <Route path="customers" element={<CustomersPage />} />
+        <Route path="popups" element={<PopupsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

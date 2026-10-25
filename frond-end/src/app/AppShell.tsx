@@ -4,7 +4,7 @@ import { useStoreType } from '@/features/menu/useStoreType'
 import {
   CalendarDays, LayoutDashboard, ListChecks, LogOut, QrCode,
   Scissors, Settings, Store, UserRound, Users, UtensilsCrossed,
-} from 'lucide-react'
+ Megaphone } from 'lucide-react'
 import { api } from '@/api/client'
 import { useAuth } from '@/app/auth'
 import { useI18n } from '@/app/i18n'
@@ -57,6 +57,7 @@ export function AppShell() {
     { to: '/staff', icon: Users, label: t.nav.staff },
     { to: '/branches', icon: Store, label: t.nav.branches },
     { to: '/customers', icon: UserRound, label: t.nav.customers },
+    { to: '/popups', icon: Megaphone, label: t.nav.popups },
     { to: '/qr', icon: QrCode, label: t.nav.qr },
     { to: '/settings', icon: Settings, label: t.nav.settings },
   ]

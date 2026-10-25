@@ -49,6 +49,7 @@ class StoreResolver
                 'merchant',
                 'bookingSettings',
                 'activeBranches',
+                'popups' => fn ($q) => $q->live(),
                 'serviceCategories' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
                 'serviceCategories.services' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
                 'services' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),

@@ -12,6 +12,7 @@ export const ar = {
     branches: 'الفروع',
     customers: 'العملاء',
     qr: 'رمز QR',
+    popups: 'الإعلانات المنبثقة',
     reports: 'التقارير',
     settings: 'الإعدادات',
     signOut: 'تسجيل الخروج',
@@ -26,6 +27,25 @@ export const ar = {
     subtitle: 'لوحة تحكم التاجر — Azir',
     noAccount: 'ما عندك حساب؟',
     createAccount: 'سجّل نشاطك',
+  },
+
+  popups: {
+    title: 'الإعلانات المنبثقة',
+    subtitle: 'صورة تظهر لعميلك لحظة دخوله متجرك في التطبيق — عرض، منتج جديد، أو إعلان. مثل تطبيقك الخاص.',
+    add: 'إعلان جديد',
+    empty: 'لا توجد إعلانات بعد. أضف إعلاناً وارفع صورته ليظهر لعملائك.',
+    upload: 'ارفع صورة',
+    replaceImage: 'استبدل الصورة',
+    noImageHint: 'لن يظهر الإعلان حتى ترفع صورة (يفضَّل 9:16 بالطول).',
+    titleAr: 'العنوان (اختياري)',
+    titleEn: 'العنوان بالإنجليزية (اختياري)',
+    frequency: 'كم مرة يظهر للعميل؟',
+    frequencies: { every_visit: 'كل زيارة', once_per_day: 'مرة في اليوم', once: 'مرة واحدة فقط' },
+    startsAt: 'يبدأ من',
+    endsAt: 'ينتهي في',
+    active: 'مفعّل',
+    inactive: 'موقوف',
+    confirmDelete: 'حذف هذا الإعلان؟',
   },
 
   register: {

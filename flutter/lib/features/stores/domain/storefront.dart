@@ -16,6 +16,26 @@ import 'menu.dart';
 /// The app has one widget per step TYPE (7 total), not one screen per merchant.
 /// Merchant A gets service → staff → date → time; Merchant B gets branch →
 /// service → date → time. Same binary.
+/// A merchant's pop-up ad for customers entering their store (image + optional
+/// title, with how often one customer should see it).
+class StorePopup {
+  const StorePopup({required this.id, required this.image, this.title, this.frequency = 'once_per_day'});
+
+  factory StorePopup.fromJson(Map<String, dynamic> json) => StorePopup(
+        id: json['id'] as int,
+        image: json['image'] as String?,
+        title: json['title'] as String?,
+        frequency: json['frequency'] as String? ?? 'once_per_day',
+      );
+
+  final int id;
+  final String? image;
+  final String? title;
+
+  /// every_visit | once_per_day | once
+  final String frequency;
+}
+
 class FlowStep {
   const FlowStep({
     required this.type,
@@ -307,6 +327,7 @@ class Storefront {
     this.minLeadTimeMinutes = 0,
     this.type = 'beauty_wellness',
     this.menu,
+    this.popups = const [],
   });
 
   /// Used only when the server sends no booking window (a store with no
@@ -346,6 +367,11 @@ class Storefront {
       menu: json['menu'] is Map<String, dynamic>
           ? Menu.fromJson(json['menu'] as Map<String, dynamic>)
           : null,
+      popups: ((json['popups'] as List?) ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(StorePopup.fromJson)
+          .where((p) => p.image != null)
+          .toList(),
       description: store['description'] as String?,
       logo: store['logo'] as String?,
       cover: store['cover'] as String?,
@@ -436,6 +462,9 @@ class Storefront {
 
   /// The menu tree, present only for restaurant storefronts.
   final Menu? menu;
+
+  /// Pop-up ads to show on entry (already filtered to live ones by the server).
+  final List<StorePopup> popups;
 
   bool get isRestaurant => type == 'restaurant';
 

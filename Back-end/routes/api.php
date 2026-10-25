@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Merchant\CustomerController;
 use App\Http\Controllers\Api\V1\Merchant\DashboardController;
 use App\Http\Controllers\Api\V1\Merchant\MediaController;
 use App\Http\Controllers\Api\V1\Merchant\OnboardingController;
+use App\Http\Controllers\Api\V1\Merchant\PopupController;
 use App\Http\Controllers\Api\V1\Merchant\QrController;
 use App\Http\Controllers\Api\V1\Merchant\ServiceCategoryController;
 use App\Http\Controllers\Api\V1\Merchant\ServiceController;
@@ -194,6 +195,10 @@ Route::prefix('merchant')
         Route::apiResource('/menu/items', MenuItemController::class)->except(['show']);
         Route::put('/menu/items/{id}/options', [MenuItemController::class, 'options']);
         Route::post('/menu/items/{id}/image', [MenuItemController::class, 'image']);
+
+        // Pop-up ads shown to customers entering this store in the app.
+        Route::apiResource('/popups', PopupController::class)->except(['show']);
+        Route::post('/popups/{id}/image', [PopupController::class, 'image']);
 
         Route::apiResource('/staff', StaffController::class)->except(['show']);
         Route::put('/staff/{id}/schedule', [StaffController::class, 'schedule']);

@@ -18,6 +18,7 @@ import '../../menu/restaurant_header.dart';
 import '../../menu/restaurant_nav_bar.dart';
 import '../domain/menu.dart';
 import 'store_avatar.dart';
+import 'store_popup.dart';
 import 'storefront_bookings.dart';
 import 'store_locations_sheet.dart';
 import 'storefront_header.dart';
@@ -163,6 +164,16 @@ class _StoreViewState extends ConsumerState<_StoreView> {
   final Map<String, GlobalKey> _anchors = {};
   int _activeChip = 0;
   bool _slotMeasured = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // The merchant's pop-up ad, shown once the storefront is on screen (the
+    // helper decides whether one is due for this device).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) maybeShowStorePopups(context, widget.store);
+    });
+  }
 
   GlobalKey _anchorFor(String id) => _anchors.putIfAbsent(id, GlobalKey.new);
 
