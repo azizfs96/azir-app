@@ -278,8 +278,10 @@ export const ar = {
     spent: 'الإجمالي',
     lastVisit: 'آخر زيارة',
     empty: 'لا يوجد عملاء بعد.',
-    emptyHint: 'سيظهر العملاء هنا بعد أول حجز.',
-    emptyHintOrders: 'سيظهر العملاء هنا بعد أول طلب.',
+    emptyHint: 'كل من يمسح رمز متجرك ويضيفه لقائمته يظهر هنا.',
+    emptyHintOrders: 'كل من يمسح رمز متجرك ويضيفه لقائمته يظهر هنا.',
+    joined: 'انضم',
+    via: { qr: 'مسح QR', deep_link: 'رابط', booking: 'حجز', order: 'طلب' },
     search: 'بحث بالاسم أو الجوال',
   },
 

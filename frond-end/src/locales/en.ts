@@ -280,8 +280,10 @@ export const en: Translated<typeof ar> = {
     spent: 'Total spent',
     lastVisit: 'Last visit',
     empty: 'No customers yet.',
-    emptyHint: 'Customers appear here after their first booking.',
-    emptyHintOrders: 'Customers appear here after their first order.',
+    emptyHint: 'Everyone who scans your QR and keeps your store in their list appears here.',
+    emptyHintOrders: 'Everyone who scans your QR and keeps your store in their list appears here.',
+    joined: 'Joined',
+    via: { qr: 'QR scan', deep_link: 'Link', booking: 'Booking', order: 'Order' },
     search: 'Search by name or phone',
   },
 

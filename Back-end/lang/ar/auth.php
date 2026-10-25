@@ -9,6 +9,6 @@ return [
     'otp_message' => 'رمز التحقق الخاص بك في وصلة هو :code',
     'otp_sent' => 'تم إرسال رمز التحقق.',
     'invalid_phone' => 'الرجاء إدخال رقم جوال سعودي صحيح.',
-    'default_customer_name' => 'عميل وصلة',
+    'default_customer_name' => 'عميل Azir',
     'phone_taken' => 'رقم الجوال مسجل بالفعل لنشاط تجاري آخر.',
 ];
