@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/location/device_location.dart';
 import '../../../core/localization/strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/open_badge.dart';
@@ -17,7 +19,7 @@ import '../data/my_stores_repository.dart';
 /// The icon + text open the store; the "إزالة" pill removes it from the list.
 /// Direction stays RTL: icon on the start (right), the button on the end (left).
 /// ============================================================================
-class StoreCard extends StatelessWidget {
+class StoreCard extends ConsumerWidget {
   const StoreCard({super.key, required this.store, required this.onTap, required this.onRemove});
 
   final MyStore store;
@@ -28,8 +30,11 @@ class StoreCard extends StatelessWidget {
   static const _iconSize = 72.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = Strings.of(context);
+    // "2.3 km away" to the nearest branch, once the customer's location is known.
+    final here = ref.watch(deviceLocationProvider).value;
+    final km = here == null ? null : store.nearestKm(here.kmTo);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -83,6 +88,21 @@ class StoreCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 15, color: AppColors.ink500, height: 1.35),
+                          ),
+                        ],
+                        if (km != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.near_me_rounded, size: 14, color: AppColors.ink400),
+                              const SizedBox(width: 4),
+                              Text(
+                                formatDistance(s, km),
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink500),
+                              ),
+                            ],
                           ),
                         ],
                       ],

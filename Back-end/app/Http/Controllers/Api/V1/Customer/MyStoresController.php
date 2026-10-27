@@ -82,6 +82,15 @@ class MyStoresController extends Controller
                     // Open/closed badge on the home card.
                     'is_open' => $store->isOpenNow(),
                     'added_via' => $link->added_via,
+                    // Branch pins so the home card can say "2.3 km away"
+                    // (nearest branch) without another request per store.
+                    'branches' => $store->activeBranches
+                        ->filter(fn ($b) => $b->latitude !== null && $b->longitude !== null)
+                        ->map(fn ($b) => [
+                            'id' => $b->id,
+                            'latitude' => (float) $b->latitude,
+                            'longitude' => (float) $b->longitude,
+                        ])->values(),
 
                     // Drives which card variant the app shows.
                     'next_appointment' => $next === null ? null : [

@@ -59,6 +59,7 @@ class MyStore {
     this.nextAppointment,
     this.lastVisitAt,
     this.isOpen,
+    this.branchPins = const [],
   });
 
   factory MyStore.fromJson(Map<String, dynamic> json) => MyStore(
@@ -72,6 +73,11 @@ class MyStore {
             : null,
         lastVisitAt: json['last_visit_at'] as String?,
         isOpen: json['is_open'] as bool?,
+        branchPins: [
+          for (final b in (json['branches'] as List?) ?? const [])
+            if (b is Map && b['latitude'] != null && b['longitude'] != null)
+              ((b['latitude'] as num).toDouble(), (b['longitude'] as num).toDouble()),
+        ],
       );
 
   final String token;
@@ -87,6 +93,19 @@ class MyStore {
   /// "Next appointment / Tomorrow 7:00 PM" vs "Last visit / 5 days ago".
   final NextAppointment? nextAppointment;
   final String? lastVisitAt;
+
+  /// (lat, lng) of every branch that has a pin — for the distance label.
+  final List<(double, double)> branchPins;
+
+  /// Straight-line km to the nearest branch, or null without pins/location.
+  double? nearestKm(double? Function(double lat, double lng) kmTo) {
+    double? best;
+    for (final (lat, lng) in branchPins) {
+      final d = kmTo(lat, lng);
+      if (d != null && (best == null || d < best)) best = d;
+    }
+    return best;
+  }
 }
 
 class NextAppointment {
