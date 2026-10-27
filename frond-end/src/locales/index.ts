@@ -19,7 +19,11 @@ import { en } from './en'
  * compile error while letting the translations differ.
  */
 export type Translated<T> = {
-  [K in keyof T]: T[K] extends string ? string : Translated<T[K]>
+  [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends (...args: infer A) => string
+      ? (...args: A) => string // parameterised strings ("3 orders") stay callable
+      : Translated<T[K]>
 }
 
 export type Dictionary = Translated<typeof ar>

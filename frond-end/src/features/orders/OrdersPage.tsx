@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Clock, Phone, Printer, ShoppingBag, Users } from 'lucide-react'
+import { Bike, Clock, MapPin, Phone, Printer, ShoppingBag, Users } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
-import { api } from '@/api/client'
+import { api, errorMessage } from '@/api/client'
+import type { Driver } from '@/api/types'
 import { useT } from '@/app/i18n'
 import { cn } from '@/lib/cn'
+import { TrackingMap } from './TrackingMap'
 
 /**
  * RESTAURANT ORDERS (RestaurantEngine, R3) — the merchant's live kitchen board.
@@ -32,7 +34,7 @@ interface Invoice {
 interface Order {
   id: number
   reference: string
-  status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'rejected' | 'cancelled'
+  status: 'placed' | 'accepted' | 'preparing' | 'ready' | 'out_for_delivery' | 'completed' | 'rejected' | 'cancelled'
   fulfillment_type: 'pickup' | 'dine_in' | 'delivery' | 'curbside'
   table_number: string | null
   party_size: number | null
@@ -45,7 +47,8 @@ interface Order {
   created_at: string | null
   customer?: { name: string | null; phone: string | null }
   items: OrderItem[]
-  delivery?: { address: string | null }
+  delivery?: { address: string | null; details?: string | null; latitude?: number | null; longitude?: number | null; distance_km?: number | null }
+  driver?: { id: number; name: string; phone: string; vehicle: string | null } | null
   invoice?: Invoice
 }
 
@@ -68,15 +71,38 @@ export function OrdersPage() {
     refetchInterval: filter === 'active' ? 8000 : false,
   })
 
+  const [error, setError] = useState<string | null>(null)
+
   const update = useMutation({
     mutationFn: async (vars: { id: number; status: string; prep_minutes?: number; reason?: string }) =>
       (await api.post<{ order: Order }>(`/merchant/orders/${vars.id}/status`, vars)).data,
     onSuccess: (data, vars) => {
+      setError(null)
       if (TERMINAL.includes(vars.status)) {
         setFinished((prev) => [data.order, ...prev.filter((o) => o.id !== data.order.id)])
       }
       void queryClient.invalidateQueries({ queryKey: ['merchant-orders'] })
     },
+    onError: (err) => setError(errorMessage(err, t.common.error)),
+  })
+
+  // Drivers are only fetched when a delivery order is on the board.
+  const hasDelivery = (orders ?? []).some((o) => o.fulfillment_type === 'delivery' && !TERMINAL.includes(o.status))
+  const { data: drivers } = useQuery({
+    queryKey: ['drivers'],
+    queryFn: async () => (await api.get<{ data: Driver[] }>('/merchant/drivers')).data.data,
+    enabled: hasDelivery,
+    staleTime: 60000,
+  })
+
+  const assign = useMutation({
+    mutationFn: async (vars: { id: number; driver_id: number }) =>
+      (await api.post<Order>(`/merchant/orders/${vars.id}/driver`, { driver_id: vars.driver_id })).data,
+    onSuccess: () => {
+      setError(null)
+      void queryClient.invalidateQueries({ queryKey: ['merchant-orders'] })
+    },
+    onError: (err) => setError(errorMessage(err, t.common.error)),
   })
 
   // On the active board, keep just-finished orders pinned IN PLACE (sorted by
@@ -110,6 +136,10 @@ export function OrdersPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-lg border border-bad-600/25 bg-bad-50 px-4 py-2.5 text-sm text-bad-600">{error}</div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-ink-400">{t.common.loading}</p>
       ) : !list.length ? (
@@ -120,7 +150,14 @@ export function OrdersPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {list.map((order) => (
-            <OrderCard key={order.id} order={order} onUpdate={update.mutate} busy={update.isPending} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onUpdate={update.mutate}
+              busy={update.isPending || assign.isPending}
+              drivers={(drivers ?? []).filter((d) => d.is_active)}
+              onAssign={(driver_id) => assign.mutate({ id: order.id, driver_id })}
+            />
           ))}
         </div>
       )}
@@ -133,6 +170,7 @@ const STATUS_STYLE: Record<Order['status'], string> = {
   accepted: 'bg-blue-100 text-blue-700',
   preparing: 'bg-blue-100 text-blue-700',
   ready: 'bg-emerald-100 text-emerald-700',
+  out_for_delivery: 'bg-indigo-100 text-indigo-700',
   completed: 'bg-ink-100 text-ink-600',
   rejected: 'bg-red-100 text-red-700',
   cancelled: 'bg-red-100 text-red-700',
@@ -142,13 +180,20 @@ function OrderCard({
   order,
   onUpdate,
   busy,
+  drivers,
+  onAssign,
 }: {
   order: Order
   onUpdate: (vars: { id: number; status: string; prep_minutes?: number; reason?: string }) => void
   busy: boolean
+  drivers: Driver[]
+  onAssign: (driverId: number) => void
 }) {
   const t = useT()
   const [prep, setPrep] = useState(order.prep_minutes ?? 20)
+  const [showMap, setShowMap] = useState(false)
+  const isDelivery = order.fulfillment_type === 'delivery'
+  const moving = order.status === 'out_for_delivery'
 
   const time = order.created_at
     ? new Date(order.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })
@@ -211,7 +256,30 @@ function OrderCard({
       </div>
 
       {order.delivery?.address && (
-        <p className="mt-2 text-xs text-ink-500">📍 {order.delivery.address}</p>
+        <p className="mt-2 flex items-start gap-1 text-xs text-ink-500">
+          <MapPin className="mt-0.5 size-3 shrink-0" />
+          <span>
+            {order.delivery.address}
+            {order.delivery.details ? ` — ${order.delivery.details}` : ''}
+            {order.delivery.distance_km != null && (
+              <span className="text-ink-400"> · {t.orders.distanceKm(order.delivery.distance_km)}</span>
+            )}
+          </span>
+        </p>
+      )}
+
+      {isDelivery && !TERMINAL.includes(order.status) && order.status !== 'placed' && (
+        <DriverRow
+          order={order}
+          drivers={drivers}
+          busy={busy}
+          onAssign={onAssign}
+          showMap={showMap}
+          onToggleMap={() => setShowMap((v) => !v)}
+        />
+      )}
+      {isDelivery && (showMap || moving) && order.driver && (
+        <TrackingMap orderId={order.id} active={moving} />
       )}
       {order.customer_notes && (
         <p className="mt-2 rounded-lg bg-ink-50 px-3 py-2 text-xs text-ink-600">
@@ -241,6 +309,63 @@ function OrderCard({
       {order.invoice?.qr && <InvoiceBlock invoice={order.invoice} order={order} />}
 
       <Actions order={order} prep={prep} setPrep={setPrep} onUpdate={onUpdate} busy={busy} />
+    </div>
+  )
+}
+
+/**
+ * Who is carrying a delivery order. The merchant can hand it to a driver (or
+ * re-assign) here; a driver can also claim it from the driver app, in which
+ * case the name simply appears.
+ */
+function DriverRow({
+  order,
+  drivers,
+  busy,
+  onAssign,
+  showMap,
+  onToggleMap,
+}: {
+  order: Order
+  drivers: Driver[]
+  busy: boolean
+  onAssign: (driverId: number) => void
+  showMap: boolean
+  onToggleMap: () => void
+}) {
+  const t = useT()
+  const moving = order.status === 'out_for_delivery'
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-ink-100 px-3 py-2 text-xs">
+      <Bike className="size-3.5 text-ink-400" />
+      <span className="text-ink-500">{t.orders.driver}:</span>
+      {order.driver ? (
+        <span className="font-semibold text-ink-900">{order.driver.name}</span>
+      ) : (
+        <span className="text-ink-400">{t.orders.unassigned}</span>
+      )}
+      {drivers.length > 0 ? (
+        <select
+          disabled={busy}
+          value={order.driver?.id ?? ''}
+          onChange={(e) => e.target.value && onAssign(Number(e.target.value))}
+          className="ms-auto h-8 max-w-[11rem] rounded-md border border-ink-200 bg-white px-2 text-xs"
+          aria-label={order.driver ? t.orders.changeDriver : t.orders.assignDriver}
+        >
+          <option value="">{order.driver ? t.orders.changeDriver : t.orders.assignDriver}</option>
+          {drivers.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      ) : (
+        !order.driver && <span className="ms-auto text-ink-400">{t.orders.noDrivers}</span>
+      )}
+      {order.driver && !moving && (
+        <button onClick={onToggleMap} className="text-ink-500 underline-offset-2 hover:underline">
+          {showMap ? t.orders.hideMap : t.orders.showMap}
+        </button>
+      )}
     </div>
   )
 }
@@ -408,14 +533,21 @@ function Actions({
     )
   }
 
+  // A delivery order leaves the kitchen as "out for delivery" (the driver app
+  // usually does this; the merchant can too), then is completed at hand-over.
+  const isDelivery = order.fulfillment_type === 'delivery'
   const next: { status: string; label: string } | null =
     order.status === 'accepted'
       ? { status: 'preparing', label: t.orders.startPreparing }
       : order.status === 'preparing'
         ? { status: 'ready', label: t.orders.markReady }
         : order.status === 'ready'
-          ? { status: 'completed', label: t.orders.complete }
-          : null
+          ? isDelivery
+            ? { status: 'out_for_delivery', label: t.orders.markOutForDelivery }
+            : { status: 'completed', label: t.orders.complete }
+          : order.status === 'out_for_delivery'
+            ? { status: 'completed', label: t.orders.complete }
+            : null
 
   if (!next) return null
 

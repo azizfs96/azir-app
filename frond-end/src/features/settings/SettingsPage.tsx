@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StoreMediaPanel } from './StoreMediaPanel'
 import { useStoreType } from '@/features/menu/useStoreType'
+import { DeliveryPricingCard } from './DeliveryPricingCard'
 import { cn } from '@/lib/cn'
 
 function Toggle({
@@ -144,6 +145,8 @@ export function SettingsPage() {
                   onChange={(e) => set('default_prep_minutes', Number(e.target.value))} />
               </div>
             </Card>
+
+            {draft.order_delivery && <DeliveryPricingCard draft={draft} set={set} />}
 
             <Card>
               <CardHeader title={t.settings.invoicingTitle} />

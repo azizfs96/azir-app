@@ -68,6 +68,14 @@ class OrderResource extends JsonResource
             'assigned_at' => $this->assigned_at?->toIso8601String(),
             'out_for_delivery_at' => $this->out_for_delivery_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
+            // The pickup point (loaded for the driver app and tracking).
+            'branch' => $this->whenLoaded('branch', fn () => $this->branch === null ? null : [
+                'id' => $this->branch->id,
+                'name' => $this->branch->displayName(app()->getLocale()),
+                'address' => $this->branch->address_line,
+                'latitude' => $this->branch->latitude !== null ? (float) $this->branch->latitude : null,
+                'longitude' => $this->branch->longitude !== null ? (float) $this->branch->longitude : null,
+            ]),
             'store' => $this->whenLoaded('store', fn () => [
                 'token' => $this->store->public_token,
                 'name' => $this->store->name_ar,

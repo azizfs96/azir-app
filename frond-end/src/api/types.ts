@@ -146,6 +146,13 @@ export interface BookingSettings {
   order_curbside: boolean
   delivery_fee: number
   delivery_min_order: number
+  // Distance pricing (DeliveryPricing): fixed | per_km | tiers.
+  delivery_pricing_mode: 'fixed' | 'per_km' | 'tiers'
+  delivery_base_fee: number
+  delivery_fee_per_km: number
+  delivery_tiers: DeliveryTier[]
+  delivery_max_distance_km: number | null
+  delivery_road_factor: number
   auto_accept_orders: boolean
   default_prep_minutes: number
   // VAT / ZATCA e-invoicing (optional per store).
@@ -232,4 +239,49 @@ export interface MenuCategory {
   image: string | null
   sort_order: number
   is_active: boolean
+}
+
+export interface DeliveryTier {
+  up_to_km: number
+  fee: number
+}
+
+/** A delivery driver (merchant/drivers). */
+export interface Driver {
+  id: number
+  name: string
+  phone: string
+  vehicle: string | null
+  is_active: boolean
+  last_location: {
+    latitude: number
+    longitude: number
+    heading: number | null
+    located_at: string
+    fresh: boolean
+  } | null
+  active_orders_count?: number
+  created_at: string | null
+}
+
+/** GET /merchant/orders/{id}/tracking — live position while out for delivery. */
+export interface OrderTracking {
+  order_id: number
+  status: string
+  driver: { id: number; name: string; phone: string; vehicle: string | null } | null
+  driver_location: {
+    latitude: number
+    longitude: number
+    heading: number | null
+    speed_kmh: number | null
+    located_at: string
+    fresh: boolean
+  } | null
+  eta_minutes: number | null
+  origin: { name: string; latitude: number | null; longitude: number | null } | null
+  destination: { address: string | null; latitude: number | null; longitude: number | null }
+  distance_km: number | null
+  assigned_at: string | null
+  out_for_delivery_at: string | null
+  completed_at: string | null
 }

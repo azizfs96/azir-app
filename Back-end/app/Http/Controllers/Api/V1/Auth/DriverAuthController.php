@@ -68,4 +68,12 @@ class DriverAuthController extends Controller
             'store' => ['token' => $driver->store?->public_token, 'name' => $driver->store?->name_ar],
         ]);
     }
+
+    /** POST /driver/logout — revoke this device's token only. */
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()?->delete();
+
+        return response()->json(['message' => __('auth.logged_out')]);
+    }
 }

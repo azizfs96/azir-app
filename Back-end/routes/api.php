@@ -171,6 +171,7 @@ Route::prefix('driver')
     ->middleware(['auth:sanctum', 'role:driver'])
     ->group(function (): void {
         Route::get('/me', [DriverOrderController::class, 'me']);
+        Route::post('/logout', [DriverAuthController::class, 'logout']);
         Route::get('/orders', [DriverOrderController::class, 'index']);
         Route::get('/orders/{id}', [DriverOrderController::class, 'show']);
         Route::post('/orders/{id}/claim', [DriverOrderController::class, 'claim']);

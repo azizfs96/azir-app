@@ -15,6 +15,7 @@ import { StaffPage } from '@/features/staff/StaffPage'
 import { BranchesPage } from '@/features/branches/BranchesPage'
 import { CustomersPage } from '@/features/customers/CustomersPage'
 import { PopupsPage } from '@/features/popups/PopupsPage'
+import { DriversPage } from '@/features/drivers/DriversPage'
 import { AdminShell } from '@/admin/AdminShell'
 import { AdminMerchantsPage } from '@/admin/AdminMerchantsPage'
 import { AdminMetricsPage } from '@/admin/AdminMetricsPage'
@@ -86,6 +87,7 @@ export function AppRouter() {
         <Route path="branches" element={<BranchesPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="popups" element={<PopupsPage />} />
+        <Route path="drivers" element={<DriversPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
