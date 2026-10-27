@@ -37,12 +37,52 @@ abstract final class AppColors {
   static const infoSoft = Color(0xFFEAF1FC);
 }
 
+/// The merchant-app design system tokens (from the design team's `:root`).
+///
+/// A warm, flat palette: no shadows, hairline `line` borders, one `brand`
+/// colour per merchant (the store's brand colour) used for the active state,
+/// the "+" buttons, the nav pill and the cart bar.
+abstract final class Ds {
+  static const bg = Color(0xFFF6F4F1); // page canvas
+  static const surface = Color(0xFFFFFFFF); // cards, tiles, chips
+  static const soft = Color(0xFFF1EDE8); // thumbs, subtle fills
+  static const stage = Color(0xFFDEDAD4);
+  static const ink = Color(0xFF1F1A16); // primary text
+  static const ink2 = Color(0xFF7A7068); // secondary text
+  static const ink3 = Color(0xFFABA29A); // captions / hints
+  static const line = Color(0xFFECE6DF); // hairline borders
+  static const ok = Color(0xFF2E9A5E);
+  static const gold = Color(0xFFF0A83A);
+  static const red = Color(0xFFD8412F);
+  static const bannerFill = Color(0xFFE9DCCB);
+
+  /// CSS `color-mix(in srgb, brand p%, base)`.
+  static Color mix(Color brand, Color base, double p) => Color.lerp(base, brand, p)!;
+}
+
 abstract final class AppSpacing {
   static const xs = 4.0;
   static const sm = 8.0;
   static const md = 16.0;
   static const lg = 24.0;
   static const xl = 32.0;
+}
+
+/// Motion tokens (spec: short, calm transitions, mostly 150–300ms).
+///
+/// Every animation in the app pulls its duration from here so timings stay
+/// consistent, and every one routes through [dur] so the OS "reduce motion"
+/// accessibility setting collapses it to an instant, jump-free change.
+abstract final class AppMotion {
+  static const fast = Duration(milliseconds: 150); // taps, small state flips
+  static const base = Duration(milliseconds: 220); // the default screen/element move
+  static const slow = Duration(milliseconds: 300); // a larger, more deliberate reveal
+  static const curve = Curves.easeOutCubic;
+
+  static bool reduced(BuildContext context) => MediaQuery.of(context).disableAnimations;
+
+  /// The duration to actually use, honouring reduce-motion (zero when on).
+  static Duration dur(BuildContext context, Duration d) => reduced(context) ? Duration.zero : d;
 }
 
 /// The bundled family (see pubspec.yaml).

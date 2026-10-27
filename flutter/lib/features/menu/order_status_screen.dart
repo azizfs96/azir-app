@@ -12,6 +12,7 @@ import '../../core/widgets/riyal_price.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/top_banner.dart';
 import '../stores/data/store_repository.dart';
+import 'delivery_tracking_card.dart';
 import 'order_repository.dart';
 import 'reorder_action.dart';
 
@@ -34,8 +35,10 @@ class OrderStatusScreen extends ConsumerStatefulWidget {
   ConsumerState<OrderStatusScreen> createState() => _OrderStatusScreenState();
 }
 
-/// The forward-only lifecycle the tracker draws as a timeline.
+/// The forward-only lifecycle the tracker draws as a timeline. A delivery
+/// order has one more leg: the driver's trip to the door.
 const _orderSteps = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
+const _deliverySteps = ['placed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'completed'];
 
 class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with WidgetsBindingObserver {
   static const _terminal = {'completed', 'rejected', 'cancelled'};
@@ -139,6 +142,12 @@ class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with Widg
                 ),
               const SizedBox(height: 14),
               _RestaurantCard(order: data, s: s),
+              // The driver (and, while on the road, the live map) for a delivery.
+              if (data.isDelivery && data.driverName != null && !_terminal.contains(data.status) ||
+                  data.isDelivery && data.status == 'out_for_delivery') ...[
+                const SizedBox(height: 14),
+                DeliveryTrackingCard(orderId: data.id, moving: data.status == 'out_for_delivery', s: s),
+              ],
               if (!waiting && data.status != 'rejected' && data.status != 'cancelled') ...[
                 const SizedBox(height: 14),
                 _Timeline(order: data, s: s),
@@ -317,16 +326,20 @@ class _Hero extends StatelessWidget {
         'placed' => s.orderStatusPlaced,
         'accepted' => s.orderStatusAccepted,
         'preparing' => s.orderStatusPreparing,
-        'ready' => s.orderStatusReady,
+        'ready' => order.isDelivery ? s.orderStatusReadyDelivery : s.orderStatusReady,
+        'out_for_delivery' => s.orderStatusOutForDelivery,
         'completed' => s.orderStatusCompleted,
         'rejected' => s.orderStatusRejected,
-        _ => s.orderStatusCancelled,
+        'cancelled' => s.orderStatusCancelled,
+        _ => order.status,
       };
 
   @override
   Widget build(BuildContext context) {
     final terminal = order.status == 'rejected' || order.status == 'cancelled';
-    final eta = order.prepMinutes;
+    // The kitchen's prep time is the ETA until the food leaves; the driver
+    // card carries the road ETA, so the ring steps aside once it's on the way.
+    final eta = order.status == 'out_for_delivery' || order.status == 'completed' ? null : order.prepMinutes;
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -370,8 +383,16 @@ class _Hero extends StatelessWidget {
               ),
             )
           else
-            Icon(order.status == 'rejected' ? Icons.cancel_rounded : Icons.info_outline_rounded,
-                size: 34, color: Colors.white.withValues(alpha: 0.85)),
+            Icon(
+              switch (order.status) {
+                'rejected' => Icons.cancel_rounded,
+                'out_for_delivery' => Icons.two_wheeler_rounded,
+                'completed' => Icons.check_circle_rounded,
+                _ => Icons.info_outline_rounded,
+              },
+              size: 34,
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
         ],
       ),
     );
@@ -558,7 +579,8 @@ class _Timeline extends StatelessWidget {
         'placed' => s.orderStatusPlaced,
         'accepted' => s.orderStatusAccepted,
         'preparing' => s.orderStatusPreparing,
-        'ready' => s.orderStatusReady,
+        'ready' => order.isDelivery ? s.orderStatusReadyDelivery : s.orderStatusReady,
+        'out_for_delivery' => s.orderStatusOutForDelivery,
         _ => s.orderStatusCompleted,
       };
 
@@ -567,6 +589,8 @@ class _Timeline extends StatelessWidget {
       'placed' => order.createdAt,
       'accepted' => order.acceptedAt,
       'ready' => order.readyAt,
+      'out_for_delivery' => order.outForDeliveryAt,
+      'completed' => order.completedAt,
       _ => null,
     };
     if (dt == null) return '';
@@ -578,7 +602,7 @@ class _Timeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = _orderSteps;
+    final steps = order.isDelivery ? _deliverySteps : _orderSteps;
     final current = steps.indexOf(order.status);
 
     return Container(

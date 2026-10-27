@@ -167,6 +167,11 @@ class OrderResult {
     this.readyAt,
     this.items = const [],
     this.deliveryAddress,
+    this.deliveryDistanceKm,
+    this.driverName,
+    this.driverPhone,
+    this.outForDeliveryAt,
+    this.completedAt,
     this.customerName,
     this.customerPhone,
   });
@@ -190,6 +195,11 @@ class OrderResult {
         acceptedAt: DateTime.tryParse(json['accepted_at'] as String? ?? ''),
         readyAt: DateTime.tryParse(json['ready_at'] as String? ?? ''),
         deliveryAddress: (json['delivery'] as Map<String, dynamic>?)?['address'] as String?,
+        deliveryDistanceKm: ((json['delivery'] as Map<String, dynamic>?)?['distance_km'] as num?)?.toDouble(),
+        driverName: (json['driver'] as Map<String, dynamic>?)?['name'] as String?,
+        driverPhone: (json['driver'] as Map<String, dynamic>?)?['phone'] as String?,
+        outForDeliveryAt: DateTime.tryParse(json['out_for_delivery_at'] as String? ?? ''),
+        completedAt: DateTime.tryParse(json['completed_at'] as String? ?? ''),
         customerName: (json['customer'] as Map<String, dynamic>?)?['name'] as String?,
         customerPhone: (json['customer'] as Map<String, dynamic>?)?['phone'] as String?,
         items: [
@@ -219,6 +229,17 @@ class OrderResult {
   final String? customerName;
   final String? customerPhone;
   final String? deliveryAddress;
+
+  /// Branch → door distance the server priced (delivery only).
+  final double? deliveryDistanceKm;
+
+  /// The driver carrying a delivery order, once assigned.
+  final String? driverName;
+  final String? driverPhone;
+  final DateTime? outForDeliveryAt;
+  final DateTime? completedAt;
+
+  bool get isDelivery => fulfillmentType == 'delivery';
 
   /// A short human pickup code shown at the counter/curbside (Jahez-style).
   String get pickupCode => (id % 100).toString().padLeft(2, '0');

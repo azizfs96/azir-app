@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/haptics.dart';
+import '../../core/location/device_location.dart';
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_image.dart';
@@ -570,16 +571,27 @@ class _ModePill extends StatelessWidget {
   }
 }
 
-/// The branch line (`.loc`): brand icon, caption + name, a soft chevron.
-class _BranchRow extends StatelessWidget {
+/// The branch line (`.loc`): brand icon, caption + name, a soft chevron — and
+/// how far the nearest branch is, once the customer's location is known.
+class _BranchRow extends ConsumerWidget {
   const _BranchRow({required this.store, required this.s, required this.brand});
   final Storefront store;
   final Strings s;
   final Color brand;
 
   @override
-  Widget build(BuildContext context) {
-    final branch = store.branches.first;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final here = ref.watch(deviceLocationProvider).value;
+    // Show the nearest branch when we can tell; otherwise the first one.
+    var branch = store.branches.first;
+    double? km;
+    for (final b in store.branches) {
+      final d = here?.kmTo(b.latitude, b.longitude);
+      if (d != null && (km == null || d < km)) {
+        km = d;
+        branch = b;
+      }
+    }
     return Row(
       children: [
         Icon(Icons.storefront_rounded, size: 24, color: brand),
@@ -605,6 +617,13 @@ class _BranchRow extends StatelessWidget {
             ],
           ),
         ),
+        if (km != null) ...[
+          Text(
+            formatDistance(s, km),
+            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Ds.ink2),
+          ),
+          const SizedBox(width: 4),
+        ],
         const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Ds.ink3),
       ],
     );

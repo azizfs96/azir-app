@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/empty_state.dart';
 import 'address_repository.dart';
 
 /// Saved delivery addresses (Jahez's "manage locations"). A live map picker
@@ -25,7 +26,12 @@ class AddressesScreen extends ConsumerWidget {
       ),
       body: addresses.when(
         loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (_, _) => Center(child: Text(s.error, style: const TextStyle(color: AppColors.ink500))),
+        error: (_, _) => EmptyState(
+          icon: Icons.wifi_off_rounded,
+          title: s.error,
+          actionLabel: s.retry,
+          onAction: () => ref.invalidate(addressesProvider),
+        ),
         data: (list) => list.isEmpty
             ? _empty(s)
             : ListView.separated(

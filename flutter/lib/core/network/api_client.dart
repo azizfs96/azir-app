@@ -59,7 +59,7 @@ class ApiClient {
 
 /// A failure the UI can act on.
 class ApiFailure implements Exception {
-  const ApiFailure(this.code, this.message, {this.fromServer = false});
+  const ApiFailure(this.code, this.message, {this.fromServer = false, this.isConnectionIssue = false});
 
   final String? code;
 
@@ -76,9 +76,25 @@ class ApiFailure implements Exception {
   /// exception text and discarding good server messages.
   final bool fromServer;
 
+  /// The request never received an HTTP response because the connection dropped
+  /// mid-flight (send/receive timeout, connection reset). For a POST this means
+  /// the result is UNKNOWN — the server may or may not have acted — so a naive
+  /// retry risks a duplicate. A connection that never opened, or any response
+  /// (even a 5xx), is NOT this: the outcome there is known.
+  final bool isConnectionIssue;
+
   static ApiFailure from(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
+      // No response body at all AND a mid-flight transport failure = the send
+      // may have reached the server. connectionTimeout is excluded: it never
+      // opened a connection, so nothing was created.
+      final unknownResult = error.response == null &&
+          const {
+            DioExceptionType.sendTimeout,
+            DioExceptionType.receiveTimeout,
+            DioExceptionType.connectionError,
+          }.contains(error.type);
 
       if (data is Map<String, dynamic>) {
         final code = data['error_code'] as String?;
@@ -93,7 +109,7 @@ class ApiFailure implements Exception {
         return ApiFailure(code, 'Request failed');
       }
 
-      return ApiFailure(null, error.message ?? 'Network error');
+      return ApiFailure(null, error.message ?? 'Network error', isConnectionIssue: unknownResult);
     }
 
     return ApiFailure(null, error.toString());

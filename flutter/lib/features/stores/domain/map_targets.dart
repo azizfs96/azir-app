@@ -25,11 +25,15 @@ Future<bool> Function(Uri url) openMapUrl = (url) =>
 /// whose only location data lives on the store profile yields one target.
 /// ============================================================================
 class MapTarget {
-  const MapTarget({required this.title, required this.url, this.subtitle});
+  const MapTarget({required this.title, required this.url, this.subtitle, this.latitude, this.longitude});
 
   final String title;
   final String? subtitle;
   final Uri url;
+
+  /// The branch pin, when known — lets the chooser say how far each one is.
+  final double? latitude;
+  final double? longitude;
 }
 
 Uri _searchUri(String query) =>
@@ -74,6 +78,8 @@ List<MapTarget> mapTargets(Storefront store) {
               .where((v) => v != null && v.trim().isNotEmpty)
               .join('، '),
           url: _branchUri(branch)!,
+          latitude: branch.latitude,
+          longitude: branch.longitude,
         ),
   ];
 

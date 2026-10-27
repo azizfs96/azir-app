@@ -11,6 +11,8 @@ class CustomerAddress {
     required this.addressText,
     this.details,
     this.isDefault = false,
+    this.latitude,
+    this.longitude,
   });
 
   factory CustomerAddress.fromJson(Map<String, dynamic> json) => CustomerAddress(
@@ -19,6 +21,8 @@ class CustomerAddress {
         addressText: json['address_text'] as String? ?? '',
         details: json['details'] as String?,
         isDefault: json['is_default'] as bool? ?? false,
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
       );
 
   final int id;
@@ -26,6 +30,10 @@ class CustomerAddress {
   final String addressText;
   final String? details;
   final bool isDefault;
+
+  /// The map pin (null for an address typed without one).
+  final double? latitude;
+  final double? longitude;
 }
 
 class AddressRepository {

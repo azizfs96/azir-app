@@ -101,6 +101,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/orders/:id',
         builder: (context, state) => OrderStatusScreen(
           orderId: int.parse(state.pathParameters['id']!),
+          // Arriving straight from checkout (`?placed=1`) opens the screen on its
+          // confirmation; reaching it from the orders list is plain tracking.
+          justPlaced: state.uri.queryParameters['placed'] == '1',
         ),
       ),
       GoRoute(
@@ -144,11 +147,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
 
     /*
-     * Authentication is required to OPEN A STORE (and therefore to book/order).
+     * Guest browsing (spec §6, revised): opening a store link — /s/:token — and
+     * browsing its menu, search and cart needs NO sign-in. A customer scans or
+     * taps a link and orders as far as the checkout button; identity is only
+     * required to PLACE THE ORDER (gated in the cart's place-order handler) and
+     * to reach the customer's own account screens below.
      *
-     * Opening a store adds it to My Stores, which needs an identity — so we sign
-     * the customer in first, then land them on the store, which is saved for
-     * them. Only the home screen, the scanner and sign-in itself stay open.
+     * Opening a store still tries to add it to My Stores, but that call is
+     * fire-and-forget and simply no-ops for a guest (added later on sign-in).
      */
     redirect: (context, state) async {
       // A tapped notification asked to open a specific screen: honour it once,
@@ -160,8 +166,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final loc = state.matchedLocation;
-      final needsAuth = loc.startsWith('/s/') ||
-          loc.endsWith('/book') ||
+      // NOTE: /s/:token (and its /cart, /search children) are intentionally
+      // absent — those are open to guests. Only booking and the customer's own
+      // account areas require an identity.
+      final needsAuth = loc.endsWith('/book') ||
           loc.startsWith('/orders') ||
           loc == '/profile' ||
           loc.startsWith('/addresses') ||

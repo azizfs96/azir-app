@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_image.dart';
 import '../../core/widgets/riyal_price.dart';
 import '../stores/presentation/store_avatar.dart';
 import 'order_repository.dart';
@@ -37,7 +38,12 @@ class OrdersScreen extends ConsumerWidget {
         },
         child: (active.isLoading || past.isLoading)
             ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-            : Builder(
+            : (active.hasError && past.hasError)
+                ? _error(s, () {
+                    ref.invalidate(myOrdersProvider('active'));
+                    ref.invalidate(myOrdersProvider('past'));
+                  })
+                : Builder(
                 builder: (_) {
                   final orders = [...?active.value, ...?past.value];
                   if (orders.isEmpty) return _empty(s);
@@ -63,6 +69,27 @@ class OrdersScreen extends ConsumerWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink900)),
         ],
       );
+
+  // A load failure is NOT "no orders" — say so and offer a retry (scrollable so
+  // pull-to-refresh still works).
+  Widget _error(Strings s, VoidCallback onRetry) => ListView(
+        children: [
+          const SizedBox(height: 140),
+          const Icon(Icons.wifi_off_rounded, size: 46, color: AppColors.ink300),
+          const SizedBox(height: 14),
+          Text(s.error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink900)),
+          const SizedBox(height: 16),
+          Center(
+            child: OutlinedButton(
+              onPressed: onRetry,
+              style: OutlinedButton.styleFrom(minimumSize: const Size(150, 46)),
+              child: Text(s.retry),
+            ),
+          ),
+        ],
+      );
 }
 
 class _OrderCard extends ConsumerWidget {
@@ -70,7 +97,8 @@ class _OrderCard extends ConsumerWidget {
   final OrderResult order;
   final Strings s;
 
-  bool get _active => const ['placed', 'accepted', 'preparing', 'ready'].contains(order.status);
+  bool get _active =>
+      const ['placed', 'accepted', 'preparing', 'ready', 'out_for_delivery'].contains(order.status);
 
   static const _months = [
     'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -97,7 +125,8 @@ class _OrderCard extends ConsumerWidget {
     }
     final label = switch (order.status) {
       'completed' => order.fulfillmentType == 'delivery' ? s.orderDelivered : s.orderReceived,
-      'ready' => s.orderStatusReady,
+      'ready' => order.fulfillmentType == 'delivery' ? s.orderStatusReadyDelivery : s.orderStatusReady,
+      'out_for_delivery' => s.orderStatusOutForDelivery,
       _ => s.orderPreparing,
     };
     return (label: label, fg: AppColors.ok, bg: AppColors.okSoft);
@@ -220,11 +249,12 @@ class _Thumbs extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
       ),
       clipBehavior: Clip.antiAlias,
-      child: url != null
-          ? Image.network(url, fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.restaurant_rounded, size: 20, color: AppColors.ink300))
-          : const Icon(Icons.restaurant_rounded, size: 20, color: AppColors.ink300),
+      child: AppImage(
+        url: url,
+        fit: BoxFit.cover,
+        placeholderColor: AppColors.cream,
+        error: const Icon(Icons.restaurant_rounded, size: 20, color: AppColors.ink300),
+      ),
     );
   }
 }

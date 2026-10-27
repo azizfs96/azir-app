@@ -3,14 +3,23 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'core/localization/strings.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/offline_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // On the web, use real URL paths (azir.sa/s/TOKEN) instead of hash routing
+  // (azir.sa/#/s/TOKEN). Without this the customer link never reaches the
+  // /s/:token route and lands on the empty home screen. No-op off the web.
+  if (kIsWeb) {
+    usePathUrlStrategy();
+  }
 
   // Firebase powers push notifications (order updates). A failure here must not
   // stop the app from launching — iOS reads GoogleService-Info.plist itself.
@@ -56,10 +65,18 @@ class _WaslaAppState extends ConsumerState<WaslaApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Wasla',
+      title: 'easy app',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       routerConfig: ref.watch(appRouterProvider),
+
+      // A single global offline bar layered above every screen.
+      builder: (context, child) => Stack(
+        children: [
+          ?child,
+          const Positioned(top: 0, left: 0, right: 0, child: OfflineBanner()),
+        ],
+      ),
 
       /*
        * Arabic-first (spec §32, §33).

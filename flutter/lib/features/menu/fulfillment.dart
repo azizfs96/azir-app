@@ -36,10 +36,11 @@ extension FulfillmentModeX on FulfillmentMode {
 /// the default and sits on the right in RTL), then curbside, delivery, dine-in.
 /// Filtered to what the merchant enabled.
 List<FulfillmentMode> enabledModes(StoreConfiguration c) => [
+      // The design system's order: pickup, dine-in, delivery, then curbside.
       if (c.orderPickup) FulfillmentMode.pickup,
-      if (c.orderCurbside) FulfillmentMode.curbside,
-      if (c.orderDelivery) FulfillmentMode.delivery,
       if (c.orderDineIn) FulfillmentMode.dineIn,
+      if (c.orderDelivery) FulfillmentMode.delivery,
+      if (c.orderCurbside) FulfillmentMode.curbside,
     ];
 
 /// The customer's chosen fulfilment mode, kept per store token so the cart and

@@ -14,7 +14,9 @@ import '../stores/domain/storefront.dart';
 import '../stores/presentation/store_avatar.dart';
 import '../../core/network/api_client.dart';
 import '../auth/data/auth_repository.dart';
+import '../../core/location/device_location.dart';
 import 'address_repository.dart';
+import 'delivery_quote.dart';
 import 'car_repository.dart';
 import 'cart_controller.dart';
 import 'delivery_selection.dart';
@@ -73,6 +75,7 @@ class CartScreen extends ConsumerWidget {
                       if (store != null) _FulfillmentCard(token: token, store: store, s: s),
                       const SizedBox(height: 12),
                       _ContextCard(token: token, s: s),
+                      _DeliveryQuoteNote(token: token, s: s),
                       const SizedBox(height: 12),
                       _TotalsCard(
                         subtotal: cart.total,
@@ -93,11 +96,16 @@ class CartScreen extends ConsumerWidget {
     );
   }
 
-  /// The delivery fee applies only when delivery is the chosen mode.
+  /// The delivery fee applies only when delivery is the chosen mode — and it is
+  /// the SERVER's quote for the chosen address (distance-priced). Until the
+  /// quote answers, the store's flat fee stands in so the total never jumps
+  /// from zero.
   double _deliveryFee(WidgetRef ref, String token, Storefront? store) {
     if (store == null) return 0;
     final mode = ref.watch(modeForStoreProvider(token));
-    return mode == FulfillmentMode.delivery ? store.configuration.deliveryFee : 0;
+    if (mode != FulfillmentMode.delivery) return 0;
+    final quote = ref.watch(cartDeliveryQuoteProvider(token))?.value;
+    return quote?.fee ?? store.configuration.deliveryFee;
   }
 }
 
@@ -253,8 +261,10 @@ class _FulfillmentCard extends ConsumerWidget {
             const Divider(height: 1, color: AppColors.ink100),
             Builder(builder: (context) {
               // A single-branch store shows its only branch (used automatically).
+              final here = ref.watch(deviceLocationProvider).value;
               if (store.branches.length == 1) {
                 final b = store.branches.first;
+                final km = here?.kmTo(b.latitude, b.longitude);
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
                   child: Row(
@@ -278,6 +288,10 @@ class _FulfillmentCard extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      if (km != null)
+                        Text(formatDistance(s, km),
+                            style: const TextStyle(
+                                fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.ink500)),
                     ],
                   ),
                 );
@@ -287,6 +301,16 @@ class _FulfillmentCard extends ConsumerWidget {
               // options are right there and one tap picks. Nothing is pre-selected
               // so the customer can't miss it and order from the wrong branch.
               final selId = ref.watch(selectedBranchIdProvider(token));
+              // Nearest first when we know where the customer is; a branch
+              // without a pin keeps its place at the end.
+              final distances = {for (final b in store.branches) b.id: here?.kmTo(b.latitude, b.longitude)};
+              final ordered = [...store.branches]..sort((a, b) {
+                  final da = distances[a.id], db = distances[b.id];
+                  if (da == null && db == null) return 0;
+                  if (da == null) return 1;
+                  if (db == null) return -1;
+                  return da.compareTo(db);
+                });
               return Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                 child: Column(
@@ -298,10 +322,13 @@ class _FulfillmentCard extends ConsumerWidget {
                           style: const TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink500)),
                     ),
-                    for (final b in store.branches)
+                    for (final (i, b) in ordered.indexed)
                       _BranchOption(
                         name: b.name,
                         address: b.address,
+                        distanceLabel: distances[b.id] == null ? null : formatDistance(s, distances[b.id]!),
+                        nearest: i == 0 && distances[b.id] != null && ordered.length > 1,
+                        s: s,
                         selected: b.id == selId,
                         onTap: () {
                           AppHaptics.tick();
@@ -328,12 +355,20 @@ class _BranchOption extends StatelessWidget {
     required this.address,
     required this.selected,
     required this.onTap,
+    required this.s,
+    this.distanceLabel,
+    this.nearest = false,
   });
 
   final String name;
   final String? address;
   final bool selected;
   final VoidCallback onTap;
+  final Strings s;
+
+  /// "2.3 كم" when the customer's location is known.
+  final String? distanceLabel;
+  final bool nearest;
 
   @override
   Widget build(BuildContext context) {
@@ -378,9 +413,28 @@ class _BranchOption extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.ink900)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.ink900)),
+                      ),
+                      if (nearest) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                              color: AppColors.okSoft, borderRadius: BorderRadius.circular(6)),
+                          child: Text(s.nearest,
+                              style: const TextStyle(
+                                  fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.ok)),
+                        ),
+                      ],
+                    ],
+                  ),
                   if ((address ?? '').isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(address!,
@@ -391,6 +445,11 @@ class _BranchOption extends StatelessWidget {
                 ],
               ),
             ),
+            if (distanceLabel != null) ...[
+              const SizedBox(width: 8),
+              Text(distanceLabel!,
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.ink500)),
+            ],
           ],
         ),
       ),
@@ -808,6 +867,22 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
       // default (first) when they never chose or it was since deleted.
       final selId = ref.read(selectedAddressIdProvider);
       addressId = addresses.any((a) => a.id == selId) ? selId : addresses.first.id;
+
+      // The server refuses these anyway; saying so here keeps the customer
+      // from a failed submit. A quote that hasn't answered doesn't block.
+      final quote = ref.read(cartDeliveryQuoteProvider(widget.token))?.value;
+      if (quote != null) {
+        if (!quote.allowed && quote.isOutOfRange) {
+          if (!mounted) return;
+          setState(() => _error = s.outOfDeliveryRangeShort);
+          return;
+        }
+        if (quote.minOrder > 0 && widget.subtotal < quote.minOrder) {
+          if (!mounted) return;
+          setState(() => _error = s.minOrderNotMet(quote.minOrder.toStringAsFixed(0)));
+          return;
+        }
+      }
     } else if (mode == FulfillmentMode.curbside) {
       final cars = await ref.read(carsProvider.future);
       if (cars.isEmpty) {
@@ -1039,6 +1114,59 @@ class CartBar extends ConsumerWidget {
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
             const Spacer(),
             RiyalPrice(amount: cart.total, size: 16, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Under the address row: the priced distance, or why delivery can't reach
+/// this address (so the customer fixes it BEFORE tapping "place order").
+class _DeliveryQuoteNote extends ConsumerWidget {
+  const _DeliveryQuoteNote({required this.token, required this.s});
+  final String token;
+  final Strings s;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final quote = ref.watch(cartDeliveryQuoteProvider(token));
+    if (quote == null) return const SizedBox.shrink();
+
+    final (String text, Color color, IconData icon) = switch (quote) {
+      AsyncData(:final value) when value.isOutOfRange => (
+          s.outOfDeliveryRange(
+            (value.distanceKm ?? 0).toStringAsFixed(1),
+            (value.maxDistanceKm ?? 0).toStringAsFixed(0),
+          ),
+          AppColors.bad,
+          Icons.wrong_location_rounded,
+        ),
+      AsyncData(:final value) when value.distanceKm != null => (
+          s.deliveryDistanceFee(value.distanceKm!.toStringAsFixed(1)),
+          AppColors.ink500,
+          Icons.route_rounded,
+        ),
+      AsyncLoading() => (s.deliveryFeeCalculating, AppColors.ink400, Icons.route_rounded),
+      _ => ('', AppColors.ink400, Icons.route_rounded),
+    };
+    if (text.isEmpty) return const SizedBox.shrink();
+
+    return AnimatedSize(
+      duration: AppMotion.dur(context, AppMotion.base),
+      curve: AppMotion.curve,
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(text,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: color, height: 1.4)),
+            ),
           ],
         ),
       ),

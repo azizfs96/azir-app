@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/haptics.dart';
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_image.dart';
 import '../../core/widgets/riyal_price.dart';
 import '../stores/domain/menu.dart';
 import '../stores/presentation/store_avatar.dart';
 import 'cart_controller.dart';
 
 /// ============================================================================
-/// PICK OPTIONS AND ADD TO CART (RestaurantEngine, R2)
+/// PICK OPTIONS AND ADD TO CART — the design system's product screen.
 ///
-/// A bottom sheet for one dish: its photo, its option groups, a quantity
-/// stepper, and a live-priced "add" button. Selection rules mirror the
-/// backend's own validation — a required single-choice group must have exactly
-/// one pick before the dish can be added, a multi group is capped at maxSelect.
+///   ┌──────────────────────────────┐
+///   │ ⊗                            │  ← square photo, floating close
+///   │           [ photo ]          │
+///   ╭──────────────────────────────╮  ← body overlaps the photo by 30pt
+///   │ اسم الصنف                    │     name 28/600, calories, description
+///   │ 🔥 150 سعرة                  │
+///   │ أضف مكونات          [اختياري]│  ← group head + required/optional pill
+///   │ ┌──────────────────────────┐ │
+///   │ │ ☐   ﷼+4      شوت إضافي  │ │  ← option rows: name · delta · check
+///   │ │ ☐   ﷼+3      حليب لوز   │ │
+///   │ └──────────────────────────┘ │
+///   │ [ أضف للسلة  ﷼18 ] [ 🗑 1 + ]│  ← brand CTA + capsule quantity
+///   ╰──────────────────────────────╯
+///
+/// Selection rules mirror the backend's own validation — a required
+/// single-choice group must have exactly one pick before the dish can be
+/// added, a multi group is capped at maxSelect.
 /// ============================================================================
 Future<void> showItemSheet(
   BuildContext context, {
@@ -25,12 +40,13 @@ Future<void> showItemSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: Ds.bg,
+    clipBehavior: Clip.antiAlias,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
     ),
     builder: (_) => FractionallySizedBox(
-      heightFactor: 0.92,
+      heightFactor: 0.95,
       child: _ItemSheet(storeToken: storeToken, item: item, brand: brand),
     ),
   );
@@ -70,8 +86,7 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
         return chosen >= group.minSelect;
       });
 
-  Set<int> get _allSelected =>
-      _selected.values.expand((s) => s).toSet();
+  Set<int> get _allSelected => _selected.values.expand((s) => s).toSet();
 
   double get _unitPrice {
     var total = widget.item.price;
@@ -85,6 +100,7 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
 
   void _toggle(MenuOptionGroup group, MenuOption option) {
     if (!option.isAvailable) return;
+    AppHaptics.tick();
     setState(() {
       final current = _selected[group.id] ?? <int>{};
 
@@ -111,6 +127,8 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
             quantity: _quantity,
           ),
         );
+    // A physical confirmation the moment it's in the cart.
+    AppHaptics.addedToCart();
     Navigator.of(context).pop();
   }
 
@@ -118,125 +136,114 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
   Widget build(BuildContext context) {
     final s = Strings.of(context);
     final item = widget.item;
+    final brand = widget.brand;
     final imageUrl = logoUrlOf(item.image);
+    final desc = item.description ?? '';
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              // ---- image header with a close button -------------------------
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: SizedBox(
-                      height: 240,
-                      width: double.infinity,
-                      child: imageUrl != null
-                          ? Image.network(imageUrl, fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => _imagePlaceholder())
-                          : _imagePlaceholder(),
-                    ),
-                  ),
-                  PositionedDirectional(
-                    top: 14,
-                    start: 14,
-                    child: _CircleBtn(
-                      icon: Icons.close_rounded,
-                      onTap: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ],
-              ),
-
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final w = c.maxWidth;
+                return Stack(
                   children: [
-                    Text(item.name,
-                        style: const TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink900)),
-                    if (item.calories != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.local_fire_department_rounded,
-                              size: 17, color: AppColors.flame),
-                          const SizedBox(width: 4),
-                          Text(s.caloriesLabel(item.calories!),
-                              style: const TextStyle(
-                                  fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink700)),
-                        ],
+                    // `.p-img`: a square hero on the soft fill.
+                    SizedBox(
+                      width: w,
+                      height: w,
+                      child: AppImage(
+                        url: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholderColor: Ds.soft,
+                        error: const ColoredBox(
+                          color: Ds.soft,
+                          child: Center(child: Icon(Icons.restaurant_rounded, size: 54, color: Ds.ink3)),
+                        ),
                       ),
-                    ],
-                    if (item.description != null && item.description!.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(item.description!,
-                          style: const TextStyle(fontSize: 14.5, height: 1.55, color: AppColors.ink500)),
-                    ],
-                  ],
-                ),
-              ),
-
-              for (final group in item.optionGroups)
-                _GroupBlock(
-                  group: group,
-                  selected: _selected[group.id] ?? const {},
-                  s: s,
-                  onToggle: (option) => _toggle(group, option),
-                ),
-
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-
-        // Quantity + add, pinned so they never scroll away.
-        Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: AppColors.ink100)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Row(
-                children: [
-                  _QuantityStepper(
-                    quantity: _quantity,
-                    onChanged: (q) => setState(() => _quantity = q),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _isComplete ? _add : null,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.ink900,
-                        disabledBackgroundColor: AppColors.ink200,
-                        minimumSize: const Size.fromHeight(56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                    ),
+                    // `.p-body`: overlaps the photo by 30pt with its own rounded top.
+                    Padding(
+                      padding: EdgeInsets.only(top: w - 30),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          color: Ds.bg,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s.addToCart,
-                                style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700)),
-                            const SizedBox(width: 8),
-                            const Text('·', style: TextStyle(fontSize: 15, color: Colors.white)),
-                            const SizedBox(width: 8),
-                            RiyalPrice(
-                                amount: _unitPrice * _quantity, size: 15, color: Colors.white),
+                            Text(item.name,
+                                style: const TextStyle(
+                                    fontSize: 28, fontWeight: FontWeight.w600, height: 1.3, color: Ds.ink)),
+                            if (item.calories != null) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.local_fire_department_rounded, size: 16, color: AppColors.flame),
+                                  const SizedBox(width: 8),
+                                  Text(s.caloriesLabel(item.calories!),
+                                      style: const TextStyle(fontSize: 15, color: Ds.ink2)),
+                                ],
+                              ),
+                            ],
+                            if (desc.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(desc, style: const TextStyle(fontSize: 14, height: 1.7, color: Ds.ink2)),
+                            ],
+                            for (final group in item.optionGroups)
+                              _GroupBlock(
+                                group: group,
+                                selected: _selected[group.id] ?? const {},
+                                brand: brand,
+                                s: s,
+                                onToggle: (option) => _toggle(group, option),
+                              ),
                           ],
                         ),
                       ),
                     ),
+                    // `.p-top`: the floating close button.
+                    PositionedDirectional(
+                      top: 14,
+                      start: 16,
+                      child: _RoundBtn(icon: Icons.close_rounded, onTap: () => Navigator.of(context).pop()),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+
+        // `.p-foot`: brand CTA (start) + capsule quantity (end), pinned.
+        ColoredBox(
+          color: Ds.bg,
+          child: SafeArea(
+            top: false,
+            minimum: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Cta(
+                      enabled: _isComplete,
+                      brand: brand,
+                      label: s.addToCart,
+                      amount: _unitPrice * _quantity,
+                      onTap: _add,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _Qty(
+                    quantity: _quantity,
+                    brand: brand,
+                    onChanged: (q) => setState(() => _quantity = q),
+                    onRemove: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
@@ -246,49 +253,51 @@ class _ItemSheetState extends ConsumerState<_ItemSheet> {
       ],
     );
   }
-
-  Widget _imagePlaceholder() => ColoredBox(
-        color: AppColors.cream,
-        child: const Center(
-            child: Icon(Icons.restaurant_rounded, size: 54, color: AppColors.ink300)),
-      );
 }
 
-class _CircleBtn extends StatelessWidget {
-  const _CircleBtn({required this.icon, required this.onTap});
+/// `.p-top .round`: a 44pt white round button with a soft drop shadow.
+class _RoundBtn extends StatelessWidget {
+  const _RoundBtn({required this.icon, required this.onTap});
   final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: const BoxDecoration(
+        color: Ds.surface,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Color(0x24000000), blurRadius: 12, offset: Offset(0, 2))],
+      ),
       child: Material(
-        color: Colors.white,
+        color: Colors.transparent,
         shape: const CircleBorder(),
-        elevation: 1,
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: Padding(
-            padding: const EdgeInsets.all(9),
-            child: Icon(icon, size: 22, color: AppColors.ink900),
-          ),
+          child: Icon(icon, size: 21, color: Ds.ink),
         ),
       ),
     );
   }
 }
 
+/// One option group: `.og-h` head (name + required/optional pill) and the
+/// `.og` white card of option rows.
 class _GroupBlock extends StatelessWidget {
   const _GroupBlock({
     required this.group,
     required this.selected,
+    required this.brand,
     required this.s,
     required this.onToggle,
   });
 
   final MenuOptionGroup group;
   final Set<int> selected;
+  final Color brand;
   final Strings s;
   final void Function(MenuOption) onToggle;
 
@@ -299,50 +308,45 @@ class _GroupBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section heading: name + a "required/optional" pill, as the reference.
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+          padding: const EdgeInsets.fromLTRB(0, 22, 0, 10),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(group.name,
-                  style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.ink900)),
+              Expanded(
+                child: Text(group.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Ds.ink)),
+              ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.ink100,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isRequired ? brand.withValues(alpha: 0.10) : Ds.soft,
+                  borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(isRequired ? s.required : s.optional,
-                    style: const TextStyle(
-                        fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.ink500)),
+                    style: TextStyle(fontSize: 12, color: isRequired ? brand : Ds.ink3)),
               ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.ink100),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < group.options.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: AppColors.ink100),
-                  _OptionRow(
-                    option: group.options[i],
-                    selected: selected.contains(group.options[i].id),
-                    single: group.isSingleChoice,
-                    s: s,
-                    onTap: () => onToggle(group.options[i]),
-                  ),
-                ],
+        Container(
+          decoration: BoxDecoration(color: Ds.surface, borderRadius: BorderRadius.circular(20)),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              for (var i = 0; i < group.options.length; i++) ...[
+                if (i > 0) const Divider(height: 1, thickness: 1, color: Ds.line),
+                _OptionLine(
+                  option: group.options[i],
+                  selected: selected.contains(group.options[i].id),
+                  brand: brand,
+                  onTap: () => onToggle(group.options[i]),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ],
@@ -350,53 +354,47 @@ class _GroupBlock extends StatelessWidget {
   }
 }
 
-class _OptionRow extends StatelessWidget {
-  const _OptionRow({
+/// `.oline`: name on the start, the price delta, then the check on the end.
+class _OptionLine extends StatelessWidget {
+  const _OptionLine({
     required this.option,
     required this.selected,
-    required this.single,
-    required this.s,
+    required this.brand,
     required this.onTap,
   });
 
   final MenuOption option;
   final bool selected;
-  final bool single;
-  final Strings s;
+  final Color brand;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final delta = option.priceDelta;
     return InkWell(
       onTap: option.isAvailable ? onTap : null,
       child: Opacity(
         opacity: option.isAvailable ? 1 : 0.4,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           child: Row(
             children: [
-              _Control(selected: selected, single: single),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(option.name,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink900)),
+                    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500, color: Ds.ink)),
               ),
-              if (option.priceDelta != 0)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(option.priceDelta > 0 ? '+' : '−',
-                        style: const TextStyle(
-                            fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink500)),
-                    RiyalPrice(
-                      amount: option.priceDelta.abs(),
-                      size: 13.5,
-                      color: AppColors.ink500,
-                      weight: FontWeight.w600,
-                    ),
-                  ],
+              if (delta != 0) ...[
+                const SizedBox(width: 12),
+                RiyalPrice(
+                  amount: delta.abs(),
+                  size: 14.5,
+                  weight: FontWeight.w600,
+                  color: selected ? Ds.ink : Ds.ink2,
+                  sign: delta > 0 ? '+' : '−',
                 ),
+              ],
+              const SizedBox(width: 12),
+              _Check(selected: selected, brand: brand),
             ],
           ),
         ),
@@ -405,74 +403,131 @@ class _OptionRow extends StatelessWidget {
   }
 }
 
-/// A Jahez-style radio (single) / checkbox (multi): a filled black mark when
-/// selected, a hollow grey ring/box otherwise.
-class _Control extends StatelessWidget {
-  const _Control({required this.selected, required this.single});
+/// `.ck`: a 24pt rounded square; brand-filled with a white check when on.
+class _Check extends StatelessWidget {
+  const _Check({required this.selected, required this.brand});
   final bool selected;
-  final bool single;
+  final Color brand;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
+    return AnimatedContainer(
+      duration: AppMotion.dur(context, AppMotion.fast),
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
-        color: selected ? AppColors.ink900 : Colors.transparent,
-        shape: single ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: single ? null : BorderRadius.circular(7),
-        border: selected ? null : Border.all(color: AppColors.ink300, width: 1.6),
+        color: selected ? brand : Colors.transparent,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: selected ? brand : Ds.ink3, width: 1.8),
       ),
-      child: selected
-          ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
-          : null,
+      child: selected ? const Icon(Icons.check_rounded, size: 15, color: Colors.white) : null,
     );
   }
 }
 
-class _QuantityStepper extends StatelessWidget {
-  const _QuantityStepper({required this.quantity, required this.onChanged});
+/// `.qty`: the capsule stepper — trash at 1 (cancels), minus above, count, plus.
+class _Qty extends StatelessWidget {
+  const _Qty({
+    required this.quantity,
+    required this.brand,
+    required this.onChanged,
+    required this.onRemove,
+  });
 
   final int quantity;
+  final Color brand;
   final ValueChanged<int> onChanged;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
+    Widget btn(IconData icon, VoidCallback onTap) => Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: () {
+              AppHaptics.tick();
+              onTap();
+            },
+            customBorder: const CircleBorder(),
+            child: SizedBox(width: 40, height: 40, child: Icon(icon, size: 20, color: brand)),
+          ),
+        );
+
     return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.ink200),
-        borderRadius: BorderRadius.circular(12),
+        color: Ds.surface,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: brand, width: 1.5),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _StepButton(icon: Icons.remove_rounded, onTap: () => onChanged(quantity - 1)),
+          btn(quantity > 1 ? Icons.remove_rounded : Icons.delete_outline_rounded,
+              () => quantity > 1 ? onChanged(quantity - 1) : onRemove()),
+          const SizedBox(width: 6),
           SizedBox(
-            width: 32,
+            width: 20,
             child: Text('$quantity',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Ds.ink)),
           ),
-          _StepButton(icon: Icons.add_rounded, onTap: () => onChanged(quantity + 1)),
+          const SizedBox(width: 6),
+          btn(Icons.add_rounded, () => onChanged(quantity + 1)),
         ],
       ),
     );
   }
 }
 
-class _StepButton extends StatelessWidget {
-  const _StepButton({required this.icon, required this.onTap});
+/// `.cta`: the brand "add to cart · price" capsule.
+class _Cta extends StatelessWidget {
+  const _Cta({
+    required this.enabled,
+    required this.brand,
+    required this.label,
+    required this.amount,
+    required this.onTap,
+  });
 
-  final IconData icon;
+  final bool enabled;
+  final Color brand;
+  final String label;
+  final double amount;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Icon(icon, size: 18, color: AppColors.ink700),
+    return Opacity(
+      opacity: enabled ? 1 : 0.8,
+      child: Material(
+        color: brand,
+        borderRadius: BorderRadius.circular(99),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(99),
+          child: SizedBox(
+            height: 58,
+            // Scales the label down rather than ever overflowing on narrow phones.
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(label,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Colors.white)),
+                    const SizedBox(width: 10),
+                    RiyalPrice(amount: amount, size: 17, weight: FontWeight.w600, color: Colors.white),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

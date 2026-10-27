@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/haptics.dart';
 import '../../../core/localization/strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../menu/order_repository.dart';
+import '../../menu/reorder_action.dart';
 import '../../stores/data/store_repository.dart';
 import '../data/my_stores_repository.dart';
 import 'store_card.dart';
@@ -85,6 +88,10 @@ class HomeScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
+                      // One-tap "reorder your last order" — shown only when there
+                      // is a completed order to repeat (the highest-value shortcut
+                      // in a food app). Silent for guests / first-time users.
+                      const _ReorderShortcut(),
                       Text(
                         s.myStores,
                         style: const TextStyle(
@@ -147,6 +154,89 @@ class HomeScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.qr_code_scanner_rounded),
         label: Text(s.scanQr),
+      ),
+    );
+  }
+}
+
+/// A prominent, dark "reorder your last order" card that stands out from the
+/// white store list. One tap rebuilds the cart and opens it. Renders nothing
+/// unless there is a completed order to repeat.
+class _ReorderShortcut extends ConsumerWidget {
+  const _ReorderShortcut();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = Strings.of(context);
+    final order = ref.watch(lastReorderableOrderProvider).value;
+    if (order == null) return const SizedBox.shrink();
+
+    final names = order.items.map((l) => l.name).toList();
+    final itemsLine = names.take(2).join('، ') + (names.length > 2 ? '…' : '');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Material(
+        color: AppColors.ink900,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            AppHaptics.tick();
+            reorderAndOpenCart(context, ref, order, s);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.flame.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.flame.withValues(alpha: 0.45)),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, color: AppColors.flame, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.reorderLast,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        order.storeName ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      if (itemsLine.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          itemsLine,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12.5, color: Colors.white.withValues(alpha: 0.55)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_left_rounded, color: Colors.white.withValues(alpha: 0.7)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

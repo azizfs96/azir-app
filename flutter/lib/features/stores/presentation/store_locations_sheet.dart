@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/location/device_location.dart';
 
 import '../../../core/localization/strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -22,6 +25,15 @@ Future<void> openStoreLocations(
     final targets = mapTargets(store);
 
     if (targets.isEmpty) return;
+
+    // Distance labels when the customer's location is already known (never
+    // prompts here — the storefront asked once already).
+    DeviceLocation? here;
+    try {
+      here = ProviderScope.containerOf(context, listen: false).read(deviceLocationProvider).value;
+    } catch (_) {
+      here = null;
+    }
 
     if (targets.length == 1) {
       await openMapUrl(targets.first.url);
@@ -60,6 +72,7 @@ Future<void> openStoreLocations(
                 separatorBuilder: (_, _) => const SizedBox(height: 4),
                 itemBuilder: (_, index) {
                   final target = targets[index];
+                  final km = here?.kmTo(target.latitude, target.longitude);
 
                   return ListTile(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -86,13 +99,28 @@ Future<void> openStoreLocations(
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 12.5, color: AppColors.ink500),
                           ),
-                    trailing: Text(
-                      s.openInMaps,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: brand,
-                      ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (km != null)
+                          Text(
+                            formatDistance(s, km),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink900,
+                            ),
+                          ),
+                        Text(
+                          s.openInMaps,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: brand,
+                          ),
+                        ),
+                      ],
                     ),
                     onTap: () {
                       Navigator.of(sheetContext).pop();

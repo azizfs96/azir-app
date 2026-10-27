@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/empty_state.dart';
 import 'car_repository.dart';
 
 const _brands = [
@@ -35,7 +36,12 @@ class CarsScreen extends ConsumerWidget {
       ),
       body: cars.when(
         loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (_, _) => Center(child: Text(s.error, style: const TextStyle(color: AppColors.ink500))),
+        error: (_, _) => EmptyState(
+          icon: Icons.wifi_off_rounded,
+          title: s.error,
+          actionLabel: s.retry,
+          onAction: () => ref.invalidate(carsProvider),
+        ),
         data: (list) => list.isEmpty
             ? _empty(s)
             : ListView.separated(

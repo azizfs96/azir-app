@@ -22,7 +22,7 @@ class Strings {
   String _(String ar, String en) => isArabic ? ar : en;
 
   // Brand
-  String get appName => _('وصلة', 'Wasla');
+  String get appName => _('easy app', 'easy app');
   String get tagline => _('امسح، وادخل مباشرة', 'Scan, and enter directly');
 
   // Home (spec §5)
@@ -198,6 +198,9 @@ class Strings {
   String get menuSectionsTitle => _('أصناف القائمة', 'Menu');
   String caloriesLabel(int n) => _('$n سعرة', '$n cal');
   String get featuredSection => _('الأكثر مبيعاً', 'Best sellers');
+  String get menuItemsHead => _('أصناف القائمة', 'Menu items');
+  String get viewCart => _('عرض السلة', 'View cart');
+  String get eveningGreeting => _('مساء الخير', 'Good evening');
   String get soldOut => _('نفد', 'Sold out');
   String get addToCart => _('أضف للسلة', 'Add to cart');
   String get cart => _('السلة', 'Cart');
@@ -205,7 +208,7 @@ class Strings {
   String get emptyCartHint => _('تصفّح المنيو وأضف ما يعجبك.', 'Browse the menu and add what you like.');
   String get orderTotal => _('الإجمالي', 'Total');
   String get reviewOrder => _('مراجعة الطلب', 'Review order');
-  String get required => _('إلزامي', 'Required');
+  String get required => _('مطلوب', 'Required');
   String get optional => _('اختياري', 'Optional');
   String chooseUpTo(int n) => _('اختر حتى $n', 'Choose up to $n');
   String chooseExactly(int n) => _('اختر $n', 'Choose $n');
@@ -225,6 +228,8 @@ class Strings {
   String get fulfillmentDelivery => _('توصيل', 'Delivery');
   String get fulfillmentCurbside => _('من السيارة', 'Curbside');
   String get pickupBranch => _('فرع الاستلام', 'Pickup branch');
+  String get selectBranch => _('اختر الفرع', 'Choose a branch');
+  String get selectBranchRequired => _('اختر الفرع أولاً', 'Choose a branch first');
   String get orderNow => _('اطلب الآن', 'Order now');
   String get storeGreeting => _('مرحباً بك 👋', 'Welcome 👋');
   String get orderCode => _('كود', 'Code');
@@ -237,10 +242,35 @@ class Strings {
         _ => _('استلام من الفرع', 'Pickup'),
       };
   String get tableNumber => _('رقم الطاولة', 'Table number');
+  String get partySize => _('عدد الأشخاص', 'Party size');
+  String get selectPartySize => _('حدد عدد الأشخاص', 'Select party size');
+  String get select => _('تحديد', 'Select');
+  String get partySizeRequired => _('حدد عدد الأشخاص أولاً', 'Choose the number of people first');
+  /// Arabic person-count with correct dual/plural forms.
+  String partySizeLabel(int n) {
+    if (!isArabic) return '$n ${n == 1 ? 'person' : 'people'}';
+    if (n == 1) return 'شخص واحد';
+    if (n == 2) return 'شخصان';
+    if (n <= 10) return '$n أشخاص';
+    return '$n شخصاً';
+  }
   String get orderNotesHint => _('ملاحظات على الطلب (اختياري)', 'Order notes (optional)');
   String get orderPlaced => _('تم استلام طلبك', 'Order received');
   String orderReference(String ref) => _('رقم الطلب $ref', 'Order $ref');
   String get orderFailed => _('تعذّر إتمام الطلب. حاول مرة أخرى.', 'Could not place the order. Please try again.');
+  String get sendingOrder => _('جارٍ إرسال الطلب…', 'Sending your order…');
+  String get verifyingOrder => _('نتحقق من حالة الطلب…', 'Checking your order…');
+  String get checkoutConnectionUnknown => _(
+        'ضعف الاتصال منع تأكيد الطلب، ولم نُنشئ طلبًا مكررًا. تحقّق من اتصالك وحاول مرة أخرى.',
+        'A weak connection stopped us from confirming — no duplicate order was created. Check your connection and try again.',
+      );
+  String get orderReceivedHint =>
+      _('سنعلمك فور قبول المطعم لطلبك.', 'We\'ll notify you as soon as the restaurant accepts it.');
+  String get waitingAcceptTitle => _('بانتظار قبول المطعم', 'Waiting for the restaurant');
+  String get waitingAcceptHint => _(
+        'المطعم يراجع طلبك الآن، وسيبدأ التجهيز فور القبول.',
+        'The restaurant is reviewing your order and will start once it\'s accepted.',
+      );
   String get trackOrder => _('تتبّع الطلب', 'Track order');
   String get track => _('تتبّع', 'Track');
   String get reorder => _('إعادة الطلب', 'Reorder');
@@ -249,6 +279,7 @@ class Strings {
   String get myOrders => _('طلباتي', 'My orders');
   String get noOrders => _('لا توجد طلبات بعد', 'No orders yet');
   String get orderAgain => _('اطلب نفس الطلب', 'Order the same');
+  String get reorderLast => _('كرّر آخر طلب', 'Reorder your last');
   String get orderDelivered => _('تم التوصيل', 'Delivered');
   String get orderReceived => _('تم الاستلام', 'Received');
   String get orderPreparing => _('قيد التحضير', 'Preparing');
@@ -293,6 +324,28 @@ class Strings {
   String get orderStatusPreparing => _('يُحضّر الآن', 'Being prepared');
   String get orderStatusReady => _('جاهز للاستلام', 'Ready for pickup');
   String get orderStatusCompleted => _('تم التسليم', 'Completed');
+  // Delivery-specific steps.
+  String get orderStatusReadyDelivery => _('جاهز، بانتظار السائق', 'Ready, waiting for the driver');
+  String get orderStatusOutForDelivery => _('السائق في الطريق إليك', 'On its way to you');
+  String get driverLabel => _('السائق', 'Driver');
+  String get driverOnTheWay => _('في الطريق', 'On the way');
+  String get waitingDriverLocation => _('بانتظار موقع السائق…', 'Waiting for the driver\'s location…');
+  String etaMinutes(int m) => _('يصل خلال ~$m دقيقة', 'Arrives in ~$m min');
+  // Distance & delivery pricing.
+  String kmAway(String km) => _('يبعد $km كم', '$km km away');
+  String metersAway(int m) => _('يبعد $m م', '$m m away');
+  String get nearest => _('الأقرب', 'Nearest');
+  String deliveryDistanceFee(String km) => _('المسافة $km كم', 'Distance $km km');
+  String get deliveryFeeCalculating => _('جارٍ حساب رسوم التوصيل…', 'Calculating the delivery fee…');
+  String outOfDeliveryRange(String km, String max) => _(
+        'عنوانك يبعد $km كم — التوصيل متاح حتى $max كم من هذا الفرع.',
+        'Your address is $km km away — delivery reaches $max km from this branch.',
+      );
+  String get outOfDeliveryRangeShort => _('العنوان خارج نطاق التوصيل', 'Address is outside the delivery range');
+  String minOrderNotMet(String amount) => _(
+        'الحد الأدنى للتوصيل $amount ر.س',
+        'Minimum order for delivery is SAR $amount',
+      );
   String get orderStatusRejected => _('رُفض الطلب', 'Order rejected');
   String get orderStatusCancelled => _('أُلغي الطلب', 'Order cancelled');
   String get cancelOrder => _('إلغاء الطلب', 'Cancel order');
@@ -332,6 +385,7 @@ class Strings {
       );
   String get loading => _('جارٍ التحميل…', 'Loading…');
   String get error => _('حدث خطأ', 'Something went wrong');
+  String get offline => _('لا يوجد اتصال بالإنترنت', 'No internet connection');
   String get currency => _('ر.س', 'SAR');
   String minutes(int n) => _('$n دقيقة', '$n min');
   // Compact prep-time label for dish cards (Jahez-style): "15 د".
