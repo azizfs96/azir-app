@@ -20,34 +20,42 @@ class DeviceLocation {
   }
 }
 
-/// One permission prompt, one fix, cached for the session. The first read asks
-/// for "when in use" permission; a refusal resolves to null quietly and is not
-/// asked again until the app restarts (invalidate the provider to retry).
-final deviceLocationProvider = FutureProvider<DeviceLocation?>((ref) async {
-  if (kIsWeb) return null;
+/// A LIVE position: one permission prompt, then a stream that emits whenever
+/// the customer has moved ~[_moveMeters] (so a distance label is never stale),
+/// opening with the last known fix so the first frame already has a number.
+/// Ends with null when permission is refused or location is off.
+const _moveMeters = 30;
+
+final deviceLocationProvider = StreamProvider<DeviceLocation?>((ref) async* {
+  if (kIsWeb) {
+    yield null;
+    return;
+  }
+
   try {
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      yield null;
+      return;
+    }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      return null;
+      yield null;
+      return;
     }
 
-    // A recent cached fix is good enough for a distance label and is instant.
+    // Something immediately, even if a little old; the stream corrects it.
     final last = await Geolocator.getLastKnownPosition();
-    if (last != null && DateTime.now().difference(last.timestamp) < const Duration(minutes: 5)) {
-      return DeviceLocation(last.latitude, last.longitude);
-    }
+    if (last != null) yield DeviceLocation(last.latitude, last.longitude);
 
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-    ).timeout(const Duration(seconds: 8));
-    return DeviceLocation(pos.latitude, pos.longitude);
+    yield* Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.best, distanceFilter: _moveMeters),
+    ).map((p) => DeviceLocation(p.latitude, p.longitude)).handleError((_) {});
   } catch (_) {
-    return null;
+    yield null;
   }
 });
 
