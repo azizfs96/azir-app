@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\Http;
  */
 final class MapsLink
 {
+    // Ordered by trust: the place pin (!3d/!4d, ?q=, staticmap center=) before
+    // the camera centre (@lat,lng), which is only where the map was looking.
     private const PATTERNS = [
-        '/@(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/',                 // …/@lat,lng,17z
-        '/[?&](?:q|ll|center|daddr|destination)=(-?\d{1,3}\.\d+)(?:,|%2C)\s*(-?\d{1,3}\.\d+)/', // ?q=lat,lng
         '/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/',                 // …/data=!3dlat!4dlng (place links)
+        '/[?&](?:q|ll|center|daddr|destination)=(-?\d{1,3}\.\d+)(?:,|%2C)\s*(-?\d{1,3}\.\d+)/', // ?q=lat,lng
+        '/@(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/',                 // …/@lat,lng,17z
         '/^geo:(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/',              // geo:lat,lng
         '/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/',        // bare "lat, lng"
     ];
@@ -84,10 +86,16 @@ final class MapsLink
             return $hit;
         }
 
-        // Place pages embed the pin as !3d<lat>!4d<lng> or /@lat,lng in the HTML.
+        // Place pages embed the pin in the og:image static map (center=lat,lng)
+        // and in the data blob (!3d<lat>!4d<lng>); read those, not any @camera.
         $body = $response->body();
-        if ($body !== '' && ($hit = self::parse(mb_substr($body, 0, 200000))) !== null) {
-            return $hit;
+        if ($body !== '') {
+            if (preg_match('/staticmap\?[^"\']*center=(-?\d{1,3}\.\d+)(?:,|%2C)(-?\d{1,3}\.\d+)/', $body, $m) === 1) {
+                return [(float) $m[1], (float) $m[2]];
+            }
+            if (preg_match('/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/', $body, $m) === 1) {
+                return [(float) $m[1], (float) $m[2]];
+            }
         }
 
         return null;
