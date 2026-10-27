@@ -14,6 +14,17 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// Folds Arabic-Indic / Persian digits to ASCII (what an Arabic keyboard types).
+String _asciiDigits(String s) {
+  const from = '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹';
+  final out = StringBuffer();
+  for (final r in s.runes) {
+    final i = from.runes.toList().indexOf(r);
+    out.writeCharCode(i < 0 ? r : 0x30 + (i % 10));
+  }
+  return out.toString();
+}
+
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
@@ -30,7 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     final s = Strings.of(context);
-    final phone = _phone.text.trim();
+    final phone = _asciiDigits(_phone.text.trim());
     final password = _password.text;
     if (phone.isEmpty || password.isEmpty) return;
 
@@ -72,12 +83,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(20)),
-                    child: const Icon(Icons.delivery_dining_rounded, color: Colors.white, size: 38),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.delivery_dining_rounded, color: Colors.white, size: 38),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Text(s.appName, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
@@ -93,6 +110,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
                     textDirection: TextDirection.ltr,
+                    // Western digits even on an Arabic keyboard: a phone number
+                    // reads the same everywhere, and the API expects ASCII.
+                    style: const TextStyle(locale: Locale('en'), fontSize: 16, fontWeight: FontWeight.w600),
                     autofillHints: const [AutofillHints.telephoneNumber],
                     decoration: InputDecoration(
                       hintText: '05XXXXXXXX',
