@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Merchant;
 
 use App\Http\Resources\BranchResource;
 use App\Models\Branch;
+use App\Support\MapsLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,7 @@ class BranchController extends MerchantController
     public function store(Request $request): JsonResponse
     {
         $branch = Branch::create([
-            ...$this->validated($request),
+            ...$this->withPins($this->validated($request)),
             'store_id' => $this->merchantStore()->id,
         ]);
 
@@ -50,7 +51,7 @@ class BranchController extends MerchantController
         $branch = Branch::findOrFail($id);
         $this->authorize('update', $branch);
 
-        $branch->update($this->validated($request, updating: true));
+        $branch->update($this->withPins($this->validated($request, updating: true), $branch));
 
         return response()->json(new BranchResource($branch->fresh()));
     }
@@ -97,6 +98,27 @@ class BranchController extends MerchantController
         }
 
         return response()->json(['message' => __('merchant.schedule_saved')]);
+    }
+
+    /**
+     * A pasted maps link with no coordinates (short links) is expanded here so
+     * the branch gets its pin — distance labels and distance pricing need it.
+     * Explicit coordinates always win; an unchanged link is not re-fetched.
+     */
+    private function withPins(array $data, ?Branch $existing = null): array
+    {
+        $url = $data['google_maps_url'] ?? null;
+        $hasPin = isset($data['latitude'], $data['longitude']);
+        $linkChanged = $existing === null || $url !== $existing->google_maps_url;
+
+        if ($url && ! $hasPin && ($linkChanged || $existing?->latitude === null)) {
+            $pin = MapsLink::resolve($url);
+            if ($pin !== null) {
+                [$data['latitude'], $data['longitude']] = $pin;
+            }
+        }
+
+        return $data;
     }
 
     /** @return array<string, mixed> */
