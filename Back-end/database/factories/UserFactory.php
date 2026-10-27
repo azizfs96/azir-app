@@ -55,6 +55,16 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function driver(?Merchant $merchant = null): static
+    {
+        return $this->state(fn () => [
+            'role' => User::ROLE_DRIVER,
+            'phone' => null,
+            'email' => 'driver-'.fake()->unique()->lexify('????????').'@drivers.azir.sa',
+            'merchant_id' => $merchant?->id ?? Merchant::factory(),
+        ]);
+    }
+
     public function admin(): static
     {
         return $this->state(fn () => ['role' => User::ROLE_ADMIN, 'merchant_id' => null]);

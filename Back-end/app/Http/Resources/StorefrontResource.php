@@ -180,6 +180,7 @@ class StorefrontResource extends JsonResource
                 'integer' => (int) $value,
                 'decimal', 'number' => (float) $value,
                 'string' => (string) ($value ?? ''),
+                'array' => array_values((array) ($value ?? [])),
                 default => (bool) $value,
             };
         }

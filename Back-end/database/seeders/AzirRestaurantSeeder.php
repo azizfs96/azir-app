@@ -120,6 +120,8 @@ class AzirRestaurantSeeder extends Seeder
             'name_en' => 'Balad Restaurant',
             'address_line' => 'حي قرطبة، الرياض',
             'city' => 'الرياض',
+            'latitude' => 24.8120,   // Qurtubah, Riyadh — needed for delivery distance pricing
+            'longitude' => 46.7580,
             'slot_interval_minutes' => 15,
         ]);
         // Opening hours (every day 10:00–23:00) so the open/closed badge works.

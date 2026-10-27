@@ -30,11 +30,20 @@ class SendOrderNotification implements ShouldQueue
             OrderStatus::Accepted => 'order_accepted',
             OrderStatus::Preparing => 'order_preparing',
             OrderStatus::Ready => 'order_ready',
+            OrderStatus::OutForDelivery => 'order_out_for_delivery',
             OrderStatus::Completed => 'order_completed',
             OrderStatus::Rejected => 'order_rejected',
             OrderStatus::Cancelled => $event->actorType === 'customer' ? null : 'order_cancelled',
             default => null,
         };
+
+        // A delivery order that just became ready also pings its driver.
+        if ($event->to === OrderStatus::Ready && $event->order->driver_id !== null) {
+            $driverUser = $event->order->driver?->user;
+            if ($driverUser !== null) {
+                $this->dispatcher->driverEvent($event->order, $driverUser, 'driver_order_ready');
+            }
+        }
 
         if ($template === null) {
             return;

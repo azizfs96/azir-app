@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\Api\V1\Admin\MerchantController as AdminMerchantController;
 use App\Http\Controllers\Api\V1\Admin\MetricsController;
+use App\Http\Controllers\Api\V1\Auth\DriverAuthController;
 use App\Http\Controllers\Api\V1\Auth\MerchantAuthController;
+use App\Http\Controllers\Api\V1\Customer\DeliveryQuoteController;
+use App\Http\Controllers\Api\V1\Driver\DriverOrderController;
+use App\Http\Controllers\Api\V1\Merchant\DriverController;
 use App\Http\Controllers\Api\V1\Auth\OtpController;
 use App\Http\Controllers\Api\V1\Customer\AddressController;
 use App\Http\Controllers\Api\V1\Customer\BookingController;
@@ -49,6 +53,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Every {id} is numeric: a non-numeric id is a 404, never a type error.
+Route::pattern('id', '[0-9]+');
+
 Route::get('/health', fn () => response()->json([
     'status' => 'ok',
     'service' => 'wasla-api',
@@ -90,6 +97,9 @@ Route::prefix('auth')->group(function (): void {
 
     // Merchant / admin: email + password.
     Route::post('/login', [MerchantAuthController::class, 'login']);
+
+    // Driver app: phone + password set by the merchant.
+    Route::post('/driver/login', [DriverAuthController::class, 'login'])->middleware('throttle:10,1');
 
     // Business registration (spec §11 step 1). Public.
     Route::post('/merchant/register', [OnboardingController::class, 'register'])
@@ -145,7 +155,30 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function (): void {
     Route::get('/orders/{id}', [CustomerOrderController::class, 'show']);
     Route::post('/orders', [CustomerOrderController::class, 'store'])->middleware('throttle:10,1');
     Route::post('/orders/{id}/cancel', [CustomerOrderController::class, 'cancel']);
+    Route::get('/orders/{id}/tracking', [CustomerOrderController::class, 'tracking']);
+
+    // "How much is delivery to my address?" — the cart asks before ordering.
+    Route::get('/me/delivery-quote', [DeliveryQuoteController::class, 'show']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Driver app  (role:driver — not a tenant user; scoped by the driver's store)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('driver')
+    ->middleware(['auth:sanctum', 'role:driver'])
+    ->group(function (): void {
+        Route::get('/me', [DriverOrderController::class, 'me']);
+        Route::get('/orders', [DriverOrderController::class, 'index']);
+        Route::get('/orders/{id}', [DriverOrderController::class, 'show']);
+        Route::post('/orders/{id}/claim', [DriverOrderController::class, 'claim']);
+        Route::post('/orders/{id}/status', [DriverOrderController::class, 'updateStatus']);
+        Route::post('/location', [DriverOrderController::class, 'location'])->middleware('throttle:120,1');
+        Route::post('/device-tokens', [\App\Http\Controllers\Api\V1\Customer\DeviceTokenController::class, 'store']);
+        Route::delete('/device-tokens', [\App\Http\Controllers\Api\V1\Customer\DeviceTokenController::class, 'destroy']);
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -180,6 +213,11 @@ Route::prefix('merchant')
 
         Route::get('/orders', [MerchantOrderController::class, 'index']);
         Route::post('/orders/{id}/status', [MerchantOrderController::class, 'updateStatus']);
+        Route::post('/orders/{id}/driver', [MerchantOrderController::class, 'assignDriver']);
+        Route::get('/orders/{id}/tracking', [MerchantOrderController::class, 'tracking']);
+
+        // Delivery drivers (accounts for the driver app).
+        Route::apiResource('/drivers', DriverController::class)->except(['show']);
 
         Route::apiResource('/services', ServiceController::class)->except(['show']);
         Route::apiResource('/service-categories', ServiceCategoryController::class)->except(['show']);

@@ -46,6 +46,18 @@ return [
         'title' => 'تعذّر قبول طلبك',
         'body' => 'نعتذر، لم يتمكن :store_name من قبول طلبك رقم :reference.',
     ],
+    'order_out_for_delivery' => [
+        'title' => 'طلبك في الطريق',
+        'body' => 'انطلق السائق بطلبك رقم :reference من :store_name — تابعه على الخريطة.',
+    ],
+    'driver_assigned' => [
+        'title' => 'طلب توصيل جديد',
+        'body' => 'أُسند إليك الطلب رقم :reference من :store_name — :address',
+    ],
+    'driver_order_ready' => [
+        'title' => 'الطلب جاهز للاستلام',
+        'body' => 'الطلب رقم :reference جاهز في :store_name. استلمه وانطلق.',
+    ],
     'order_cancelled' => [
         'title' => 'تم إلغاء طلبك',
         'body' => 'تم إلغاء طلبك رقم :reference في :store_name.',

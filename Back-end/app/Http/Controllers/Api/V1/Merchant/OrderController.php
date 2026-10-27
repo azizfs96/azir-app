@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Api\V1\Merchant;
 
 use App\Domain\Ordering\Exceptions\InvalidOrderTransition;
 use App\Domain\Ordering\OrderStatus;
+use App\Domain\Notification\NotificationDispatcher;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrderTrackingResource;
+use App\Models\Driver;
+use Carbon\CarbonImmutable;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,7 +33,7 @@ class OrderController extends MerchantController
 
         $query = Order::query()
             ->where('store_id', $this->merchantStore()->id)
-            ->with(['customer.user', 'items.options'])
+            ->with(['customer.user', 'items.options', 'driver'])
             ->latest();
 
         $query = $filter === 'past'
@@ -49,7 +53,7 @@ class OrderController extends MerchantController
     {
         $data = $request->validate([
             'status' => ['required', Rule::in([
-                'accepted', 'preparing', 'ready', 'completed', 'rejected', 'cancelled',
+                'accepted', 'preparing', 'ready', 'out_for_delivery', 'completed', 'rejected', 'cancelled',
             ])],
             'prep_minutes' => ['sometimes', 'integer', 'min:1', 'max:600'],
             'reason' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -86,11 +90,57 @@ class OrderController extends MerchantController
         }
 
         return response()->json([
-            'order' => new OrderResource($order->load(['customer.user', 'items.options'])),
+            'order' => new OrderResource($order->load(['customer.user', 'items.options', 'driver'])),
             'allowed_transitions' => array_map(
                 fn (OrderStatus $status) => $status->value,
                 $order->status->allowedTransitions(),
             ),
         ]);
+    }
+
+    /**
+     * POST /merchant/orders/{id}/driver — hand a delivery order to one of the
+     * store's drivers (or re-assign it). The driver is notified.
+     */
+    public function assignDriver(int $id, Request $request, NotificationDispatcher $dispatcher): JsonResponse
+    {
+        $data = $request->validate(['driver_id' => ['required', 'integer']]);
+
+        $order = Order::with('items.options')->findOrFail($id);
+        $this->authorize('update', $order);
+
+        if ($order->fulfillment_type !== 'delivery' || $order->status->isTerminal() || $order->status === OrderStatus::Placed) {
+            return response()->json([
+                'message' => __('errors.order_not_assignable'),
+                'error_code' => 'ORDER_NOT_ASSIGNABLE',
+            ], 422);
+        }
+
+        $driver = Driver::query()
+            ->where('store_id', $this->merchantStore()->id)
+            ->where('is_active', true)
+            ->find($data['driver_id']);
+
+        if ($driver === null) {
+            return response()->json(['message' => __('errors.not_found'), 'error_code' => 'DRIVER_NOT_FOUND'], 422);
+        }
+
+        $changed = $order->driver_id !== $driver->id;
+        $order->forceFill(['driver_id' => $driver->id, 'assigned_at' => CarbonImmutable::now()])->save();
+
+        if ($changed && $driver->user !== null) {
+            $dispatcher->driverEvent($order, $driver->user, 'driver_assigned');
+        }
+
+        return response()->json(new OrderResource($order->load(['customer.user', 'items.options', 'driver'])));
+    }
+
+    /** GET /merchant/orders/{id}/tracking — the driver's live position for this order. */
+    public function tracking(int $id): JsonResponse
+    {
+        $order = Order::with(['driver', 'branch'])->findOrFail($id);
+        $this->authorize('view', $order);
+
+        return response()->json(new OrderTrackingResource($order));
     }
 }

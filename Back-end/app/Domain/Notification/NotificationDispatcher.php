@@ -95,6 +95,26 @@ class NotificationDispatcher
     }
 
     /**
+     * A delivery-order event for the DRIVER carrying it (assignment, ready for
+     * pickup). Same channels, the driver's locale, the order linked.
+     */
+    public function driverEvent(Order $order, User $driverUser, string $templateKey): void
+    {
+        $store = $order->store;
+        $locale = $driverUser->locale ?: 'ar';
+
+        $payload = [
+            'order_id' => $order->id,
+            'reference' => $order->reference,
+            'store_name' => $store?->displayName($locale),
+            'store_token' => $store?->public_token,
+            'address' => $order->delivery_address ?? '',
+        ];
+
+        $this->send($driverUser, null, $templateKey, $payload, $locale, $order);
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      */
     public function send(

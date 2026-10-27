@@ -58,6 +58,15 @@ class RestaurantEngine implements BusinessEngine
             'delivery_fee' => ['type' => 'decimal', 'default' => 0, 'group' => 'orders'],
             'delivery_min_order' => ['type' => 'decimal', 'default' => 0, 'group' => 'orders'],
 
+            // Distance pricing (DeliveryPricing): fixed | per_km | tiers, with an
+            // optional radius beyond which delivery is refused before ordering.
+            'delivery_pricing_mode' => ['type' => 'string', 'default' => 'fixed', 'group' => 'orders'],
+            'delivery_base_fee' => ['type' => 'decimal', 'default' => 0, 'group' => 'orders'],
+            'delivery_fee_per_km' => ['type' => 'decimal', 'default' => 0, 'group' => 'orders'],
+            'delivery_tiers' => ['type' => 'array', 'default' => [], 'group' => 'orders'],
+            'delivery_max_distance_km' => ['type' => 'decimal', 'default' => 0, 'group' => 'orders'],
+            'delivery_road_factor' => ['type' => 'decimal', 'default' => 1.3, 'group' => 'orders'],
+
             // Jahez-style: the restaurant ACCEPTS each order and commits to a
             // prep time. Auto-accept is for the food-truck who never looks at
             // a dashboard.

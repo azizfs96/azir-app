@@ -100,6 +100,8 @@ class AstrofRoasterySeeder extends Seeder
             'name_en' => 'Astrof',
             'address_line' => 'الرياض',
             'city' => 'الرياض',
+            'latitude' => 24.7743,   // Al Olaya, Riyadh
+            'longitude' => 46.6830,
             'slot_interval_minutes' => 15,
         ]);
         foreach (range(0, 6) as $day) {

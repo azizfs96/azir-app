@@ -33,6 +33,10 @@ return [
     'order_below_min_order' => 'المبلغ أقل من الحد الأدنى للتوصيل.',
     'order_item_unavailable' => 'أحد الأصناف في سلتك غير متوفر حالياً.',
     'order_option_unavailable' => 'أحد الخيارات المختارة غير متوفر حالياً.',
+    'order_out_of_delivery_range' => 'عنوانك خارج نطاق التوصيل لهذا الفرع.',
+    'order_already_taken' => 'استلم سائق آخر هذا الطلب.',
+    'order_not_claimable' => 'هذا الطلب غير متاح للتوصيل الآن.',
+    'order_not_assignable' => 'لا يمكن إسناد سائق لهذا الطلب.',
     'order_not_placeable' => 'تعذّر إنشاء الطلب. تحقق من السلة وحاول مجدداً.',
     'order_not_cancellable' => 'لا يمكن إلغاء الطلب بعد قبوله من المطعم.',
 ];

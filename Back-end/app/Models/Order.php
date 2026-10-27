@@ -50,8 +50,11 @@ class Order extends Model
             'delivery_longitude' => 'decimal:8',
             'prep_minutes' => 'integer',
             'party_size' => 'integer',
+            'delivery_distance_km' => 'decimal:2',
             'accepted_at' => 'immutable_datetime',
             'ready_at' => 'immutable_datetime',
+            'assigned_at' => 'immutable_datetime',
+            'out_for_delivery_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
         ];
@@ -84,6 +87,12 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /** The delivery driver carrying this order (delivery orders only). */
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
     /**
      * Move to a new status, or refuse. The ONLY way status changes.
      *
@@ -105,6 +114,7 @@ class Order extends Model
         match ($target) {
             OrderStatus::Accepted => $this->accepted_at = CarbonImmutable::now(),
             OrderStatus::Ready => $this->ready_at = CarbonImmutable::now(),
+            OrderStatus::OutForDelivery => $this->out_for_delivery_at = CarbonImmutable::now(),
             OrderStatus::Completed => $this->completed_at = CarbonImmutable::now(),
             OrderStatus::Cancelled, OrderStatus::Rejected => $this->cancelled_at = CarbonImmutable::now(),
             default => null,
@@ -129,6 +139,7 @@ class Order extends Model
             OrderStatus::Accepted->value,
             OrderStatus::Preparing->value,
             OrderStatus::Ready->value,
+            OrderStatus::OutForDelivery->value,
         ]);
     }
 }

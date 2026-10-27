@@ -33,7 +33,12 @@ class MerchantAuthController extends Controller
             ], 429);
         }
 
+        // Only dashboard roles may sign in here: a customer or a delivery driver
+        // with the same email is indistinguishable from "no such account".
         $user = User::where('email', $email)->first();
+        if ($user !== null && ! $user->isMerchantUser() && ! $user->isAdmin()) {
+            $user = null;
+        }
 
         /*
          * One generic failure for "no such user" and "wrong password".

@@ -138,4 +138,63 @@ wait; echo "       ids: $(jq -r .id /tmp/e2e_d1) / $(jq -r .id /tmp/e2e_d2)  (tw
 echo "== J. rate limit (10/min on POST /orders) =="
 C429=0; for i in $(seq 1 12); do req POST /orders "$T2" '{"store_token":"AZRBRGR2","fulfillment_type":"pickup","items":[{"item_id":10,"quantity":1}]}'; [ "$CODE" = "429" ] && C429=$((C429+1)); done; [ $C429 -gt 0 ] && ok "throttle kicks in (429 x$C429 of 12)" || bad "no 429 after 12 rapid orders" ""
 
+
+(cd $BE && php artisan cache:clear >/dev/null 2>&1)
+echo "== K. delivery pricing by distance =="
+# Local fixtures: pin the Azir branch, switch the store to per-km pricing with a 25 km radius.
+tinker "\$s=App\Models\Store::withoutGlobalScopes()->where('public_token','AZRBRGR2')->first(); \$s->branches()->update(['latitude'=>24.8120,'longitude'=>46.7580]); App\Models\BookingSettings::withoutGlobalScopes()->where('store_id',\$s->id)->update(['delivery_pricing_mode'=>'per_km','delivery_base_fee'=>5,'delivery_fee_per_km'=>2,'delivery_max_distance_km'=>25,'delivery_road_factor'=>1.3]); echo 'ok';" >/dev/null
+req GET "/stores/AZRBRGR2"; [ "$(j .configuration.delivery_pricing_mode)" = "per_km" ] && ok "storefront exposes pricing mode per_km" || bad "storefront pricing mode" "$(j .configuration.delivery_pricing_mode)"
+req GET "/me/delivery-quote?store_token=AZRBRGR2&address_id=$ADDR" "$T1"; expect 200 "quote for a nearby address"
+QFEE=$(j .fee); QKM=$(j .distance_km); echo "       allowed=$(j .allowed) mode=$(j .mode) distance_km=$QKM fee=$QFEE"
+[ "$(j .allowed)" = "true" ] && ok "nearby address is allowed" || bad "nearby address refused" "$BODY"
+req POST /me/addresses "$T1" '{"label":"other","address_text":"الخرج","latitude":24.15,"longitude":47.30}'; FAR=$(j '.id // .data.id')
+req GET "/me/delivery-quote?store_token=AZRBRGR2&address_id=$FAR" "$T1"; expect 200 "quote for a far address"
+[ "$(j .allowed)" = "false" ] && [ "$(j .reason)" = "OUT_OF_RANGE" ] && ok "far address reported out of range ($(j .distance_km) km > $(j .max_distance_km))" || bad "far address not refused" "$BODY"
+req POST /orders "$T1" "{\"store_token\":\"AZRBRGR2\",\"fulfillment_type\":\"delivery\",\"address_id\":$FAR,\"items\":[{\"item_id\":3,\"quantity\":1}]}"; expect 422 "ordering to the far address refused"; echo "       code=$(j .error_code)"
+req POST /orders "$T1" "{\"store_token\":\"AZRBRGR2\",\"fulfillment_type\":\"delivery\",\"address_id\":$ADDR,\"items\":[{\"item_id\":3,\"quantity\":1}]}"; expect 201 "delivery order to the nearby address"; OD=$(j .id)
+[ "$(j .delivery_fee)" = "$QFEE" ] && ok "order fee equals the quote ($QFEE)" || bad "fee mismatch" "order=$(j .delivery_fee) quote=$QFEE"
+[ "$(j .delivery.distance_km)" = "$QKM" ] && ok "distance snapshotted on the order ($QKM km)" || bad "distance not snapshotted" "$(j .delivery)"
+req DELETE "/me/addresses/$FAR" "$T1" >/dev/null 2>&1
+
+echo "== L. driver app =="
+tinker "App\Models\Driver::withoutTenancy()->where('phone','like','+96655999000%')->get()->each(function(\$d){ \$d->user?->delete(); \$d->delete(); }); echo 'ok';" >/dev/null
+req POST /merchant/drivers "$TM" '{"name":"سعد السائق","phone":"0559990001","password":"driver-pass-1","vehicle":"دراجة"}'; expect 201 "merchant creates driver 1"; D1=$(j .id)
+req POST /merchant/drivers "$TM" '{"name":"فهد السائق","phone":"0559990002","password":"driver-pass-2"}'; expect 201 "merchant creates driver 2"; D2=$(j .id)
+req POST /merchant/drivers "$TM" '{"name":"مكرر","phone":"0559990001","password":"driver-pass-3"}'; expect 422 "duplicate driver phone refused"
+req GET /merchant/drivers "$TM"; expect 200 "merchant lists drivers"; echo "       count=$(j '.data|length')"
+req POST /auth/driver/login "" '{"phone":"0559990001","password":"nope"}'; expect 422 "driver wrong password"
+req POST /auth/driver/login "" '{"phone":"0559990001","password":"driver-pass-1","device_name":"e2e"}'; expect 200 "driver 1 login"; TD1=$(j .token)
+req POST /auth/driver/login "" '{"phone":"0559990002","password":"driver-pass-2"}'; expect 200 "driver 2 login"; TD2=$(j .token)
+req POST /auth/login "" '{"email":"'"$(tinker "echo App\Models\Driver::withoutTenancy()->find($D1)->user->email;")"'","password":"driver-pass-1"}'; expect 422 "driver cannot use the dashboard login"
+req GET /merchant/orders "$TD1"; expect 403 "driver token blocked from merchant routes"
+req GET /driver/me "$TD1"; expect 200 "driver profile"; echo "       store=$(j .store.name) driver=$(j .driver.name)"
+req GET "/driver/orders?filter=available" "$TD1"; [ "$(j "[.data[].id] | index($OD)")" = "null" ] && ok "placed order not yet on the driver board" || bad "placed order visible to drivers" ""
+req POST "/driver/orders/$OD/claim" "$TD1"; expect 422 "claim before acceptance refused"
+req POST "/merchant/orders/$OD/status" "$TM" '{"status":"accepted","prep_minutes":10}'; expect 200 "merchant accepts the delivery order"
+req GET "/driver/orders?filter=available" "$TD1"; [ "$(j "[.data[].id] | index($OD)")" != "null" ] && ok "accepted order on the driver board (customer=$(j '.data[0].customer.name // "?"') lat=$(j '.data[0].delivery.latitude'))" || bad "accepted order missing from board" "$BODY"
+req POST "/driver/orders/$OD/claim" "$TD1"; expect 200 "driver 1 claims"; echo "       driver=$(j .driver.name) assigned_at=$(j .assigned_at)"
+req POST "/driver/orders/$OD/claim" "$TD2"; expect 409 "driver 2 claim refused (already taken)"
+req GET "/driver/orders/$OD" "$TD2"; expect 404 "driver 2 cannot open driver 1's order"
+req POST "/driver/orders/$OD/status" "$TD1" '{"status":"out_for_delivery"}'; expect 422 "pickup before ready is illegal"
+req GET "/orders/$OD/tracking" "$T1"; expect 200 "customer tracking (assigned, not moving)"; echo "       driver=$(j .driver.name) location=$(j .driver_location)"
+req POST "/merchant/orders/$OD/status" "$TM" '{"status":"ready"}'; expect 200 "kitchen marks ready"
+req POST "/driver/orders/$OD/status" "$TD1" '{"status":"out_for_delivery"}'; expect 200 "driver picks up -> out_for_delivery"
+req POST /driver/location "$TD1" '{"latitude":24.80,"longitude":46.75,"heading":120,"speed_kmh":35}'; expect 200 "driver heartbeat"
+req GET "/orders/$OD/tracking" "$T1"; expect 200 "customer tracking while moving"
+[ "$(j .driver_location.latitude)" = "24.8" ] && ok "customer sees the driver's position (eta=$(j .eta_minutes) min, fresh=$(j .driver_location.fresh))" || bad "no driver position for customer" "$BODY"
+req GET "/merchant/orders/$OD/tracking" "$TM"; expect 200 "merchant tracking"
+req GET "/orders/$OD/tracking" "$T2"; expect 404 "another customer cannot track this order"
+if [ -n "$TA" ] && [ "$TA" != "null" ]; then req GET "/merchant/orders/$OD/tracking" "$TA"; [ "$CODE" = "403" ] || [ "$CODE" = "404" ] && ok "other merchant cannot track this order [$CODE]" || bad "TENANT LEAK: other merchant tracked order" "$CODE"; fi
+req POST "/driver/orders/$OD/status" "$TD1" '{"status":"completed"}'; expect 200 "driver hands over -> completed"
+req GET "/orders/$OD/tracking" "$T1"; [ "$(j .driver_location)" = "null" ] && [ "$(j .status)" = "completed" ] && ok "position hidden after completion" || bad "position still exposed" "$BODY"
+req GET "/driver/orders?filter=past" "$TD1"; [ "$(j "[.data[].id] | index($OD)")" != "null" ] && ok "run listed under driver's past" || bad "run missing from past" ""
+req PUT "/merchant/drivers/$D2" "$TM" '{"is_active":false}'; expect 200 "merchant deactivates driver 2"
+req GET /driver/me "$TD2"; expect 401 "deactivated driver's token revoked"
+req DELETE "/merchant/drivers/$D1" "$TM"; expect 200 "merchant deletes driver 1"
+req GET "/orders/$OD" "$T1"; [ "$(j .status)" = "completed" ] && ok "order history survives driver deletion" || bad "order lost" ""
+(cd $BE && php artisan queue:work --stop-when-empty 2>&1 | grep -c "DONE" | sed 's/^/       jobs processed: /')
+req GET /me/notifications "$T1"; [ "$(j '[.data[].title] | index("طلبك في الطريق")')" != "null" ] && ok "customer got the on-its-way notification" || bad "no on-its-way notification" "$(j '[.data[].title]')"
+# restore the store's pricing for the next run
+tinker "\$s=App\Models\Store::withoutGlobalScopes()->where('public_token','AZRBRGR2')->first(); App\Models\BookingSettings::withoutGlobalScopes()->where('store_id',\$s->id)->update(['delivery_pricing_mode'=>'fixed','delivery_max_distance_km'=>0]); echo 'ok';" >/dev/null
+
 echo; echo "RESULT: $PASS passed, $FAIL failed"

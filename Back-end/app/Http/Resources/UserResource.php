@@ -31,6 +31,12 @@ class UserResource extends JsonResource
                 'gender' => $this->customer->gender,
             ]),
 
+            'driver' => $this->whenLoaded('driver', fn () => [
+                'id' => $this->driver->id,
+                'vehicle' => $this->driver->vehicle,
+                'is_active' => $this->driver->is_active,
+            ]),
+
             'merchant' => $this->whenLoaded('merchant', fn () => [
                 'display_name' => $this->merchant->display_name,
                 'status' => $this->merchant->status,

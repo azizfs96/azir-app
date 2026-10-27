@@ -47,6 +47,18 @@ return [
         'title' => "Order couldn't be accepted",
         'body' => "Sorry, :store_name couldn't accept order :reference.",
     ],
+    'order_out_for_delivery' => [
+        'title' => 'Your order is on its way',
+        'body' => 'The driver left :store_name with order :reference — follow it on the map.',
+    ],
+    'driver_assigned' => [
+        'title' => 'New delivery',
+        'body' => 'Order :reference from :store_name was assigned to you — :address',
+    ],
+    'driver_order_ready' => [
+        'title' => 'Order ready for pickup',
+        'body' => 'Order :reference is ready at :store_name. Pick it up and go.',
+    ],
     'order_cancelled' => [
         'title' => 'Order cancelled',
         'body' => 'Order :reference at :store_name has been cancelled.',

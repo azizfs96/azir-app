@@ -8,6 +8,8 @@ namespace App\Domain\Ordering;
  *                     ┌──────────────► rejected (terminal)
  *                     │
  *   placed ───► accepted ───► preparing ───► ready ───► completed (terminal)
+ *                                              │              ▲
+ *                                              └► out_for_delivery (delivery only)
  *     │            │              │
  *     └── cancelled┴──────────────┴────────► cancelled (terminal)
  *
@@ -20,6 +22,7 @@ enum OrderStatus: string
     case Accepted = 'accepted';
     case Preparing = 'preparing';
     case Ready = 'ready';
+    case OutForDelivery = 'out_for_delivery';
     case Completed = 'completed';
     case Rejected = 'rejected';
     case Cancelled = 'cancelled';
@@ -31,7 +34,8 @@ enum OrderStatus: string
             self::Placed => [self::Accepted, self::Rejected, self::Cancelled],
             self::Accepted => [self::Preparing, self::Ready, self::Cancelled],
             self::Preparing => [self::Ready, self::Cancelled],
-            self::Ready => [self::Completed],
+            self::Ready => [self::Completed, self::OutForDelivery, self::Cancelled],
+            self::OutForDelivery => [self::Completed, self::Cancelled],
             self::Completed, self::Rejected, self::Cancelled => [],
         };
     }

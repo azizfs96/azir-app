@@ -33,6 +33,10 @@ return [
     'order_below_min_order' => 'The amount is below the delivery minimum.',
     'order_item_unavailable' => 'An item in your cart is currently unavailable.',
     'order_option_unavailable' => 'One of the chosen options is currently unavailable.',
+    'order_out_of_delivery_range' => 'Your address is outside this branch\'s delivery range.',
+    'order_already_taken' => 'Another driver already took this order.',
+    'order_not_claimable' => 'This order is not available for delivery right now.',
+    'order_not_assignable' => 'A driver cannot be assigned to this order.',
     'order_not_placeable' => 'Could not place the order. Check your cart and try again.',
     'order_not_cancellable' => 'The order can no longer be cancelled once the restaurant accepts it.',
 ];

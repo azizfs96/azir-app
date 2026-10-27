@@ -5,6 +5,8 @@ return [
     'cannot_publish' => 'A few things are still needed before you can go live.',
     'service_deleted' => 'Service removed.',
     'staff_deleted' => 'Staff member removed.',
+    'driver_deleted' => 'Driver deleted.',
+    'driver_phone_taken' => 'This phone belongs to another driver.',
     'branch_deleted' => 'Branch removed.',
     'category_deleted' => 'Category removed.',
     'schedule_saved' => 'Working hours saved.',

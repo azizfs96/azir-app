@@ -4,6 +4,7 @@ namespace App\Domain\Ordering;
 
 use App\Domain\Ordering\Events\OrderStatusChanged;
 use App\Domain\Ordering\Exceptions\OrderNotPlaceable;
+use App\Domain\Ordering\DeliveryPricing;
 use App\Models\Branch;
 use App\Models\CustomerAddress;
 use App\Models\CustomerCar;
@@ -151,9 +152,12 @@ class OrderService
                 $subtotal += $this->addLine($order, $store, $line, $index);
             }
 
-            // Delivery pricing is the server's: enforce the minimum, then add the
-            // flat fee. The client's figures are never trusted.
+            // Delivery pricing is the server's: enforce the minimum, then price
+            // by the merchant's mode (flat / per km / tiers) from the distance
+            // between the branch and the customer's pin. The client's figures
+            // are never trusted, and the quote endpoint runs this same code.
             $deliveryFee = 0.0;
+            $deliveryDistanceKm = null;
 
             if ($isDelivery) {
                 $minOrder = (float) ($settings->delivery_min_order ?? 0);
@@ -165,7 +169,22 @@ class OrderService
                     );
                 }
 
-                $deliveryFee = round((float) ($settings->delivery_fee ?? 0), 2);
+                $quote = (new DeliveryPricing)->quote(
+                    $settings,
+                    $branch,
+                    $deliveryAddress->latitude !== null ? (float) $deliveryAddress->latitude : null,
+                    $deliveryAddress->longitude !== null ? (float) $deliveryAddress->longitude : null,
+                );
+
+                if (! $quote->allowed) {
+                    throw new OrderNotPlaceable(
+                        'OUT_OF_DELIVERY_RANGE',
+                        "The address is {$quote->distanceKm} km away; delivery reaches {$quote->maxDistanceKm} km.",
+                    );
+                }
+
+                $deliveryFee = $quote->fee;
+                $deliveryDistanceKm = $quote->distanceKm;
             }
 
             // VAT (spec §35). Added on top of the taxable base (subtotal +
@@ -192,6 +211,7 @@ class OrderService
             $order->forceFill([
                 'subtotal' => $subtotalRounded,
                 'delivery_fee' => $deliveryFee,
+                'delivery_distance_km' => $deliveryDistanceKm,
                 'tax_rate' => $taxRate,
                 'tax_amount' => $taxAmount,
                 'seller_name' => $sellerName,

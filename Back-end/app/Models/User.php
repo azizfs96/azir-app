@@ -36,6 +36,9 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
 
+    /** A merchant's delivery driver (signs in to the driver app). */
+    public const ROLE_DRIVER = 'driver';
+
     /**
      * PHP-side defaults, not just DB column defaults.
      *
@@ -103,5 +106,15 @@ class User extends Authenticatable
     public function isMerchantOwner(): bool
     {
         return $this->role === self::ROLE_MERCHANT_OWNER;
+    }
+
+    public function isDriver(): bool
+    {
+        return $this->role === self::ROLE_DRIVER;
+    }
+
+    public function driver(): HasOne
+    {
+        return $this->hasOne(Driver::class);
     }
 }

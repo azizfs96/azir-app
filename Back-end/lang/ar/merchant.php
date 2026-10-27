@@ -5,6 +5,8 @@ return [
     'cannot_publish' => 'هناك بعض الخطوات المتبقية قبل التفعيل.',
     'service_deleted' => 'تم حذف الخدمة.',
     'staff_deleted' => 'تم حذف الموظف.',
+    'driver_deleted' => 'تم حذف السائق.',
+    'driver_phone_taken' => 'هذا الجوال مسجّل لسائق آخر.',
     'branch_deleted' => 'تم حذف الفرع.',
     'category_deleted' => 'تم حذف التصنيف.',
     'schedule_saved' => 'تم حفظ أوقات العمل.',

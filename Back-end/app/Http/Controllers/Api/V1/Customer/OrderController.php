@@ -7,6 +7,7 @@ use App\Domain\Ordering\Exceptions\OrderNotPlaceable;
 use App\Domain\Ordering\OrderService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrderTrackingResource;
 use App\Models\Branch;
 use App\Models\CustomerStore;
 use App\Models\Order;
@@ -174,7 +175,7 @@ class OrderController extends Controller
         $query = Order::query()
             ->withoutTenancy()
             ->where('customer_id', $customer?->id)
-            ->with(['store', 'customer.user', 'items.options', 'items.menuItem'])
+            ->with(['store', 'customer.user', 'items.options', 'items.menuItem', 'driver'])
             ->latest();
 
         $query = $filter === 'past'
@@ -198,7 +199,7 @@ class OrderController extends Controller
         $order = Order::query()
             ->withoutTenancy()
             ->where('customer_id', $request->user()->customer?->id)
-            ->with(['store', 'customer.user', 'items.options', 'items.menuItem'])
+            ->with(['store', 'customer.user', 'items.options', 'items.menuItem', 'driver'])
             ->find($id);
 
         return $order === null
@@ -232,5 +233,22 @@ class OrderController extends Controller
         ]);
 
         return response()->json(new OrderResource($order->load(['store', 'customer.user', 'items.options', 'items.menuItem'])));
+    }
+
+    /**
+     * GET /orders/{id}/tracking — the driver's live position while the order
+     * is out for delivery (polled by the tracking screen).
+     */
+    public function tracking(int $id, Request $request): JsonResponse
+    {
+        $order = Order::query()
+            ->withoutTenancy()
+            ->where('customer_id', $request->user()->customer?->id)
+            ->with(['driver', 'branch'])
+            ->find($id);
+
+        return $order === null
+            ? response()->json(['message' => __('errors.not_found'), 'error_code' => 'NOT_FOUND'], 404)
+            : response()->json(new OrderTrackingResource($order));
     }
 }

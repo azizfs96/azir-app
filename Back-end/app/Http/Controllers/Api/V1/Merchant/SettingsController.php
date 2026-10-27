@@ -49,7 +49,15 @@ class SettingsController extends MerchantController
 
         // Cross-vertical booking policy that is not part of an engine's own
         // schema still needs explicit rules.
+        // The schema's generic 'string' rule for the mode is replaced by the enum.
+        $rules['delivery_pricing_mode'] = ['sometimes', 'in:fixed,per_km,tiers'];
+
         $rules += [
+            // Delivery pricing tiers are {up_to_km, fee} rows.
+            'delivery_tiers.*.up_to_km' => ['required', 'numeric', 'min:0.1', 'max:500'],
+            'delivery_tiers.*.fee' => ['required', 'numeric', 'min:0', 'max:9999.99'],
+            'delivery_max_distance_km' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:500'],
+            'delivery_road_factor' => ['sometimes', 'numeric', 'min:1', 'max:3'],
             'cancellation_deadline_hours' => ['sometimes', 'integer', 'min:0', 'max:168'],
             'refund_policy' => ['sometimes', 'in:full,deposit_forfeited,none'],
             'reschedule_deadline_hours' => ['sometimes', 'integer', 'min:0', 'max:168'],
@@ -107,6 +115,7 @@ class SettingsController extends MerchantController
                 'integer' => ['sometimes', 'integer', 'min:0', 'max:100000'],
                 'decimal', 'number' => ['sometimes', 'numeric', 'min:0', 'max:99999.99'],
                 'string' => ['sometimes', 'nullable', 'string', 'max:255'],
+                'array' => ['sometimes', 'nullable', 'array', 'max:12'],
                 default => ['sometimes', 'boolean'],
             };
         }

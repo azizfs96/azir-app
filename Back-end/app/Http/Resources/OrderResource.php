@@ -50,6 +50,14 @@ class OrderResource extends JsonResource
                 'details' => $this->delivery_details,
                 'latitude' => $this->delivery_latitude !== null ? (float) $this->delivery_latitude : null,
                 'longitude' => $this->delivery_longitude !== null ? (float) $this->delivery_longitude : null,
+                'distance_km' => $this->delivery_distance_km !== null ? (float) $this->delivery_distance_km : null,
+            ]),
+            // The driver carrying a delivery order (null until assigned).
+            'driver' => $this->whenLoaded('driver', fn () => $this->driver === null ? null : [
+                'id' => $this->driver->id,
+                'name' => $this->driver->name,
+                'phone' => $this->driver->phone,
+                'vehicle' => $this->driver->vehicle,
             ]),
             'prep_minutes' => $this->prep_minutes,
             'customer_notes' => $this->customer_notes,
@@ -57,6 +65,9 @@ class OrderResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
             'ready_at' => $this->ready_at?->toIso8601String(),
+            'assigned_at' => $this->assigned_at?->toIso8601String(),
+            'out_for_delivery_at' => $this->out_for_delivery_at?->toIso8601String(),
+            'completed_at' => $this->completed_at?->toIso8601String(),
             'store' => $this->whenLoaded('store', fn () => [
                 'token' => $this->store->public_token,
                 'name' => $this->store->name_ar,
