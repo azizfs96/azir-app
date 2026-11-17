@@ -47,26 +47,26 @@ final deviceLocationProvider = StreamProvider<DeviceLocation?>((ref) async* {
       return;
     }
 
-    // Something immediately, even if a little old — but only if it is recent:
-    // a fix from hours ago would show yesterday's distance.
+    // Something immediately, even if old: the fresh fix below replaces it
+    // within seconds, and an old number beats an empty row meanwhile.
     final last = await Geolocator.getLastKnownPosition();
-    if (last != null && DateTime.now().difference(last.timestamp) < const Duration(minutes: 2)) {
-      yield DeviceLocation(last.latitude, last.longitude);
-    }
+    if (last != null) yield DeviceLocation(last.latitude, last.longitude);
 
-    // Then a fresh, accurate fix right now (the stream alone only reports
-    // after the customer has MOVED, so a stationary customer would wait).
+    // A fresh fix right now (the movement stream alone only reports after the
+    // customer has MOVED, so a stationary customer would otherwise wait).
+    // geolocator's own timeLimit cancels the request cleanly on both platforms,
+    // which an external .timeout() would not.
     try {
       final now = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.best),
-      ).timeout(const Duration(seconds: 10));
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+      );
       yield DeviceLocation(now.latitude, now.longitude);
     } catch (_) {
-      // Fall through to the stream.
+      // No fix in time — the stream below keeps trying.
     }
 
     yield* Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.best, distanceFilter: _moveMeters),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: _moveMeters),
     ).map((p) => DeviceLocation(p.latitude, p.longitude)).handleError((_) {});
   } catch (_) {
     yield null;

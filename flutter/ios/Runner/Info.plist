@@ -39,7 +39,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Azir</string>
+	<string>easy app</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -53,9 +53,9 @@
 		<string>remote-notification</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>Azir</string>
+	<string>easy app</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>لتحديد موقع التوصيل على الخريطة.</string>
+	<string>لعرض المسافة إلى الفروع وتحديد موقع التوصيل على الخريطة.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
