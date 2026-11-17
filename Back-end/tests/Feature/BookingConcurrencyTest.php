@@ -56,9 +56,6 @@ class BookingConcurrencyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // The scenarios book fixed dates in Nov 2026; pin the clock before them
-        // so the lead-time rule does not turn every request into SLOT_TAKEN.
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-25 09:00:00', 'Asia/Riyadh'));
 
         $merchant = Merchant::factory()->create();
         app(TenantContext::class)->setTenant($merchant);
@@ -114,7 +111,6 @@ class BookingConcurrencyTest extends TestCase
     {
         $this->truncateTablesForAllConnections();
 
-        CarbonImmutable::setTestNow();
         parent::tearDown();
     }
 
@@ -134,9 +130,21 @@ class BookingConcurrencyTest extends TestCase
         return $staff;
     }
 
+    /**
+     * The scenario dates are written as fixed days, but the booking workers
+     * run in separate PHP processes (no setTestNow), so a date that has slipped
+     * into the past is rolled forward by whole weeks — same weekday, same
+     * schedule — until it is at least two days ahead of the real clock.
+     */
     private function at(string $ymd, int $hour, int $minute = 0): CarbonImmutable
     {
-        return CarbonImmutable::parse($ymd, self::TZ)->setTime($hour, $minute);
+        $when = CarbonImmutable::parse($ymd, self::TZ)->setTime($hour, $minute);
+        $floor = CarbonImmutable::now(self::TZ)->addDays(2);
+        while ($when->lessThan($floor)) {
+            $when = $when->addWeek();
+        }
+
+        return $when;
     }
 
     /**
