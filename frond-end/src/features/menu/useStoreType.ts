@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 
+export type BusinessType = 'beauty_wellness' | 'restaurant' | 'supermarket'
+
 /**
- * The vertical this dashboard's store runs on.
- *
- * One cheap shared query (cached by TanStack) that the nav uses to show "Menu"
- * for a restaurant and "Services" for beauty — the engine is chosen server-side
- * from business_type, and the dashboard simply mirrors it.
+ * Which vertical this merchant runs. The whole dashboard branches on this one
+ * value (nav, home page, settings cards) — the API's `business_type` is the
+ * single source of truth, cached for five minutes.
  */
 export function useStoreType() {
   const { data } = useQuery({
@@ -16,8 +16,13 @@ export function useStoreType() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const businessType = (data?.business_type ?? null) as BusinessType | null
+
   return {
-    businessType: data?.business_type ?? null,
-    isRestaurant: data?.business_type === 'restaurant',
+    businessType,
+    isRestaurant: businessType === 'restaurant',
+    isSupermarket: businessType === 'supermarket',
+    /** Sells through the cart/order pipeline (restaurant or supermarket). */
+    takesOrders: businessType === 'restaurant' || businessType === 'supermarket',
   }
 }

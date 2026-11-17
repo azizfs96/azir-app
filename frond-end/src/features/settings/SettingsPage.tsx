@@ -10,36 +10,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { StoreMediaPanel } from './StoreMediaPanel'
 import { useStoreType } from '@/features/menu/useStoreType'
 import { DeliveryPricingCard } from './DeliveryPricingCard'
-import { cn } from '@/lib/cn'
-
-function Toggle({
-  label, hint, checked, onChange,
-}: { label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <div className="flex items-start justify-between gap-4 px-5 py-3.5">
-      <div className="min-w-0">
-        <div className="text-sm text-ink-900">{label}</div>
-        {hint && <div className="mt-0.5 text-xs text-ink-500">{hint}</div>}
-      </div>
-      <button
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          'relative h-5 w-9 shrink-0 rounded-full transition-colors',
-          checked ? 'bg-ink-900' : 'bg-ink-200',
-        )}
-      >
-        {/* start-/end- keep the knob on the correct side in RTL (spec §33). */}
-        <span className={cn(
-          'absolute top-0.5 size-4 rounded-full bg-white transition-all',
-          checked ? 'start-[18px]' : 'start-0.5',
-        )} />
-      </button>
-    </div>
-  )
-}
+import { Toggle } from '@/components/ui/Toggle'
 
 /**
  * Booking settings (spec §10, §21, §22).
@@ -50,7 +21,7 @@ function Toggle({
  */
 export function SettingsPage() {
   const t = useT()
-  const { isRestaurant } = useStoreType()
+  const { isRestaurant, isSupermarket, businessType } = useStoreType()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<BookingSettings | null>(null)
   const [saved, setSaved] = useState(false)
@@ -113,6 +84,55 @@ export function SettingsPage() {
       <div className="space-y-5">
         <StoreMediaPanel />
 
+        {isSupermarket && (
+          <>
+            <Card>
+              <CardHeader title={t.grocery.settings.title} />
+              <p className="px-5 pt-4 text-sm text-ink-500">{t.grocery.settings.hint}</p>
+              <div className="divide-y divide-ink-200">
+                <Toggle label={t.grocery.settings.autoAccept} hint={t.grocery.settings.autoAcceptHint}
+                  checked={draft.auto_accept_orders} onChange={(v) => set('auto_accept_orders', v)} />
+                <Toggle label={t.grocery.settings.notes}
+                  checked={draft.customer_notes} onChange={(v) => set('customer_notes', v)} />
+              </div>
+              <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
+                <Input label={t.grocery.settings.minOrder} type="number" min={0} step="0.01"
+                  value={draft.delivery_min_order}
+                  onChange={(e) => set('delivery_min_order', Number(e.target.value))} />
+                <Input label={t.grocery.settings.prepMinutes} type="number" min={0} max={240}
+                  value={draft.default_prep_minutes}
+                  onChange={(e) => set('default_prep_minutes', Number(e.target.value))} />
+              </div>
+            </Card>
+
+            <DeliveryPricingCard draft={draft} set={set} />
+
+            <Card>
+              <CardHeader title={t.settings.invoicingTitle} />
+              <div className="divide-y divide-ink-200">
+                <Toggle label={t.settings.taxEnabled} hint={t.settings.taxEnabledHint}
+                  checked={draft.tax_enabled} onChange={(v) => set('tax_enabled', v)} />
+              </div>
+              {draft.tax_enabled && (
+                <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
+                  <Input label={t.settings.taxRate} type="number" min={0} max={100} step="0.01"
+                    value={draft.tax_rate}
+                    onChange={(e) => set('tax_rate', Number(e.target.value))} />
+                  <Input label={t.settings.taxNumber} hint={t.settings.taxNumberHint}
+                    value={draft.tax_number ?? ''}
+                    onChange={(e) => set('tax_number', e.target.value)} />
+                  <Input label={t.settings.legalName} hint={t.settings.legalNameHint}
+                    value={draft.legal_name ?? ''}
+                    onChange={(e) => set('legal_name', e.target.value)} />
+                  <Input label={t.settings.nationalAddress}
+                    value={draft.national_address ?? ''}
+                    onChange={(e) => set('national_address', e.target.value)} />
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+
         {isRestaurant && (
           <>
             <Card>
@@ -174,6 +194,7 @@ export function SettingsPage() {
           </>
         )}
 
+        {businessType === 'beauty_wellness' && (<>
         <Card>
           <CardHeader title={t.settings.title} />
           <div className="divide-y divide-ink-200">
@@ -239,6 +260,7 @@ export function SettingsPage() {
             />
           </div>
         </Card>
+        </>)}
       </div>
     </>
   )

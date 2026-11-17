@@ -8,6 +8,8 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { useStoreType } from '@/features/menu/useStoreType'
+import { GroceryDashboardPage } from '@/features/grocery/GroceryDashboardPage'
 
 /**
  * Merchant dashboard (spec §13).
@@ -17,6 +19,13 @@ import { Button } from '@/components/ui/Button'
  *   Upcoming 10:00 Sara · 11:30 Reem · 13:00 Ahmed
  */
 export function DashboardPage() {
+  const { businessType } = useStoreType()
+  if (businessType === null) return null
+  if (businessType === 'supermarket') return <GroceryDashboardPage />
+  return <BookingDashboard />
+}
+
+function BookingDashboard() {
   const t = useT()
 
   const { data, isLoading, isError } = useQuery({

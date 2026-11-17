@@ -4,7 +4,7 @@ import { useStoreType } from '@/features/menu/useStoreType'
 import {
   CalendarDays, LayoutDashboard, ListChecks, LogOut, QrCode,
   Scissors, Settings, Store, UserRound, Users, UtensilsCrossed,
-  Megaphone, Bike } from 'lucide-react'
+  Megaphone, Bike, PackageSearch, Truck } from 'lucide-react'
 import { api } from '@/api/client'
 import { useAuth } from '@/app/auth'
 import { useI18n } from '@/app/i18n'
@@ -22,7 +22,7 @@ export function AppShell() {
   const { t, locale, setLocale } = useI18n()
   const { user, signOut } = useAuth()
   const queryClient = useQueryClient()
-  const { isRestaurant } = useStoreType()
+  const { isRestaurant, isSupermarket } = useStoreType()
 
   /*
    * Switching language has to change BOTH sides.
@@ -44,7 +44,19 @@ export function AppShell() {
     await queryClient.invalidateQueries()
   }
 
-  const items = [
+  // Each vertical has its own nav — a supermarket never sees bookings,
+  // services or a kitchen board.
+  const items = isSupermarket ? [
+    { to: '/', icon: LayoutDashboard, label: t.grocery.nav.dashboard, end: true },
+    { to: '/grocery-orders', icon: Truck, label: t.grocery.nav.orders },
+    { to: '/catalog', icon: PackageSearch, label: t.grocery.nav.catalog },
+    { to: '/drivers', icon: Bike, label: t.nav.drivers },
+    { to: '/branches', icon: Store, label: t.nav.branches },
+    { to: '/customers', icon: UserRound, label: t.nav.customers },
+    { to: '/popups', icon: Megaphone, label: t.nav.popups },
+    { to: '/qr', icon: QrCode, label: t.nav.qr },
+    { to: '/settings', icon: Settings, label: t.nav.settings },
+  ] : [
     { to: '/', icon: LayoutDashboard, label: t.nav.dashboard, end: true },
     // Restaurants take Orders; beauty stores take Bookings — same slot.
     isRestaurant
@@ -66,12 +78,12 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh bg-ink-50">
-      <aside className="hidden w-60 shrink-0 flex-col border-e border-ink-200 bg-white md:flex">
+      <aside className={cn('hidden w-60 shrink-0 flex-col border-e md:flex', isSupermarket ? 'border-fresh-800 bg-fresh-900 text-white' : 'border-ink-200 bg-white')}>
         <div className="flex items-center gap-2.5 px-5 py-5">
           <img src="/azir-logo.png" alt="Azir" className="size-8 rounded-lg" />
           <div className="leading-tight">
-            <div className="text-sm font-semibold text-ink-900">{t.brand.name}</div>
-            <div className="text-[11px] text-ink-400">{user?.merchant?.display_name}</div>
+            <div className={cn('text-sm font-semibold', isSupermarket ? 'text-white' : 'text-ink-900')}>{t.brand.name}</div>
+            <div className={cn('text-[11px]', isSupermarket ? 'text-fresh-400' : 'text-ink-400')}>{user?.merchant?.display_name}</div>
           </div>
         </div>
 
@@ -83,9 +95,9 @@ export function AppShell() {
               end={end}
               className={({ isActive }) => cn(
                 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                isActive
-                  ? 'bg-ink-100 font-medium text-ink-900'
-                  : 'text-ink-500 hover:bg-ink-50 hover:text-ink-900',
+                isSupermarket
+                  ? (isActive ? 'bg-white/15 font-medium text-white' : 'text-fresh-100/80 hover:bg-white/10 hover:text-white')
+                  : (isActive ? 'bg-ink-100 font-medium text-ink-900' : 'text-ink-500 hover:bg-ink-50 hover:text-ink-900'),
               )}
             >
               <Icon className="size-4 shrink-0" />
@@ -94,7 +106,7 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="space-y-0.5 border-t border-ink-200 px-3 py-3">
+        <div className={cn('space-y-0.5 border-t px-3 py-3', isSupermarket ? 'border-fresh-800 [&_button]:text-fresh-100/80 [&_button:hover]:bg-white/10 [&_button:hover]:text-white' : 'border-ink-200')}>
           <button
             onClick={() => void switchLocale(locale === 'ar' ? 'en' : 'ar')}
             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink-500 hover:bg-ink-50 hover:text-ink-900"

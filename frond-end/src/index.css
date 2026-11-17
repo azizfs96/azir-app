@@ -35,6 +35,21 @@
   --color-accent-500: #8f74ff;
   --color-accent-50: #f2eeff;
 
+  /* The grocery vertical's own ramp: never reuse ok-* for brand chrome. */
+  --color-fresh-950: #0b2a1c;
+  --color-fresh-900: #10381f;
+  --color-fresh-800: #14532d;
+  --color-fresh-700: #166534;
+  --color-fresh-600: #1f7a4d;
+  --color-fresh-500: #22c55e;
+  --color-fresh-400: #4ade80;
+  --color-fresh-100: #dcfce7;
+  --color-fresh-50: #f0fdf4;
+  /* Referenced by existing code but never defined. */
+  --color-ink-600: #55555f;
+  --color-bad-700: #991b1b;
+  --color-bad-200: #f5c2bd;
+
   /* Semantic status — booking states (spec §19). */
   --color-ok-600: #0f7b5a;
   --color-ok-50: #e7f6f0;

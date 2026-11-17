@@ -222,6 +222,12 @@ export interface MenuItem {
   description: string | null
   image: string | null
   price: number
+  // Grocery fields (null for a restaurant dish).
+  compare_at_price: number | null
+  discount_percent: number | null
+  unit: string | null
+  stock_quantity: number | null
+  in_stock: boolean
   calories: number | null
   category_id: number | null
   is_available: boolean
@@ -284,4 +290,54 @@ export interface OrderTracking {
   assigned_at: string | null
   out_for_delivery_at: string | null
   completed_at: string | null
+}
+
+// ---- Orders (shared by the restaurant board and the grocery board) --------
+
+export type OrderStatus =
+  | 'placed' | 'accepted' | 'preparing' | 'ready' | 'out_for_delivery' | 'completed' | 'rejected' | 'cancelled'
+
+export interface OrderItemRow {
+  id: number
+  name: string
+  quantity: number
+  unit_price: number
+  line_total: number
+  options?: { group: string; name: string }[]
+}
+
+export interface Order {
+  id: number
+  reference: string
+  status: OrderStatus
+  fulfillment_type: 'pickup' | 'dine_in' | 'delivery' | 'curbside'
+  payment_method: 'pay_at_store' | 'cash_on_delivery' | 'online'
+  subtotal: number
+  delivery_fee: number
+  tax_amount: number
+  total: number
+  prep_minutes: number | null
+  customer_notes: string | null
+  created_at: string | null
+  out_for_delivery_at: string | null
+  completed_at: string | null
+  customer?: { name: string | null; phone: string | null }
+  items: OrderItemRow[]
+  delivery?: { address: string | null; details?: string | null; latitude?: number | null; longitude?: number | null; distance_km?: number | null }
+  driver?: { id: number; name: string; phone: string; vehicle: string | null } | null
+}
+
+/** GET /merchant/grocery/dashboard */
+export interface GroceryDashboardData {
+  date: string
+  store: { token: string; name: string; is_published: boolean; deep_link: string }
+  today: { new: number; preparing: number; out_for_delivery: number; delivered: number; cancelled: number; orders: number }
+  revenue: { today: number; week: number; series: { date: string; revenue: number }[] }
+  catalog: {
+    products: number
+    out_of_stock: number
+    low_stock: { id: number; name: string; image: string | null; unit: string | null; stock_quantity: number }[]
+  }
+  best_sellers: { item_id: number; name: string; quantity: number; revenue: number }[]
+  needs_action: Order[]
 }
