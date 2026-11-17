@@ -44,6 +44,7 @@ class DriverOrderController extends Controller
                 'token' => $driver->store?->public_token,
                 'name' => $driver->store?->name_ar,
                 'logo' => $driver->store?->logo_path,
+                'type' => $driver->store?->business_type,
             ],
         ]);
     }

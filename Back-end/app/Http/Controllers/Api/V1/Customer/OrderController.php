@@ -64,10 +64,12 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Honour the merchant's fulfilment configuration server-side.
+        // Honour the vertical (a supermarket is delivery-only) and the
+        // merchant's fulfilment configuration server-side.
         $settings = $store->bookingSettings;
         $type = $data['fulfillment_type'];
-        $allowed = match ($type) {
+        $engine = app(\App\Engines\BusinessEngineRegistry::class)->for($store);
+        $allowed = in_array($type, $engine->fulfillmentTypes(), true) && match ($type) {
             'dine_in' => (bool) ($settings->order_dine_in ?? true),
             'delivery' => (bool) ($settings->order_delivery ?? false),
             'curbside' => (bool) ($settings->order_curbside ?? false),

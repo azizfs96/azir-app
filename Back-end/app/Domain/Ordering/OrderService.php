@@ -4,6 +4,7 @@ namespace App\Domain\Ordering;
 
 use App\Domain\Ordering\Events\OrderStatusChanged;
 use App\Domain\Ordering\Exceptions\OrderNotPlaceable;
+use App\Engines\BusinessEngineRegistry;
 use App\Domain\Ordering\DeliveryPricing;
 use App\Models\Branch;
 use App\Models\CustomerAddress;
@@ -54,10 +55,16 @@ class OrderService
         }
 
         $settings = $store->bookingSettings;
-        $engineKey = $store->business_type;
+        $engine = app(BusinessEngineRegistry::class)->for($store);
 
-        if ($engineKey !== 'restaurant') {
-            throw new OrderNotPlaceable('NOT_A_RESTAURANT', 'This store does not take orders.');
+        if (! $engine->takesOrders()) {
+            throw new OrderNotPlaceable('NOT_ORDERABLE', 'This store does not take orders.');
+        }
+
+        // The engine decides which fulfilment types exist at all (a supermarket
+        // is delivery-only); the merchant's toggles narrow them further below.
+        if (! in_array($fulfillmentType, $engine->fulfillmentTypes(), true)) {
+            throw new OrderNotPlaceable('FULFILLMENT_UNAVAILABLE', "{$fulfillmentType} is not offered by this store.");
         }
 
         // Opening hours are enforced here, not only on the storefront badge: a
@@ -102,7 +109,7 @@ class OrderService
 
         return DB::transaction(function () use (
             $store, $lines, $fulfillmentType, $branch, $customer, $notes, $tableNumber,
-            $settings, $deliveryAddress, $car, $partySize,
+            $settings, $deliveryAddress, $car, $partySize, $engine,
         ): Order {
             $isDelivery = $fulfillmentType === 'delivery';
             $isDineIn = $fulfillmentType === 'dine_in';
@@ -122,6 +129,8 @@ class OrderService
                 'merchant_id' => $store->merchant_id,
                 'store_id' => $store->id,
                 'status' => OrderStatus::Placed,
+                // How this order is paid is the vertical's rule, never the client's.
+                'payment_method' => $engine->paymentMethod(),
             ]);
 
             // Snapshot the destination AS SENT, so a later address edit/delete
@@ -266,6 +275,19 @@ class OrderService
 
         if (! $item->is_available) {
             throw new OrderNotPlaceable('ITEM_UNAVAILABLE', "Line {$index}: '{$item->name_ar}' is sold out.");
+        }
+
+        // Tracked stock (groceries): take it atomically under a row lock so two
+        // carts cannot both buy the last unit; untracked (null) never runs out.
+        if ($item->stock_quantity !== null) {
+            $taken = MenuItem::query()
+                ->whereKey($item->id)
+                ->where('stock_quantity', '>=', $quantity)
+                ->decrement('stock_quantity', $quantity);
+
+            if ($taken === 0) {
+                throw new OrderNotPlaceable('OUT_OF_STOCK', "Line {$index}: only {$item->stock_quantity} × '{$item->name_ar}' left.");
+            }
         }
 
         // One vote per option: a repeated id must not count twice toward

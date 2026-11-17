@@ -6,6 +6,7 @@ return [
     'service_deleted' => 'Service removed.',
     'staff_deleted' => 'Staff member removed.',
     'driver_deleted' => 'Driver deleted.',
+    'compare_at_must_exceed_price' => 'The compare-at price must be higher than the price.',
     'driver_phone_taken' => 'This phone belongs to another driver.',
     'branch_deleted' => 'Branch removed.',
     'category_deleted' => 'Category removed.',

@@ -38,6 +38,27 @@ class RestaurantEngine implements BusinessEngine
         return ['ar' => 'مطعم', 'en' => 'Restaurant'];
     }
 
+    public function takesOrders(): bool
+    {
+        return true;
+    }
+
+    public function fulfillmentTypes(): array
+    {
+        return ['pickup', 'dine_in', 'delivery', 'curbside'];
+    }
+
+    public function paymentMethod(): string
+    {
+        return 'pay_at_store';
+    }
+
+    /** The default machine in OrderStatus::allowedTransitions() is the restaurant's. */
+    public function orderTransitions(): array
+    {
+        return [];
+    }
+
     /**
      * Drives the merchant Settings UI (R2), same contract as beauty.
      */

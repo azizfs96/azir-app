@@ -93,7 +93,7 @@ class OrderController extends MerchantController
             'order' => new OrderResource($order->load(['customer.user', 'items.options', 'driver'])),
             'allowed_transitions' => array_map(
                 fn (OrderStatus $status) => $status->value,
-                $order->status->allowedTransitions(),
+                $order->allowedTransitions(),
             ),
         ]);
     }

@@ -48,7 +48,7 @@ class MenuItemController extends MerchantController
         $item = MenuItem::findOrFail($id);
         $this->authorize('update', $item);
 
-        $item->update($this->validated($request, updating: true));
+        $item->update($this->validated($request, updating: true, item: $item));
 
         return response()->json(new MenuItemResource($item->fresh()->load('optionGroups.options')));
     }
@@ -187,7 +187,7 @@ class MenuItemController extends MerchantController
     }
 
     /** @return array<string, mixed> */
-    private function validated(Request $request, bool $updating = false): array
+    private function validated(Request $request, bool $updating = false, ?MenuItem $item = null): array
     {
         $required = $updating ? 'sometimes' : 'required';
 
@@ -204,6 +204,16 @@ class MenuItemController extends MerchantController
                     ->where('store_id', $this->merchantStore()->id),
             ],
             'price' => [$required, 'numeric', 'min:0', 'max:99999.99'],
+            // Grocery: a "was" price must actually be higher than the price.
+            'compare_at_price' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999.99',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request, $item): void {
+                    $price = $request->input('price', $item?->price);
+                    if ($value !== null && $price !== null && (float) $value <= (float) $price) {
+                        $fail(__('merchant.compare_at_must_exceed_price'));
+                    }
+                }],
+            'unit' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'stock_quantity' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000000'],
             'calories' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:20000'],
             'is_available' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],

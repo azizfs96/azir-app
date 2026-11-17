@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\MerchantAuthController;
 use App\Http\Controllers\Api\V1\Customer\DeliveryQuoteController;
 use App\Http\Controllers\Api\V1\Driver\DriverOrderController;
 use App\Http\Controllers\Api\V1\Merchant\DriverController;
+use App\Http\Controllers\Api\V1\Merchant\GroceryDashboardController;
 use App\Http\Controllers\Api\V1\Auth\OtpController;
 use App\Http\Controllers\Api\V1\Customer\AddressController;
 use App\Http\Controllers\Api\V1\Customer\BookingController;
@@ -216,6 +217,9 @@ Route::prefix('merchant')
         Route::post('/orders/{id}/status', [MerchantOrderController::class, 'updateStatus']);
         Route::post('/orders/{id}/driver', [MerchantOrderController::class, 'assignDriver']);
         Route::get('/orders/{id}/tracking', [MerchantOrderController::class, 'tracking']);
+
+        // The supermarket home screen (orders, revenue, stock).
+        Route::get('/grocery/dashboard', [GroceryDashboardController::class, 'index']);
 
         // Delivery drivers (accounts for the driver app).
         Route::apiResource('/drivers', DriverController::class)->except(['show']);

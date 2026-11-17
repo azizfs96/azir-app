@@ -65,7 +65,7 @@ class DriverAuthController extends Controller
             'token' => $user->createToken(($data['device_name'] ?? null) ?: 'driver-app')->plainTextToken,
             'user' => new UserResource($user),
             'driver' => new DriverResource($driver),
-            'store' => ['token' => $driver->store?->public_token, 'name' => $driver->store?->name_ar],
+            'store' => ['token' => $driver->store?->public_token, 'name' => $driver->store?->name_ar, 'type' => $driver->store?->business_type],
         ]);
     }
 

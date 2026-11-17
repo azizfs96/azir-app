@@ -37,6 +37,8 @@ return [
     'order_already_taken' => 'Another driver already took this order.',
     'order_not_claimable' => 'This order is not available for delivery right now.',
     'order_not_assignable' => 'A driver cannot be assigned to this order.',
+    'order_out_of_stock' => 'One of the products is not available in the quantity requested.',
+    'order_not_orderable' => 'This store does not take orders.',
     'order_not_placeable' => 'Could not place the order. Check your cart and try again.',
     'order_not_cancellable' => 'The order can no longer be cancelled once the restaurant accepts it.',
 ];

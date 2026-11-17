@@ -125,7 +125,14 @@ class MerchantOnboardingService
             $blockers[] = 'branch_required';
         }
 
-        if ($store->services()->where('is_active', true)->count() === 0) {
+        // A booking store needs something to book; an ordering store (restaurant,
+        // supermarket) needs something to sell.
+        $takesOrders = app(\App\Engines\BusinessEngineRegistry::class)->for($store)->takesOrders();
+        if ($takesOrders) {
+            if (\App\Models\MenuItem::query()->where('store_id', $store->id)->where('is_active', true)->count() === 0) {
+                $blockers[] = 'catalog_required';
+            }
+        } elseif ($store->services()->where('is_active', true)->count() === 0) {
             $blockers[] = 'service_required';
         }
 

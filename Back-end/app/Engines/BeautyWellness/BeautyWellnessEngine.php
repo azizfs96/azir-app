@@ -25,6 +25,26 @@ class BeautyWellnessEngine implements BusinessEngine
         return ['ar' => 'الجمال والعناية', 'en' => 'Beauty & Wellness'];
     }
 
+    public function takesOrders(): bool
+    {
+        return false;
+    }
+
+    public function fulfillmentTypes(): array
+    {
+        return [];
+    }
+
+    public function paymentMethod(): string
+    {
+        return 'pay_at_store';
+    }
+
+    public function orderTransitions(): array
+    {
+        return [];
+    }
+
     /**
      * The spec §10 toggles, with types and grouping.
      *

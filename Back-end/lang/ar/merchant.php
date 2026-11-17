@@ -6,6 +6,7 @@ return [
     'service_deleted' => 'تم حذف الخدمة.',
     'staff_deleted' => 'تم حذف الموظف.',
     'driver_deleted' => 'تم حذف السائق.',
+    'compare_at_must_exceed_price' => 'السعر قبل الخصم يجب أن يكون أعلى من السعر الحالي.',
     'driver_phone_taken' => 'هذا الجوال مسجّل لسائق آخر.',
     'branch_deleted' => 'تم حذف الفرع.',
     'category_deleted' => 'تم حذف التصنيف.',

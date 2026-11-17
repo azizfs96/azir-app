@@ -126,7 +126,7 @@ class StorefrontResource extends JsonResource
              * Laravel's MissingValue filtering — when() would leak the key
              * into every beauty payload as an empty object.
              */
-            ...($engine->key() === 'restaurant'
+            ...($engine->takesOrders()
                 ? ['menu' => (function () use ($engine) {
                     $catalog = $engine->catalog($this->resource);
 
@@ -167,7 +167,7 @@ class StorefrontResource extends JsonResource
      */
     private function configurationPayload(mixed $engine, mixed $settings): array
     {
-        if ($engine->key() !== 'restaurant') {
+        if (! $engine->takesOrders()) {
             return $settings?->toConfiguration() ?? $engine->defaultConfiguration();
         }
 

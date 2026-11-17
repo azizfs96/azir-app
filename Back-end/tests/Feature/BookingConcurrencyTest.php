@@ -56,6 +56,9 @@ class BookingConcurrencyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // The scenarios book fixed dates in Nov 2026; pin the clock before them
+        // so the lead-time rule does not turn every request into SLOT_TAKEN.
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-25 09:00:00', 'Asia/Riyadh'));
 
         $merchant = Merchant::factory()->create();
         app(TenantContext::class)->setTenant($merchant);
@@ -111,6 +114,7 @@ class BookingConcurrencyTest extends TestCase
     {
         $this->truncateTablesForAllConnections();
 
+        CarbonImmutable::setTestNow();
         parent::tearDown();
     }
 

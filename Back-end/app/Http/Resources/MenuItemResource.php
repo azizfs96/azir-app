@@ -22,6 +22,12 @@ class MenuItemResource extends JsonResource
                 : $this->description_ar,
             'image' => $this->image_path,
             'price' => (float) $this->price,
+            // Grocery fields (null for a restaurant dish).
+            'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
+            'discount_percent' => $this->discountPercent(),
+            'unit' => $this->unit,
+            'stock_quantity' => $this->stock_quantity,
+            'in_stock' => $this->inStock(),
             'calories' => $this->calories,
             'category_id' => $this->menu_category_id,
             'is_available' => $this->is_available,

@@ -119,6 +119,7 @@ return [
     'engines' => [
         'beauty_wellness' => \App\Engines\BeautyWellness\BeautyWellnessEngine::class,
         'restaurant' => \App\Engines\Restaurant\RestaurantEngine::class,
+        'supermarket' => \App\Engines\Supermarket\SupermarketEngine::class,
     ],
 
     'default_engine' => 'beauty_wellness',

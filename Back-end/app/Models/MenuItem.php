@@ -20,8 +20,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 #[Fillable([
     'store_id', 'menu_category_id', 'name_ar', 'name_en', 'description_ar',
-    'description_en', 'price', 'calories', 'image_path', 'is_available', 'is_featured',
-    'is_active', 'sort_order',
+    'description_en', 'price', 'compare_at_price', 'unit', 'stock_quantity', 'calories', 'image_path',
+    'is_available', 'is_featured', 'is_active', 'sort_order',
 ])]
 class MenuItem extends Model
 {
@@ -31,6 +31,8 @@ class MenuItem extends Model
     {
         return [
             'price' => 'decimal:2',
+            'compare_at_price' => 'decimal:2',
+            'stock_quantity' => 'integer',
             'calories' => 'integer',
             'is_available' => 'boolean',
             'is_active' => 'boolean',
@@ -52,6 +54,24 @@ class MenuItem extends Model
     public function optionGroups(): HasMany
     {
         return $this->hasMany(MenuOptionGroup::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /** A tracked product at zero is sold out; untracked (null) never is. */
+    public function inStock(): bool
+    {
+        return $this->stock_quantity === null || $this->stock_quantity > 0;
+    }
+
+    /** Whole-percent saving from the compare-at price, or null without one. */
+    public function discountPercent(): ?int
+    {
+        $was = (float) ($this->compare_at_price ?? 0);
+        $now = (float) $this->price;
+        if ($was <= 0 || $was <= $now) {
+            return null;
+        }
+
+        return (int) round(($was - $now) / $was * 100);
     }
 
     public function isOrderable(): bool

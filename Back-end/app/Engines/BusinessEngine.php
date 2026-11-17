@@ -79,4 +79,29 @@ interface BusinessEngine
      * @return array<string, mixed>
      */
     public function catalog(Store $store): array;
+
+    /**
+     * Does this vertical sell through the cart/order pipeline (vs bookings)?
+     * Gates the storefront `menu` key, order placement and publishing rules.
+     */
+    public function takesOrders(): bool;
+
+    /**
+     * The fulfilment types a customer may choose, in the engine's own order
+     * (subset of pickup | dine_in | delivery | curbside). Empty when !takesOrders.
+     *
+     * @return array<int, string>
+     */
+    public function fulfillmentTypes(): array;
+
+    /** pay_at_store | cash_on_delivery | online — stamped on every order. */
+    public function paymentMethod(): string;
+
+    /**
+     * The status machine for this vertical's orders: status value → the
+     * statuses it may move to. Empty = the default restaurant machine.
+     *
+     * @return array<string, array<int, \App\Domain\Ordering\OrderStatus>>
+     */
+    public function orderTransitions(): array;
 }

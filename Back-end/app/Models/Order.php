@@ -105,7 +105,7 @@ class Order extends Model
     ): self {
         $current = $this->status;
 
-        if (! $current->canTransitionTo($target)) {
+        if (! in_array($target, $this->allowedTransitions(), true)) {
             throw new InvalidOrderTransition($current, $target);
         }
 
@@ -129,6 +129,19 @@ class Order extends Model
         OrderStatusChanged::dispatch($this, $current, $target, $actorType);
 
         return $this;
+    }
+
+    /**
+     * Where this order may go next — the store's engine owns the machine
+     * (groceries skip accept/ready); the enum's own map is the default.
+     *
+     * @return array<int, OrderStatus>
+     */
+    public function allowedTransitions(): array
+    {
+        $map = app(\App\Engines\BusinessEngineRegistry::class)->for($this->store)->orderTransitions();
+
+        return $map[$this->status->value] ?? $this->status->allowedTransitions();
     }
 
     /** Live orders the kitchen still has to act on. */
