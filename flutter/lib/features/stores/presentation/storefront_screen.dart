@@ -12,6 +12,8 @@ import '../../booking/data/store_bookings_provider.dart';
 import '../../home/data/my_stores_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/storefront.dart';
+import '../../grocery/grocery_storefront.dart';
+import '../../grocery/grocery_theme.dart';
 import '../../menu/cart_screen.dart';
 import '../../menu/menu_view.dart';
 import '../../menu/restaurant_header.dart';
@@ -69,9 +71,10 @@ class _StorefrontScreenState extends ConsumerState<StorefrontScreen> {
     // The restaurant template gets a warm canvas; its Jahez-style bottom nav
     // floats OVER the menu (added in _StoreView), so the dishes scroll behind it.
     final isRestaurant = store.value?.isRestaurant ?? false;
+    final isSupermarket = store.value?.isSupermarket ?? false;
 
     return Scaffold(
-      backgroundColor: isRestaurant ? Ds.bg : Colors.white,
+      backgroundColor: isSupermarket ? Gr.bg : (isRestaurant ? Ds.bg : Colors.white),
       body: store.when(
         loading: () => const _MenuSkeleton(),
         /*
@@ -295,6 +298,12 @@ class _StoreViewState extends ConsumerState<_StoreView> {
 
   @override
   Widget build(BuildContext context) {
+    // A supermarket is its own journey end to end (dark-green canvas, product
+    // grid, five-tab nav) — rendered by GroceryStorefront, popups included.
+    if (store.isSupermarket) {
+      return GroceryStorefront(store: store, s: s, token: widget.token, onShare: _share);
+    }
+
     final header = SliverToBoxAdapter(
       child: StorefrontHeader(
         store: store,

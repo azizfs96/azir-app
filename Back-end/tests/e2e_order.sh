@@ -157,7 +157,7 @@ req POST /orders "$T1" "{\"store_token\":\"AZRBRGR2\",\"fulfillment_type\":\"del
 req DELETE "/me/addresses/$FAR" "$T1" >/dev/null 2>&1
 
 echo "== L. driver app =="
-tinker "App\Models\Driver::withoutTenancy()->where('phone','like','+96655999000%')->get()->each(function(\$d){ \$d->user?->delete(); \$d->delete(); }); echo 'ok';" >/dev/null
+tinker "App\Models\Driver::withoutTenancy()->with('user')->where('phone','like','+96655999000%')->get()->each(function(\$d){ \$u=\$d->user; \$d->delete(); \$u?->delete(); }); echo 'ok';" >/dev/null
 req POST /merchant/drivers "$TM" '{"name":"سعد السائق","phone":"0559990001","password":"driver-pass-1","vehicle":"دراجة"}'; expect 201 "merchant creates driver 1"; D1=$(j .id)
 req POST /merchant/drivers "$TM" '{"name":"فهد السائق","phone":"0559990002","password":"driver-pass-2"}'; expect 201 "merchant creates driver 2"; D2=$(j .id)
 req POST /merchant/drivers "$TM" '{"name":"مكرر","phone":"0559990001","password":"driver-pass-3"}'; expect 422 "duplicate driver phone refused"
@@ -196,5 +196,27 @@ req GET "/orders/$OD" "$T1"; [ "$(j .status)" = "completed" ] && ok "order histo
 req GET /me/notifications "$T1"; [ "$(j '[.data[].title] | index("طلبك في الطريق")')" != "null" ] && ok "customer got the on-its-way notification" || bad "no on-its-way notification" "$(j '[.data[].title]')"
 # restore the store's pricing for the next run
 tinker "\$s=App\Models\Store::withoutGlobalScopes()->where('public_token','AZRBRGR2')->first(); App\Models\BookingSettings::withoutGlobalScopes()->where('store_id',\$s->id)->update(['delivery_pricing_mode'=>'fixed','delivery_max_distance_km'=>0]); echo 'ok';" >/dev/null
+
+
+(cd $BE && php artisan cache:clear >/dev/null 2>&1)
+echo "== M. supermarket (delivery-only, cash on delivery, grocery status flow) =="
+tinker "if(!App\Models\Store::withoutGlobalScopes()->where('public_token','AZRMRKT7')->exists()){ Artisan::call('db:seed',['--class'=>'Database\\\\Seeders\\\\SupermarketSeeder','--force'=>true]); } \$s=App\Models\Store::withoutGlobalScopes()->where('public_token','AZRMRKT7')->first(); foreach(\$s->branches as \$b){ \$b->schedules()->update(['opens_at'=>'00:00','closes_at'=>'23:59','is_closed'=>false]); } App\Models\BookingSettings::withoutGlobalScopes()->where('store_id',\$s->id)->update(['delivery_max_distance_km'=>0,'delivery_min_order'=>0]); echo 'ok';" >/dev/null
+req GET /stores/AZRMRKT7; expect 200 "supermarket storefront"
+[ "$(j .store.type)" = "supermarket" ] && ok "type=supermarket, flow pays $(j '.flow[2].mode')" || bad "wrong type" "$(j .store.type)"
+[ "$(j .configuration.order_pickup)" = "false" ] && [ "$(j .configuration.order_delivery)" = "true" ] && ok "delivery-only configuration" || bad "configuration" "$(j .configuration)"
+MILK=$(j '[.menu.categories[].items[]] | map(select(.name_ar=="حليب طازج"))[0].id'); echo "       milk id=$MILK unit=$(j "[.menu.categories[].items[]] | map(select(.id==$MILK))[0].unit") discount=$(j "[.menu.categories[].items[]] | map(select(.id==$MILK))[0].discount_percent")% stock=$(j "[.menu.categories[].items[]] | map(select(.id==$MILK))[0].stock_quantity")"
+STOCK0=$(j "[.menu.categories[].items[]] | map(select(.id==$MILK))[0].stock_quantity")
+req POST /orders "$T1" "{\"store_token\":\"AZRMRKT7\",\"fulfillment_type\":\"pickup\",\"items\":[{\"item_id\":$MILK,\"quantity\":1}]}"; expect 422 "pickup refused for a supermarket"
+req POST /orders "$T1" "{\"store_token\":\"AZRMRKT7\",\"fulfillment_type\":\"delivery\",\"address_id\":$ADDR,\"items\":[{\"item_id\":$MILK,\"quantity\":3}]}"; expect 201 "grocery delivery order"; OM=$(j .id)
+[ "$(j .payment_method)" = "cash_on_delivery" ] && ok "paid on delivery" || bad "payment method" "$(j .payment_method)"
+req GET /stores/AZRMRKT7; STOCK1=$(j "[.menu.categories[].items[]] | map(select(.id==$MILK))[0].stock_quantity"); [ "$STOCK1" = "$((STOCK0-3))" ] && ok "stock decremented $STOCK0 -> $STOCK1" || bad "stock not decremented" "$STOCK0 -> $STOCK1"
+req POST /auth/login "" "{\"email\":\"owner@market.sa\",\"password\":\"$PW\"}"; expect 200 "market owner login"; TMK=$(j .token)
+req GET /merchant/grocery/dashboard "$TMK"; expect 200 "grocery dashboard"; echo "       new=$(j .today.new) products=$(j .catalog.products) needs_action=$(j '.needs_action|length')"
+req POST "/merchant/orders/$OM/status" "$TMK" '{"status":"accepted"}'; expect 422 "accepted is not a grocery step"
+req POST "/merchant/orders/$OM/status" "$TMK" '{"status":"preparing"}'; expect 200 "placed -> preparing"; echo "       next=$(j '.allowed_transitions|join(",")')"
+req POST "/merchant/orders/$OM/status" "$TMK" '{"status":"out_for_delivery"}'; expect 200 "preparing -> out_for_delivery"
+req POST "/merchant/orders/$OM/status" "$TMK" '{"status":"completed"}'; expect 200 "out_for_delivery -> delivered"
+req GET "/orders/$OM" "$T1"; [ "$(j .status)" = "completed" ] && [ "$(j .store.type)" = "supermarket" ] && ok "customer sees delivered grocery order" || bad "customer order view" "$(j '{status, store}')"
+req POST "/merchant/orders/$OM/status" "$TM" '{"status":"cancelled"}'; [ "$CODE" = "403" ] || [ "$CODE" = "404" ] && ok "restaurant owner cannot touch the market's order [$CODE]" || bad "TENANT LEAK across verticals" "$CODE"
 
 echo; echo "RESULT: $PASS passed, $FAIL failed"

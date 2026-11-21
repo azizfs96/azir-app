@@ -468,6 +468,11 @@ class Storefront {
 
   bool get isRestaurant => type == 'restaurant';
 
+  bool get isSupermarket => type == 'supermarket';
+
+  /// Sells through the cart/order pipeline (restaurant or supermarket).
+  bool get takesOrders => isRestaurant || isSupermarket;
+
   /// Worth sectioning the list? One category is the same as none.
   bool get hasCategories => categories.length > 1;
 }

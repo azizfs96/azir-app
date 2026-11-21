@@ -15,6 +15,7 @@ import '../stores/presentation/store_avatar.dart';
 import '../../core/network/api_client.dart';
 import '../auth/data/auth_repository.dart';
 import '../../core/location/device_location.dart';
+import '../grocery/grocery_theme.dart';
 import 'address_repository.dart';
 import 'delivery_quote.dart';
 import 'car_repository.dart';
@@ -39,11 +40,13 @@ class CartScreen extends ConsumerWidget {
     final s = Strings.of(context);
     final cart = ref.watch(cartForStoreProvider(token));
     final store = ref.watch(storefrontProvider(token)).value;
+    // A supermarket's cart sits on a pale green; the restaurant keeps its cream.
+    final canvas = store?.isSupermarket == true ? Gr.cartCanvas : AppColors.cream;
 
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: canvas,
       appBar: AppBar(
-        backgroundColor: AppColors.cream,
+        backgroundColor: canvas,
         surfaceTintColor: Colors.transparent,
         title: Text(s.cart),
         actions: [
@@ -81,6 +84,7 @@ class CartScreen extends ConsumerWidget {
                         subtotal: cart.total,
                         s: s,
                         deliveryFee: _deliveryFee(ref, token, store),
+                        cashOnDelivery: store?.isSupermarket == true,
                       ),
                     ],
                   ),
@@ -90,6 +94,7 @@ class CartScreen extends ConsumerWidget {
                   subtotal: cart.total,
                   deliveryFee: _deliveryFee(ref, token, store),
                   s: s,
+                  canvas: canvas,
                 ),
               ],
             ),
@@ -173,7 +178,7 @@ class _CartItemCard extends StatelessWidget {
     return AppImage(
       url: logoUrlOf(path),
       fit: BoxFit.cover,
-      error: const Icon(Icons.restaurant_rounded, size: 26, color: AppColors.ink300),
+      error: const Icon(Icons.shopping_basket_rounded, size: 26, color: AppColors.ink300),
     );
   }
 }
@@ -240,7 +245,7 @@ class _FulfillmentCard extends ConsumerWidget {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
-          Padding(
+          if (modes.length > 1) Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
@@ -733,11 +738,14 @@ class _ContextCard extends ConsumerWidget {
 // a code entry that can only ever say "invalid" is friction, not a feature.
 
 class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.subtotal, required this.deliveryFee, required this.s});
+  const _TotalsCard({required this.subtotal, required this.deliveryFee, required this.s, this.cashOnDelivery = false});
 
   final double subtotal;
   final double deliveryFee;
   final Strings s;
+
+  /// Supermarkets: say how the order is paid, right under the total.
+  final bool cashOnDelivery;
 
   @override
   Widget build(BuildContext context) {
@@ -756,6 +764,25 @@ class _TotalsCard extends StatelessWidget {
             child: Divider(height: 1, color: AppColors.ink100),
           ),
           _row(s.total, subtotal + deliveryFee, bold: true),
+          if (cashOnDelivery) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: Gr.cartCanvas, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(Icons.payments_outlined, size: 18, color: Gr.accentDeep),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.cashOnDeliveryAmount((subtotal + deliveryFee).toStringAsFixed(2)),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink700, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -781,12 +808,14 @@ class _CheckoutBar extends ConsumerStatefulWidget {
     required this.subtotal,
     required this.deliveryFee,
     required this.s,
+    this.canvas = AppColors.cream,
   });
 
   final String token;
   final double subtotal;
   final double deliveryFee;
   final Strings s;
+  final Color canvas;
 
   @override
   ConsumerState<_CheckoutBar> createState() => _CheckoutBarState();
@@ -976,7 +1005,7 @@ class _CheckoutBarState extends ConsumerState<_CheckoutBar> {
     final total = widget.subtotal + widget.deliveryFee;
 
     return Container(
-      color: AppColors.cream,
+      color: widget.canvas,
       child: SafeArea(
         top: false,
         child: Padding(

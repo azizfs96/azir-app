@@ -27,13 +27,18 @@ class DriverProfile {
 }
 
 class StoreInfo {
-  const StoreInfo({required this.token, required this.name});
+  const StoreInfo({required this.token, required this.name, this.type});
 
   final String? token;
   final String name;
 
+  /// 'restaurant' | 'supermarket' — groceries are picked up while preparing.
+  final String? type;
+
+  bool get isSupermarket => type == 'supermarket';
+
   factory StoreInfo.fromJson(Map<String, dynamic> json) =>
-      StoreInfo(token: json['token'] as String?, name: (json['name'] ?? '').toString());
+      StoreInfo(token: json['token'] as String?, name: (json['name'] ?? '').toString(), type: json['type'] as String?);
 }
 
 class Session {
@@ -50,7 +55,7 @@ class Session {
       'vehicle': driver.vehicle,
       'is_active': driver.isActive,
     },
-    'store': {'token': store.token, 'name': store.name},
+    'store': {'token': store.token, 'name': store.name, 'type': store.type},
   };
 
   static Session? tryParse(Map<String, dynamic>? json) {

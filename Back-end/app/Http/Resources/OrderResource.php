@@ -80,6 +80,7 @@ class OrderResource extends JsonResource
             'store' => $this->whenLoaded('store', fn () => [
                 'token' => $this->store->public_token,
                 'name' => $this->store->name_ar,
+                'type' => $this->store->business_type,
             ]),
             'customer' => $this->whenLoaded('customer', fn () => [
                 'name' => $this->customer?->fullName() ?: $this->customer?->user?->name,

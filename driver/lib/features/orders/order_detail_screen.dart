@@ -12,6 +12,7 @@ import '../../core/env.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets.dart';
+import '../auth/session.dart';
 import 'order_model.dart';
 import 'order_repository.dart';
 
@@ -119,6 +120,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         data: (o) => _Body(
           order: o,
           busy: _busy,
+          pickupWhilePreparing: ref.watch(sessionProvider).value?.store.isSupermarket ?? false,
           onClaim: () => _run((r) => r.claim(o.id), toast: s.claimed),
           onPickUp: () => _run((r) => r.updateStatus(o.id, 'out_for_delivery')),
           onDelivered: _confirmDelivered,
@@ -132,6 +134,7 @@ class _Body extends StatelessWidget {
   const _Body({
     required this.order,
     required this.busy,
+    required this.pickupWhilePreparing,
     required this.onClaim,
     required this.onPickUp,
     required this.onDelivered,
@@ -139,6 +142,7 @@ class _Body extends StatelessWidget {
 
   final DriverOrder order;
   final bool busy;
+  final bool pickupWhilePreparing;
   final VoidCallback onClaim;
   final VoidCallback onPickUp;
   final VoidCallback onDelivered;
@@ -297,7 +301,14 @@ class _Body extends StatelessWidget {
             ],
           ),
         ),
-        _ActionBar(order: order, busy: busy, onClaim: onClaim, onPickUp: onPickUp, onDelivered: onDelivered),
+        _ActionBar(
+          order: order,
+          busy: busy,
+          pickupWhilePreparing: pickupWhilePreparing,
+          onClaim: onClaim,
+          onPickUp: onPickUp,
+          onDelivered: onDelivered,
+        ),
       ],
     );
   }
@@ -322,6 +333,7 @@ class _ActionBar extends StatelessWidget {
   const _ActionBar({
     required this.order,
     required this.busy,
+    required this.pickupWhilePreparing,
     required this.onClaim,
     required this.onPickUp,
     required this.onDelivered,
@@ -329,6 +341,9 @@ class _ActionBar extends StatelessWidget {
 
   final DriverOrder order;
   final bool busy;
+
+  /// Supermarkets have no "ready" step: the driver collects while preparing.
+  final bool pickupWhilePreparing;
   final VoidCallback onClaim;
   final VoidCallback onPickUp;
   final VoidCallback onDelivered;
@@ -336,6 +351,7 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = Strings.of(context);
+    final canPickUp = order.isReadyForPickup || (pickupWhilePreparing && order.isBeingPrepared);
 
     Widget? child;
     if (order.isTerminal) {
@@ -349,6 +365,13 @@ class _ActionBar extends StatelessWidget {
       );
     } else if (order.isUnassigned) {
       child = null;
+    } else if (canPickUp) {
+      child = PrimaryButton(
+        label: s.pickUp,
+        icon: Icons.two_wheeler_rounded,
+        onPressed: onPickUp,
+        loading: busy,
+      );
     } else if (order.isBeingPrepared) {
       child = Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

@@ -8,6 +8,7 @@ import '../../features/booking/data/booking_repository.dart';
 import '../../features/booking/presentation/booking_flow_screen.dart';
 import '../../features/booking/presentation/confirmation_screen.dart';
 import '../../features/menu/cart_screen.dart';
+import '../../features/grocery/grocery_categories_screen.dart';
 import '../../features/menu/order_status_screen.dart';
 import '../../features/menu/orders_screen.dart';
 import '../../features/menu/invoice_screen.dart';
@@ -75,6 +76,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'cart',
             builder: (context, state) => CartScreen(
               token: state.pathParameters['token']!,
+            ),
+          ),
+          GoRoute(
+            path: 'categories',
+            builder: (context, state) => GroceryCategoriesScreen(
+              token: state.pathParameters['token']!,
+              initialCategory: int.tryParse(state.uri.queryParameters['category'] ?? ''),
+              featured: state.uri.queryParameters['featured'] == '1',
             ),
           ),
           GoRoute(

@@ -162,6 +162,8 @@ class OrderResult {
     this.prepMinutes,
     this.storeName,
     this.storeToken,
+    this.storeType,
+    this.paymentMethod = 'pay_at_store',
     this.createdAt,
     this.acceptedAt,
     this.readyAt,
@@ -191,6 +193,8 @@ class OrderResult {
         prepMinutes: json['prep_minutes'] as int?,
         storeName: (json['store'] as Map<String, dynamic>?)?['name'] as String?,
         storeToken: (json['store'] as Map<String, dynamic>?)?['token'] as String?,
+        storeType: (json['store'] as Map<String, dynamic>?)?['type'] as String?,
+        paymentMethod: json['payment_method'] as String? ?? 'pay_at_store',
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
         acceptedAt: DateTime.tryParse(json['accepted_at'] as String? ?? ''),
         readyAt: DateTime.tryParse(json['ready_at'] as String? ?? ''),
@@ -222,6 +226,16 @@ class OrderResult {
   final int? prepMinutes;
   final String? storeName;
   final String? storeToken;
+
+  /// 'restaurant' | 'supermarket' | … — picks the tracker's step list.
+  final String? storeType;
+
+  /// 'pay_at_store' | 'cash_on_delivery' | 'online'.
+  final String paymentMethod;
+
+  bool get isGrocery => storeType == 'supermarket';
+
+  bool get isCashOnDelivery => paymentMethod == 'cash_on_delivery';
   final DateTime? createdAt;
   final DateTime? acceptedAt;
   final DateTime? readyAt;

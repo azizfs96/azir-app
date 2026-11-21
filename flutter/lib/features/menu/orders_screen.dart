@@ -124,10 +124,13 @@ class _OrderCard extends ConsumerWidget {
       return (label: s.orderStatusCancelled, fg: AppColors.bad, bg: AppColors.badSoft);
     }
     final label = switch (order.status) {
-      'completed' => order.fulfillmentType == 'delivery' ? s.orderDelivered : s.orderReceived,
+      'completed' => order.isGrocery
+          ? s.groceryStatusDelivered
+          : (order.fulfillmentType == 'delivery' ? s.orderDelivered : s.orderReceived),
       'ready' => order.fulfillmentType == 'delivery' ? s.orderStatusReadyDelivery : s.orderStatusReady,
-      'out_for_delivery' => s.orderStatusOutForDelivery,
-      _ => s.orderPreparing,
+      'out_for_delivery' => order.isGrocery ? s.groceryStatusOutForDelivery : s.orderStatusOutForDelivery,
+      'placed' => order.isGrocery ? s.groceryStatusPlaced : s.orderPreparing,
+      _ => order.isGrocery ? s.groceryStatusPreparing : s.orderPreparing,
     };
     return (label: label, fg: AppColors.ok, bg: AppColors.okSoft);
   }

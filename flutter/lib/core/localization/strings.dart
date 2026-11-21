@@ -201,7 +201,6 @@ class Strings {
   String get menuItemsHead => _('أصناف القائمة', 'Menu items');
   String get viewCart => _('عرض السلة', 'View cart');
   String get eveningGreeting => _('مساء الخير', 'Good evening');
-  String get soldOut => _('نفد', 'Sold out');
   String get addToCart => _('أضف للسلة', 'Add to cart');
   String get cart => _('السلة', 'Cart');
   String get emptyCart => _('سلتك فارغة', 'Your cart is empty');
@@ -327,6 +326,34 @@ class Strings {
   // Delivery-specific steps.
   String get orderStatusReadyDelivery => _('جاهز، بانتظار السائق', 'Ready, waiting for the driver');
   String get orderStatusOutForDelivery => _('السائق في الطريق إليك', 'On its way to you');
+  // Grocery (supermarket) storefront + order flow.
+  String get groceryWelcome => _('أهلاً بك 👋', 'Welcome back! 👋');
+  String get groceryHeroTitle => _('احتياجاتك اليومية', 'Your Everyday');
+  String get groceryHeroAccent => _('تصلك إلى بابك', 'Essentials, Delivered');
+  String get groceryHeroHint => _('خضار، بقالة، ومنتجات طازجة بلمسة واحدة.', 'Groceries, fresh produce & more at your fingertips.');
+  String get grocerySearchHint => _('ابحث عن منتج…', 'Search for products…');
+  String get groceryCategories => _('الأقسام', 'Categories');
+  String get groceryBestSellers => _('الأكثر مبيعاً', 'Best Sellers');
+  String get groceryAllProducts => _('كل المنتجات', 'All products');
+  String get shopNow => _('تسوّق الآن', 'Shop now');
+  String get groceryPromoKicker => _('عرض خاص', 'Special offer');
+  String get groceryFastDelivery => _('توصيل سريع', 'Fast delivery');
+  String get groceryFastDeliveryHint => _('يصلك خلال دقائق', 'At your door in minutes');
+  String get groceryBestPrices => _('أفضل الأسعار', 'Best prices');
+  String get groceryBestPricesHint => _('خصومات حصرية', 'Exclusive deals');
+  String get groceryFresh => _('طازج 100%', '100% fresh');
+  String get groceryFreshHint => _('جودة تثق بها', 'Quality you can trust');
+  String discountBadge(int p) => _('خصم $p%', '$p% OFF');
+  String get soldOut => _('نفد', 'Sold out');
+  String get categoriesTab => _('الأقسام', 'Categories');
+  String get cashOnDelivery => _('الدفع عند الاستلام', 'Cash on delivery');
+  String cashOnDeliveryAmount(String amount) => _('ادفع $amount ر.س نقداً أو بالشبكة عند الاستلام', 'Pay SAR $amount in cash or by card on delivery');
+  String get groceryDeliveryOnly => _('توصيل إلى عنوانك', 'Delivered to your address');
+  String get groceryStatusPlaced => _('تم استلام طلبك', 'Order received');
+  String get groceryStatusPreparing => _('جاري التحضير', 'Preparing your order');
+  String get groceryStatusOutForDelivery => _('جاري التوصيل', 'Out for delivery');
+  String get groceryStatusDelivered => _('تم الإيصال', 'Delivered');
+  String get groceryWaitingHint => _('سيبدأ المتجر تحضير طلبك خلال لحظات.', 'The store will start preparing your order shortly.');
   String get driverLabel => _('السائق', 'Driver');
   String get driverOnTheWay => _('في الطريق', 'On the way');
   String get waitingDriverLocation => _('بانتظار موقع السائق…', 'Waiting for the driver\'s location…');

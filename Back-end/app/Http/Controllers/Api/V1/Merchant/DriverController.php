@@ -81,7 +81,7 @@ class DriverController extends MerchantController
     /** PUT /merchant/drivers/{id} */
     public function update(int $id, Request $request): JsonResponse
     {
-        $driver = Driver::findOrFail($id);
+        $driver = Driver::with('user')->findOrFail($id);
         $this->authorize('update', $driver);
 
         $data = $request->validate([
@@ -134,7 +134,7 @@ class DriverController extends MerchantController
     /** DELETE /merchant/drivers/{id} */
     public function destroy(int $id): JsonResponse
     {
-        $driver = Driver::findOrFail($id);
+        $driver = Driver::with('user')->findOrFail($id);
         $this->authorize('delete', $driver);
 
         DB::transaction(function () use ($driver): void {

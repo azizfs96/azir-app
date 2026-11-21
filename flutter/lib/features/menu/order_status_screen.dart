@@ -12,6 +12,7 @@ import '../../core/widgets/riyal_price.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/top_banner.dart';
 import '../stores/data/store_repository.dart';
+import '../grocery/grocery_theme.dart';
 import 'delivery_tracking_card.dart';
 import 'order_repository.dart';
 import 'reorder_action.dart';
@@ -39,6 +40,19 @@ class OrderStatusScreen extends ConsumerStatefulWidget {
 /// order has one more leg: the driver's trip to the door.
 const _orderSteps = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
 const _deliverySteps = ['placed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'completed'];
+
+/// A grocery order: received → preparing → out for delivery → delivered. The
+/// server never uses accept/ready for supermarkets, but a driver-app move or a
+/// legacy row could still carry them, so statuses map onto a display step.
+const _grocerySteps = ['placed', 'preparing', 'out_for_delivery', 'completed'];
+
+int _groceryStepIndex(String status) => switch (status) {
+      'placed' => 0,
+      'accepted' || 'preparing' || 'ready' => 1,
+      'out_for_delivery' => 2,
+      'completed' => 3,
+      _ => -1,
+    };
 
 class _OrderStatusScreenState extends ConsumerState<OrderStatusScreen> with WidgetsBindingObserver {
   static const _terminal = {'completed', 'rejected', 'cancelled'};
@@ -217,6 +231,9 @@ class _WaitingHero extends StatefulWidget {
 }
 
 class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderStateMixin {
+  /// Groceries wear their green; restaurants keep the flame.
+  Color get _accent => widget.order.isGrocery ? Gr.accentDeep : AppColors.flame;
+
   late final AnimationController _c =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 2200))..repeat();
 
@@ -255,13 +272,13 @@ class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderSta
           ),
           const SizedBox(height: 26),
           Text(
-            s.waitingAcceptTitle,
+            widget.order.isGrocery ? s.groceryStatusPlaced : s.waitingAcceptTitle,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.ink900),
           ),
           const SizedBox(height: 10),
           Text(
-            s.waitingAcceptHint,
+            widget.order.isGrocery ? s.groceryWaitingHint : s.waitingAcceptHint,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13.5, height: 1.5, color: AppColors.ink500),
           ),
@@ -276,7 +293,7 @@ class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderSta
                   height: 4,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
-                    color: i == 0 ? AppColors.flame : AppColors.ink200,
+                    color: i == 0 ? _accent : AppColors.ink200,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -297,7 +314,7 @@ class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderSta
         height: 66 + t * 88,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.flame, width: 1.6),
+          border: Border.all(color: _accent, width: 1.6),
         ),
       ),
     );
@@ -308,10 +325,10 @@ class _WaitingHeroState extends State<_WaitingHero> with SingleTickerProviderSta
         height: 66,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.flame.withValues(alpha: 0.14),
-          border: Border.all(color: AppColors.flame.withValues(alpha: 0.45)),
+          color: _accent.withValues(alpha: 0.14),
+          border: Border.all(color: _accent.withValues(alpha: 0.45)),
         ),
-        child: const Icon(Icons.hourglass_top_rounded, color: AppColors.flame, size: 32),
+        child: Icon(widget.order.isGrocery ? Icons.shopping_basket_rounded : Icons.hourglass_top_rounded, color: _accent, size: 32),
       );
 }
 
@@ -322,7 +339,15 @@ class _Hero extends StatelessWidget {
   final OrderResult order;
   final Strings s;
 
-  String _statusText() => switch (order.status) {
+  String _statusText() => order.isGrocery
+      ? switch (_groceryStepIndex(order.status)) {
+          0 => s.groceryStatusPlaced,
+          1 => s.groceryStatusPreparing,
+          2 => s.groceryStatusOutForDelivery,
+          3 => s.groceryStatusDelivered,
+          _ => order.status == 'rejected' ? s.orderStatusRejected : s.orderStatusCancelled,
+        }
+      : switch (order.status) {
         'placed' => s.orderStatusPlaced,
         'accepted' => s.orderStatusAccepted,
         'preparing' => s.orderStatusPreparing,
@@ -523,6 +548,25 @@ class _ItemsCard extends StatelessWidget {
             ],
           ],
           _totalRow(s.total, order.total, bold: true),
+          if (order.isCashOnDelivery) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: Gr.cartCanvas, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(Icons.payments_outlined, size: 18, color: Gr.accentDeep),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.cashOnDeliveryAmount(order.total.toStringAsFixed(2)),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink700, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -575,7 +619,14 @@ class _Timeline extends StatelessWidget {
   final OrderResult order;
   final Strings s;
 
-  String _label(String step) => switch (step) {
+  String _label(String step) => order.isGrocery
+      ? switch (step) {
+          'placed' => s.groceryStatusPlaced,
+          'preparing' => s.groceryStatusPreparing,
+          'out_for_delivery' => s.groceryStatusOutForDelivery,
+          _ => s.groceryStatusDelivered,
+        }
+      : switch (step) {
         'placed' => s.orderStatusPlaced,
         'accepted' => s.orderStatusAccepted,
         'preparing' => s.orderStatusPreparing,
@@ -589,6 +640,7 @@ class _Timeline extends StatelessWidget {
       'placed' => order.createdAt,
       'accepted' => order.acceptedAt,
       'ready' => order.readyAt,
+      'preparing' => order.isGrocery ? order.acceptedAt : null,
       'out_for_delivery' => order.outForDeliveryAt,
       'completed' => order.completedAt,
       _ => null,
@@ -602,8 +654,8 @@ class _Timeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final steps = order.isDelivery ? _deliverySteps : _orderSteps;
-    final current = steps.indexOf(order.status);
+    final steps = order.isGrocery ? _grocerySteps : (order.isDelivery ? _deliverySteps : _orderSteps);
+    final current = order.isGrocery ? _groceryStepIndex(order.status) : steps.indexOf(order.status);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),

@@ -76,6 +76,11 @@ class MenuItem {
     this.isAvailable = true,
     this.isFeatured = false,
     this.optionGroups = const [],
+    this.compareAtPrice,
+    this.discountPercent,
+    this.unit,
+    this.stockQuantity,
+    this.inStock = true,
   });
 
   factory MenuItem.fromJson(Map<String, dynamic> json) => MenuItem(
@@ -88,6 +93,11 @@ class MenuItem {
         categoryId: json['category_id'] as int?,
         isAvailable: json['is_available'] as bool? ?? true,
         isFeatured: json['is_featured'] as bool? ?? false,
+        compareAtPrice: (json['compare_at_price'] as num?)?.toDouble(),
+        discountPercent: (json['discount_percent'] as num?)?.toInt(),
+        unit: json['unit'] as String?,
+        stockQuantity: (json['stock_quantity'] as num?)?.toInt(),
+        inStock: json['in_stock'] as bool? ?? true,
         optionGroups: ((json['option_groups'] as List?) ?? const [])
             .whereType<Map<String, dynamic>>()
             .map(MenuOptionGroup.fromJson)
@@ -104,6 +114,21 @@ class MenuItem {
   final bool isAvailable;
   final bool isFeatured;
   final List<MenuOptionGroup> optionGroups;
+
+  // Grocery fields (null / default for a restaurant dish).
+  /// The "was" price a discount badge is shown against.
+  final double? compareAtPrice;
+  final int? discountPercent;
+  /// "1 كجم", "500 جم" — printed beside the price.
+  final String? unit;
+  /// Tracked stock; null = not tracked (never sells out by count).
+  final int? stockQuantity;
+  final bool inStock;
+
+  /// Can be put in the cart right now (merchant switch AND stock).
+  bool get isOrderable => isAvailable && inStock;
+
+  bool get hasDiscount => discountPercent != null && discountPercent! > 0;
 }
 
 class MenuCategory {
