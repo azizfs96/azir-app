@@ -48,10 +48,14 @@ abstract final class Gr {
   /// Columns on the home grid; the categories screen uses two.
   static const homeColumns = 3;
 
+  /// Horizontal gap between product cards (the owner asked for tighter than
+  /// the reference's 12).
+  static const gutter = s8;
+
   /// Width of one home-grid cell for a screen of [screenWidth] — also the
   /// width of the best-sellers cards, so every product tile on the page is
   /// the same size.
   /// Not rounded: it must equal the width the grid itself hands each cell.
   static double homeCellWidth(double screenWidth) =>
-      (screenWidth - pageX * 2 - s12 * (homeColumns - 1)) / homeColumns;
+      (screenWidth - pageX * 2 - gutter * (homeColumns - 1)) / homeColumns;
 }

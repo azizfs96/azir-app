@@ -46,15 +46,19 @@ class GroceryProductCard extends ConsumerWidget {
 
   static const _priceH = 20.0;
   static const _nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35);
-  static const _nameLineH = 13 * 1.35; // 17.55
+  // Text lines are budgeted at their rounded-up height (13 × 1.35 = 17.55 →
+  // 18; 11 × 1.25 = 13.75 → 14): the engine snaps line boxes up, so an exact
+  // product would overflow by a fraction of a pixel.
+  static const _nameLineH = 18.0;
   static const _unitH = 2.0 + 14.0;
 
   /// Total height of a card whose square image tile is [width] wide and whose
-  /// name needs [nameLines] lines: tile + 8 + price + 4 + name + unit.
+  /// name needs [nameLines] lines: tile + 8 + price + 4 + name + unit, plus
+  /// one pixel of slack for device-pixel rounding.
   /// Grids pass the result of [nameLinesFor] so a section of one-line names
   /// does not reserve an empty second line under every card.
   static double heightFor(double width, {int nameLines = 1}) =>
-      (width + Gr.s8 + _priceH + Gr.s4 + _nameLineH * nameLines + _unitH).ceilToDouble();
+      (width + Gr.s8 + _priceH + Gr.s4 + _nameLineH * nameLines + _unitH).ceilToDouble() + 1;
 
   /// 1 when every name in [items] fits one line at [width], else 2 — measured
   /// with the card's own text style and the ambient text scale.

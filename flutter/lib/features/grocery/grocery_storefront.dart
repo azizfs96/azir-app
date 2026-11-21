@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -46,6 +47,63 @@ class GroceryStorefront extends ConsumerStatefulWidget {
 class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
   final _scroll = ScrollController();
   final Map<int, GlobalKey> _sectionKeys = {};
+
+  // ---- the sticky search row ------------------------------------------------
+  // Same mechanism as the restaurant's chip bar: the search row scrolls in its
+  // natural place; a copy follows it and pins under the status bar once it
+  // would scroll out, with a canvas-coloured backdrop over the status bar.
+  final _searchSlot = GlobalKey();
+  bool _slotMeasured = false;
+
+  /// Where the in-flow search row's top edge currently sits relative to the
+  /// scroll view's top edge; null until it has been laid out.
+  double? _searchScreenY() {
+    final box = _searchSlot.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null || !_scroll.hasClients) return null;
+    return viewport.getOffsetToReveal(box, 0).offset - _scroll.offset;
+  }
+
+  Widget _stickySearch(BuildContext context) {
+    final statusTop = MediaQuery.paddingOf(context).top;
+    final stickTop = statusTop + Gr.s8;
+    return AnimatedBuilder(
+      animation: _scroll,
+      builder: (context, _) {
+        final y = _searchScreenY();
+        if (y == null) {
+          // First frame: the row isn't laid out yet — measure once it is.
+          if (!_slotMeasured) {
+            _slotMeasured = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }
+          return const SizedBox.shrink();
+        }
+        final pinned = y <= stickTop;
+        final row = _SearchField(token: widget.token, s: s);
+        return Positioned(
+          top: pinned ? 0 : y,
+          left: 0,
+          right: 0,
+          child: pinned
+              ? DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Gr.bg,
+                    border: Border(bottom: BorderSide(color: Gr.line)),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(0, stickTop, 0, Gr.s8),
+                    child: row,
+                  ),
+                )
+              : row,
+        );
+      },
+    );
+  }
 
   Storefront get store => widget.store;
   Strings get s => widget.s;
@@ -114,7 +172,10 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                 // category (title ─12─ grid) ─24─ features card ─24─ nav bar.
                 SliverToBoxAdapter(child: _Header(store: store, s: s, token: widget.token, onShare: widget.onShare)),
                 const _Gap(Gr.s16),
-                SliverToBoxAdapter(child: _SearchField(token: widget.token, s: s)),
+                // The in-flow search row; [_stickySearch] draws the copy that pins.
+                SliverToBoxAdapter(
+                  child: KeyedSubtree(key: _searchSlot, child: _SearchField(token: widget.token, s: s)),
+                ),
                 if (categories.isNotEmpty) ...[
                   const _Gap(Gr.s16),
                   SliverToBoxAdapter(child: _CategoryStrip(categories: categories, onTap: _jumpTo)),
@@ -145,7 +206,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
                         itemCount: featured.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: Gr.s12),
+                        separatorBuilder: (_, _) => const SizedBox(width: Gr.gutter),
                         itemBuilder: (_, i) => GroceryProductCard(
                           token: widget.token,
                           item: featured[i],
@@ -206,6 +267,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
               ],
             ),
           ),
+          _stickySearch(context),
           // The nav bar sits on the canvas edge; the cart pill floats above it.
           Align(
             alignment: Alignment.bottomCenter,
@@ -612,7 +674,7 @@ class _ProductGrid extends StatelessWidget {
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: Gr.homeColumns,
           mainAxisSpacing: Gr.s16,
-          crossAxisSpacing: Gr.s12,
+          crossAxisSpacing: Gr.gutter,
           mainAxisExtent: cellHeight,
         ),
         delegate: SliverChildBuilderDelegate(

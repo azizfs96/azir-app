@@ -61,7 +61,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
     // Two equal columns in the space right of the rail: screen − rail − the
     // 20pt page margin − one 12pt gutter. Rows are as tall as the card needs.
     final gridW = MediaQuery.sizeOf(context).width - _railWidth - Gr.pageX;
-    final cellW = (gridW - Gr.s12) / 2;
+    final cellW = (gridW - Gr.gutter) / 2;
     final cellH = GroceryProductCard.heightFor(
       cellW,
       nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
@@ -156,7 +156,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 mainAxisSpacing: Gr.s16,
-                                crossAxisSpacing: Gr.s12,
+                                crossAxisSpacing: Gr.gutter,
                                 mainAxisExtent: cellH,
                               ),
                               delegate: SliverChildBuilderDelegate(
