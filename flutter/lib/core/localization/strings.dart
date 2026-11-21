@@ -337,6 +337,9 @@ class Strings {
   String get groceryAllProducts => _('كل المنتجات', 'All products');
   String get shopNow => _('تسوّق الآن', 'Shop now');
   String get groceryPromoKicker => _('عرض خاص', 'Special offer');
+  String groceryPromoUpTo(int p) => _('خصم حتى $p%', 'Up to $p% Off');
+  String groceryPromoOn(String category) => _('على $category', 'On $category');
+  String get groceryPromoFreshTitle => _('طازج كل يوم', 'Fresh every day');
   String get groceryFastDelivery => _('توصيل سريع', 'Fast delivery');
   String get groceryFastDeliveryHint => _('يصلك خلال دقائق', 'At your door in minutes');
   String get groceryBestPrices => _('أفضل الأسعار', 'Best prices');

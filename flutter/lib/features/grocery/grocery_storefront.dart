@@ -83,7 +83,8 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
           }
           return const SizedBox.shrink();
         }
-        if (y > stickTop) return const SizedBox.shrink(); // in-flow copy is on screen
+        // While the in-flow copy is on screen there is nothing to dock.
+        if (y > stickTop) return const SizedBox.shrink();
         return Positioned(
           top: 0,
           left: 0,
@@ -101,7 +102,11 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   _SearchField(token: widget.token, s: s),
                   if (categories.isNotEmpty) ...[
                     const SizedBox(height: Gr.s8),
-                    _CategoryStrip(categories: categories, onTap: _jumpTo, compact: true),
+                    _CategoryStrip(
+                      categories: categories,
+                      onTap: _jumpTo,
+                      compact: true,
+                    ),
                   ],
                 ],
               ),
@@ -134,36 +139,65 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
     final box = ctx.findRenderObject();
     final viewport = box == null ? null : RenderAbstractViewport.maybeOf(box);
     if (box == null || viewport == null || !_scroll.hasClients) return;
-    final target = (viewport.getOffsetToReveal(box, 0).offset - _dockedHeight(context) - Gr.s8)
-        .clamp(0.0, _scroll.position.maxScrollExtent);
-    _scroll.animateTo(target, duration: AppMotion.dur(context, AppMotion.slow), curve: AppMotion.curve);
+    final target =
+        (viewport.getOffsetToReveal(box, 0).offset -
+                _dockedHeight(context) -
+                Gr.s8)
+            .clamp(0.0, _scroll.position.maxScrollExtent);
+    _scroll.animateTo(
+      target,
+      duration: AppMotion.dur(context, AppMotion.slow),
+      curve: AppMotion.curve,
+    );
   }
 
   /// Height of the docked tools block (status bar + search row + compact chips).
   double _dockedHeight(BuildContext context) =>
-      MediaQuery.paddingOf(context).top + Gr.s8 + _SearchField.height + Gr.s8 + _CategoryStrip.compactHeight + Gr.s8;
+      MediaQuery.paddingOf(context).top +
+      Gr.s8 +
+      _SearchField.height +
+      Gr.s8 +
+      _CategoryStrip.compactHeight +
+      Gr.s8;
 
   @override
   Widget build(BuildContext context) {
-    final categories = menu.categories.where((c) => c.items.isNotEmpty).toList();
+    final categories = menu.categories
+        .where((c) => c.items.isNotEmpty)
+        .toList();
     final featured = menu.featured.where((i) => i.isAvailable).toList();
     // Category glyph per item id, for products without a photo.
     final glyphOf = <int, String>{
       for (final c in menu.categories)
         for (final i in c.items) i.id: categoryGlyph(c.name),
     };
-    final promo = store.popups.isNotEmpty ? store.popups.first.image : store.cover;
+    final promo = store.popups.isNotEmpty
+        ? store.popups.first.image
+        : store.cover;
+    // The banner's headline is the store's best real discount and its category
+    // (never an invented number); without discounts it says "fresh every day".
+    _Deal? deal;
+    for (final c in menu.categories) {
+      for (final i in c.items) {
+        if (i.hasDiscount &&
+            i.isAvailable &&
+            (deal == null || i.discountPercent! > deal.percent)) {
+          deal = _Deal(percent: i.discountPercent!, category: c);
+        }
+      }
+    }
     final cart = ref.watch(cartForStoreProvider(widget.token));
     // One cell width for every product tile on the page (grid and best
     // sellers); each section's row height follows its longest name.
     final cellW = Gr.homeCellWidth(MediaQuery.sizeOf(context).width);
     double heightFor(Iterable<MenuItem> items) => GroceryProductCard.heightFor(
-          cellW,
-          nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
-        );
+      cellW,
+      nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
+    );
     // Clearance under the last section: 32 to the nav bar, the bar itself, its
     // safe area, and the floating cart pill when there is one.
-    final bottomClearance = Gr.s24 +
+    final bottomClearance =
+        Gr.s24 +
         GroceryNavBar.height +
         MediaQuery.paddingOf(context).bottom +
         (cart.isEmpty ? 0 : _CartPill.height + Gr.s16);
@@ -175,31 +209,50 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
           RefreshIndicator(
             color: Gr.accent,
             backgroundColor: Gr.surface,
-            onRefresh: () async => ref.invalidate(storefrontProvider(widget.token)),
+            onRefresh: () async =>
+                ref.invalidate(storefrontProvider(widget.token)),
             child: CustomScrollView(
               controller: _scroll,
               slivers: [
                 // Vertical rhythm (8pt grid, reference density): header ─16─
                 // search ─16─ categories ─16─ promo ─24─ best sellers ─24─ each
                 // category (title ─12─ grid) ─24─ features card ─24─ nav bar.
-                SliverToBoxAdapter(child: _Header(store: store, s: s, token: widget.token, onShare: widget.onShare)),
+                SliverToBoxAdapter(
+                  child: _Header(
+                    store: store,
+                    s: s,
+                    token: widget.token,
+                    onShare: widget.onShare,
+                  ),
+                ),
                 const _Gap(Gr.s16),
                 // The in-flow search row; [_stickyTools] docks a copy (with the
                 // categories as compact pills) once this scrolls out.
                 SliverToBoxAdapter(
-                  child: KeyedSubtree(key: _toolsSlot, child: _SearchField(token: widget.token, s: s)),
+                  child: KeyedSubtree(
+                    key: _toolsSlot,
+                    child: _SearchField(token: widget.token, s: s),
+                  ),
                 ),
                 if (categories.isNotEmpty) ...[
                   const _Gap(Gr.s16),
-                  SliverToBoxAdapter(child: _CategoryStrip(categories: categories, onTap: _jumpTo)),
+                  SliverToBoxAdapter(
+                    child: _CategoryStrip(
+                      categories: categories,
+                      onTap: _jumpTo,
+                    ),
+                  ),
                 ],
-                if (promo != null) ...[
+                // Only when the merchant has added a visual (pop-up or cover).
+                if (promo != null && categories.isNotEmpty) ...[
                   const _Gap(Gr.s16),
                   SliverToBoxAdapter(
                     child: _PromoBanner(
                       image: promo,
+                      deal: deal,
                       s: s,
-                      onTap: () => categories.isEmpty ? null : _jumpTo(categories.first.id),
+                      onTap: () =>
+                          _jumpTo((deal?.category ?? categories.first).id),
                     ),
                   ),
                 ],
@@ -209,7 +262,9 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                     child: _SectionTitle(
                       title: s.groceryBestSellers,
                       action: s.seeAll,
-                      onAction: () => context.push('/s/${widget.token}/categories?featured=1'),
+                      onAction: () => context.push(
+                        '/s/${widget.token}/categories?featured=1',
+                      ),
                     ),
                   ),
                   SliverToBoxAdapter(
@@ -217,9 +272,12 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                       height: heightFor(featured),
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Gr.pageX,
+                        ),
                         itemCount: featured.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: Gr.gutter),
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: Gr.gutter),
                         itemBuilder: (_, i) => GroceryProductCard(
                           token: widget.token,
                           item: featured[i],
@@ -239,7 +297,9 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                       child: _SectionTitle(
                         title: category.name,
                         action: s.seeAll,
-                        onAction: () => context.push('/s/${widget.token}/categories?category=${category.id}'),
+                        onAction: () => context.push(
+                          '/s/${widget.token}/categories?category=${category.id}',
+                        ),
                       ),
                     ),
                   ),
@@ -253,7 +313,9 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
                   const _Gap(Gr.s24),
-                  SliverToBoxAdapter(child: _SectionTitle(title: s.groceryAllProducts)),
+                  SliverToBoxAdapter(
+                    child: _SectionTitle(title: s.groceryAllProducts),
+                  ),
                   _ProductGrid(
                     token: widget.token,
                     items: menu.uncategorised,
@@ -266,9 +328,19 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                        const Icon(Icons.shopping_basket_outlined, color: Gr.ink3, size: 40),
+                        const Icon(
+                          Icons.shopping_basket_outlined,
+                          color: Gr.ink3,
+                          size: 40,
+                        ),
                         const SizedBox(height: Gr.s12),
-                        Text(s.menuEmpty, style: const TextStyle(color: Gr.ink2, fontWeight: FontWeight.w600)),
+                        Text(
+                          s.menuEmpty,
+                          style: const TextStyle(
+                            color: Gr.ink2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -292,7 +364,12 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(Gr.headerX, 0, Gr.headerX, GroceryNavBar.height + Gr.s12),
+                  padding: const EdgeInsets.fromLTRB(
+                    Gr.headerX,
+                    0,
+                    Gr.headerX,
+                    GroceryNavBar.height + Gr.s12,
+                  ),
                   child: _CartPill(token: widget.token, s: s),
                 ),
               ),
@@ -310,13 +387,19 @@ class _Gap extends StatelessWidget {
   final double height;
 
   @override
-  Widget build(BuildContext context) => SliverToBoxAdapter(child: SizedBox(height: height));
+  Widget build(BuildContext context) =>
+      SliverToBoxAdapter(child: SizedBox(height: height));
 }
 
 // ---------------------------------------------------------------------------
 
 class _Header extends StatelessWidget {
-  const _Header({required this.store, required this.s, required this.token, required this.onShare});
+  const _Header({
+    required this.store,
+    required this.s,
+    required this.token,
+    required this.onShare,
+  });
 
   final Storefront store;
   final Strings s;
@@ -336,26 +419,40 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               _RoundIcon(
-                icon: context.canPop() ? Icons.arrow_back_rounded : Icons.menu_rounded,
+                icon: context.canPop()
+                    ? Icons.arrow_back_rounded
+                    : Icons.menu_rounded,
                 onTap: context.canPop() ? () => context.pop() : onShare,
                 flipForRtl: context.canPop(),
               ),
               const SizedBox(width: Gr.s8),
-              StoreAvatar(name: store.name, logoPath: store.logo, brandColor: store.brandColor, size: 32),
+              StoreAvatar(
+                name: store.name,
+                logoPath: store.logo,
+                brandColor: store.brandColor,
+                size: 32,
+              ),
               const SizedBox(width: Gr.s8),
               Expanded(
                 child: Text(
                   store.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Gr.ink),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Gr.ink,
+                  ),
                 ),
               ),
               if (store.isOpen != null) ...[
                 OpenBadge(open: store.isOpen!, s: s, compact: true),
                 const SizedBox(width: Gr.s8),
               ],
-              _RoundIcon(icon: Icons.notifications_none_rounded, onTap: () => context.push('/notifications')),
+              _RoundIcon(
+                icon: Icons.notifications_none_rounded,
+                onTap: () => context.push('/notifications'),
+              ),
             ],
           ),
           const SizedBox(height: Gr.s16),
@@ -366,22 +463,45 @@ class _Header extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.groceryWelcome, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.accent)),
+                    Text(
+                      s.groceryWelcome,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Gr.accent,
+                      ),
+                    ),
                     const SizedBox(height: Gr.s4),
                     Text(
                       s.groceryHeroTitle,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Gr.ink, height: 1.15),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Gr.ink,
+                        height: 1.15,
+                      ),
                     ),
                     Text(
                       s.groceryHeroAccent,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Gr.accent, height: 1.15),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Gr.accent,
+                        height: 1.15,
+                      ),
                     ),
                     const SizedBox(height: Gr.s8),
                     Text(
-                      (store.description ?? '').trim().isNotEmpty ? store.description! : s.groceryHeroHint,
+                      (store.description ?? '').trim().isNotEmpty
+                          ? store.description!
+                          : s.groceryHeroHint,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12.5, color: Gr.ink2, height: 1.45),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Gr.ink2,
+                        height: 1.45,
+                      ),
                     ),
                   ],
                 ),
@@ -410,7 +530,11 @@ class _Header extends StatelessWidget {
 }
 
 class _RoundIcon extends StatelessWidget {
-  const _RoundIcon({required this.icon, required this.onTap, this.flipForRtl = false});
+  const _RoundIcon({
+    required this.icon,
+    required this.onTap,
+    this.flipForRtl = false,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
@@ -428,7 +552,10 @@ class _RoundIcon extends StatelessWidget {
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Transform.flip(flipX: flipForRtl && rtl, child: Icon(icon, size: 20, color: Gr.ink)),
+          child: Transform.flip(
+            flipX: flipForRtl && rtl,
+            child: Icon(icon, size: 20, color: Gr.ink),
+          ),
         ),
       ),
     );
@@ -461,9 +588,16 @@ class _SearchField extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
                   child: Row(
                     children: [
-                      const Icon(Icons.search_rounded, color: Gr.ink3, size: 20),
+                      const Icon(
+                        Icons.search_rounded,
+                        color: Gr.ink3,
+                        size: 20,
+                      ),
                       const SizedBox(width: Gr.s8),
-                      Text(s.grocerySearchHint, style: const TextStyle(color: Gr.ink3, fontSize: 14)),
+                      Text(
+                        s.grocerySearchHint,
+                        style: const TextStyle(color: Gr.ink3, fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -477,7 +611,11 @@ class _SearchField extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(Gr.cardRadius),
               onTap: () => context.push('/s/$token/categories'),
-              child: const SizedBox(width: height, height: height, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
+              child: const SizedBox(
+                width: height,
+                height: height,
+                child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20),
+              ),
             ),
           ),
         ],
@@ -487,7 +625,11 @@ class _SearchField extends StatelessWidget {
 }
 
 class _CategoryStrip extends StatelessWidget {
-  const _CategoryStrip({required this.categories, required this.onTap, this.compact = false});
+  const _CategoryStrip({
+    required this.categories,
+    required this.onTap,
+    this.compact = false,
+  });
 
   final List<MenuCategory> categories;
   final ValueChanged<int> onTap;
@@ -520,8 +662,14 @@ class _CategoryStrip extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
                   child: Center(
-                    child: Text(c.name,
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.ink)),
+                    child: Text(
+                      c.name,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Gr.ink,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -554,11 +702,18 @@ class _CategoryStrip extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Gr.surface2,
                       shape: BoxShape.circle,
-                      border: Border.all(color: i == 0 ? Gr.accent : Gr.line, width: 1.5),
+                      border: Border.all(
+                        color: i == 0 ? Gr.accent : Gr.line,
+                        width: 1.5,
+                      ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: c.image != null
-                        ? AppImage(url: logoUrlOf(c.image), placeholderColor: Gr.surface2, error: _CategoryGlyph(c.name))
+                        ? AppImage(
+                            url: logoUrlOf(c.image),
+                            placeholderColor: Gr.surface2,
+                            error: _CategoryGlyph(c.name),
+                          )
                         : _CategoryGlyph(c.name),
                   ),
                   const SizedBox(height: Gr.s8),
@@ -568,7 +723,12 @@ class _CategoryStrip extends StatelessWidget {
                       maxLines: 2,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Gr.ink2, height: 1.2),
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Gr.ink2,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ],
@@ -589,19 +749,51 @@ class _CategoryGlyph extends StatelessWidget {
   final String name;
 
   @override
-  Widget build(BuildContext context) =>
-      Center(child: Text(categoryGlyph(name), style: const TextStyle(fontSize: 28, height: 1)));
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      categoryGlyph(name),
+      style: const TextStyle(fontSize: 28, height: 1),
+    ),
+  );
 }
 
+/// The store's best live discount, for the promo banner's headline.
+class _Deal {
+  const _Deal({required this.percent, required this.category});
+
+  final int percent;
+  final MenuCategory category;
+}
+
+/// The promo banner from the reference: a dark-green card after the category
+/// chips — kicker, "up to N% off", the category, a "shop now" pill and a star
+/// badge — over the merchant's pop-up or cover photo. Shown only when the
+/// merchant has added such a photo.
 class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({required this.image, required this.s, required this.onTap});
+  const _PromoBanner({
+    required this.image,
+    required this.deal,
+    required this.s,
+    required this.onTap,
+  });
 
   final String image;
+  final _Deal? deal;
   final Strings s;
   final VoidCallback onTap;
 
+  static const _dark = Color(0xFF0B3B33);
+  static const _lime = Color(0xFF8DE3C4); // kicker on the dark card
+
   @override
   Widget build(BuildContext context) {
+    final title = deal != null
+        ? s.groceryPromoUpTo(deal!.percent)
+        : s.groceryPromoFreshTitle;
+    final subtitle = deal != null
+        ? s.groceryPromoOn(deal!.category.name)
+        : s.groceryHeroHint;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: ClipRRect(
@@ -611,50 +803,119 @@ class _PromoBanner extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface2, error: const ColoredBox(color: Gr.surface2)),
+              // The merchant's photo with a dark wash from the start side so
+              // the copy stays legible; the photo shows through on the end side.
+              AppImage(
+                url: logoUrlOf(image),
+                placeholderColor: _dark,
+                error: const ColoredBox(color: _dark),
+              ),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: AlignmentDirectional.centerStart,
                     end: AlignmentDirectional.centerEnd,
-                    colors: [Color(0xE60C1A12), Color(0x330C1A12)],
+                    colors: [Color(0xF20B3B33), Color(0x400B3B33)],
                   ),
                 ),
               ),
+              // Star badge (reference: a lit circle in the top-end corner).
+              PositionedDirectional(
+                top: Gr.s12,
+                end: Gr.s12,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: const BoxDecoration(
+                    color: Gr.accent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.star_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              // Copy block on the start 2/3 so it never runs under the visual.
               Padding(
                 padding: const EdgeInsets.all(Gr.s16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(s.groceryPromoKicker.toUpperCase(),
-                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Gr.accent, letterSpacing: 0.6)),
-                    const SizedBox(height: Gr.s4),
-                    Text(s.groceryHeroHint,
-                        maxLines: 2,
+                child: FractionallySizedBox(
+                  alignment: AlignmentDirectional.centerStart,
+                  widthFactor: 0.68,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        s.groceryPromoKicker.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: _lime,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      const SizedBox(height: Gr.s4),
+                      Text(
+                        title,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Gr.ink, height: 1.25)),
-                    const SizedBox(height: Gr.s12),
-                    Material(
-                      color: Gr.accent,
-                      borderRadius: BorderRadius.circular(99),
-                      child: InkWell(
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          height: 1.15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFD6EFE4),
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: Gr.s12),
+                      Material(
+                        color: Gr.accent,
                         borderRadius: BorderRadius.circular(99),
-                        onTap: onTap,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: Gr.s12, vertical: Gr.s8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(s.shopNow, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Gr.onAccent)),
-                              const SizedBox(width: Gr.s4),
-                              const Icon(Icons.arrow_forward_rounded, size: 14, color: Gr.onAccent),
-                            ],
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(99),
+                          onTap: onTap,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Gr.s12,
+                              vertical: Gr.s8,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  s.shopNow,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Gr.onAccent,
+                                  ),
+                                ),
+                                const SizedBox(width: Gr.s4),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 14,
+                                  color: Gr.onAccent,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -679,7 +940,16 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, Gr.s12),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Gr.ink))),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Gr.ink,
+              ),
+            ),
+          ),
           if (action != null)
             GestureDetector(
               onTap: onAction,
@@ -687,9 +957,20 @@ class _SectionTitle extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(action!, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.accent)),
+                  Text(
+                    action!,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Gr.accent,
+                    ),
+                  ),
                   const SizedBox(width: Gr.s4),
-                  const Icon(Icons.arrow_forward_rounded, size: 14, color: Gr.accent),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: Gr.accent,
+                  ),
                 ],
               ),
             ),
@@ -730,7 +1011,12 @@ class _ProductGrid extends StatelessWidget {
           mainAxisExtent: cellHeight,
         ),
         delegate: SliverChildBuilderDelegate(
-          (_, i) => GroceryProductCard(token: token, item: items[i], s: s, fallbackGlyph: glyph),
+          (_, i) => GroceryProductCard(
+            token: token,
+            item: items[i],
+            s: s,
+            fallbackGlyph: glyph,
+          ),
           childCount: items.length,
         ),
       ),
@@ -746,14 +1032,21 @@ class _FeaturesRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final features = [
-      (Icons.delivery_dining_rounded, s.groceryFastDelivery, s.groceryFastDeliveryHint),
+      (
+        Icons.delivery_dining_rounded,
+        s.groceryFastDelivery,
+        s.groceryFastDeliveryHint,
+      ),
       (Icons.sell_outlined, s.groceryBestPrices, s.groceryBestPricesHint),
       (Icons.eco_rounded, s.groceryFresh, s.groceryFreshHint),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Gr.s8, vertical: Gr.s12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Gr.s8,
+          vertical: Gr.s12,
+        ),
         decoration: BoxDecoration(
           color: Gr.surface,
           borderRadius: BorderRadius.circular(Gr.cardRadius),
@@ -768,11 +1061,26 @@ class _FeaturesRow extends StatelessWidget {
                   children: [
                     Icon(icon, color: Gr.accent, size: 24),
                     const SizedBox(height: Gr.s8),
-                    Text(title, textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Gr.ink)),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Gr.ink,
+                      ),
+                    ),
                     const SizedBox(height: Gr.s4),
-                    Text(hint, textAlign: TextAlign.center, maxLines: 2,
-                        style: const TextStyle(fontSize: 10.5, color: Gr.ink3, height: 1.3)),
+                    Text(
+                      hint,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: Gr.ink3,
+                        height: 1.3,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -810,14 +1118,35 @@ class _CartPill extends ConsumerWidget {
                 width: 32,
                 height: 32,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: Gr.onAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(Gr.s8)),
-                child: Text('${cart.count}', style: const TextStyle(fontWeight: FontWeight.w800, color: Gr.onAccent)),
+                decoration: BoxDecoration(
+                  color: Gr.onAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(Gr.s8),
+                ),
+                child: Text(
+                  '${cart.count}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Gr.onAccent,
+                  ),
+                ),
               ),
               const SizedBox(width: Gr.s12),
               Expanded(
-                child: Text(s.viewCart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Gr.onAccent)),
+                child: Text(
+                  s.viewCart,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Gr.onAccent,
+                  ),
+                ),
               ),
-              RiyalPrice(amount: cart.total, size: 15, color: Gr.onAccent, decimals: 2),
+              RiyalPrice(
+                amount: cart.total,
+                size: 15,
+                color: Gr.onAccent,
+                decimals: 2,
+              ),
             ],
           ),
         ),
