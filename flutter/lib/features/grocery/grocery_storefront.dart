@@ -516,16 +516,12 @@ class _CategoryStrip extends StatelessWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(99),
                 onTap: () => onTap(c.id),
+                // Text-only pills in the docked bar (no glyphs).
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(categoryGlyph(c.name), style: const TextStyle(fontSize: 16, height: 1)),
-                      const SizedBox(width: 6),
-                      Text(c.name,
-                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.ink)),
-                    ],
+                  child: Center(
+                    child: Text(c.name,
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.ink)),
                   ),
                 ),
               ),
