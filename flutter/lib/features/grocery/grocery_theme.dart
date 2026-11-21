@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// The supermarket storefront's tokens: the pale-green canvas the cart uses,
-/// white cards, dark type and one green accent.
+/// white cards, dark type and black as the single accent (Azir's identity).
 ///
 /// Kept separate from `Ds` (the restaurant's warm cream system) so the two
 /// verticals never bleed into each other.
@@ -13,8 +13,8 @@ abstract final class Gr {
   static const ink = Color(0xFF13231A); // primary text
   static const ink2 = Color(0xFF4F6457); // secondary
   static const ink3 = Color(0xFF8A9B91); // captions
-  static const accent = Color(0xFF1F9D55); // green — fills, links, hero accent
-  static const accentDeep = Color(0xFF167A43); // pressed / darker accents
+  static const accent = Color(0xFF111111); // black — fills, links, hero accent (Azir identity)
+  static const accentDeep = Color(0xFF000000); // pressed / darker accents
   static const red = Color(0xFFE5484D);
   static const amber = Color(0xFFD9A21B);
 
