@@ -510,13 +510,13 @@ class _CategoryStrip extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(width: Gr.s8),
           itemBuilder: (_, i) {
             final c = categories[i];
+            // Text-only, near-square chips (owner: sharp corners, no glyphs).
             return Material(
               color: Gr.surface2,
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(Gr.s4),
               child: InkWell(
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(Gr.s4),
                 onTap: () => onTap(c.id),
-                // Text-only pills in the docked bar (no glyphs).
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
                   child: Center(
