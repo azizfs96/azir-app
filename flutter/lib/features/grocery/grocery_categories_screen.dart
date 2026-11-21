@@ -63,7 +63,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
     final gridW = MediaQuery.sizeOf(context).width - _railWidth - Gr.pageX;
     final cellW = (gridW - Gr.s12) / 2;
     final cellH = GroceryProductCard.heightFor(cellW);
-    final bottomClearance = Gr.s32 + GroceryNavBar.height + MediaQuery.paddingOf(context).bottom;
+    final bottomClearance = Gr.s24 + GroceryNavBar.height + MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
       backgroundColor: Gr.bg,
@@ -72,7 +72,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
           Column(
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(Gr.pageX, MediaQuery.paddingOf(context).top + Gr.s8, Gr.pageX, Gr.s16),
+                padding: EdgeInsets.fromLTRB(Gr.headerX, MediaQuery.paddingOf(context).top + Gr.s8, Gr.headerX, Gr.s12),
                 child: Row(
                   children: [
                     Material(
@@ -135,7 +135,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                         slivers: [
                           SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsetsDirectional.fromSTEB(0, 0, Gr.pageX, Gr.s16),
+                              padding: const EdgeInsetsDirectional.fromSTEB(0, 0, Gr.pageX, Gr.s12),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -185,7 +185,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
   }
 }
 
-/// Rail column: 20 margin + 72 item + 12 gutter to the grid.
+/// Rail column: 12 margin + 72 item + 12 gutter to the grid.
 const _railWidth = Gr.pageX + 72 + Gr.s12;
 
 class _RailItem extends StatelessWidget {
@@ -218,21 +218,21 @@ class _RailItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: Gr.s8, horizontal: Gr.s4),
         decoration: BoxDecoration(
           color: selected ? Gr.surface2 : Colors.transparent,
-          borderRadius: BorderRadius.circular(Gr.s16),
+          borderRadius: BorderRadius.circular(Gr.cardRadius),
           border: Border.all(color: selected ? Gr.accent : Colors.transparent, width: 1.5),
         ),
         child: Column(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: const BoxDecoration(color: Gr.surface, shape: BoxShape.circle),
               clipBehavior: Clip.antiAlias,
               child: image != null
                   ? AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface, error: _fallback())
                   : _fallback(),
             ),
-            const SizedBox(height: Gr.s8),
+            const SizedBox(height: Gr.s4),
             Text(
               label,
               maxLines: 2,

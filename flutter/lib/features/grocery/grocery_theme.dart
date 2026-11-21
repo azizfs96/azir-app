@@ -36,10 +36,14 @@ abstract final class Gr {
   static const s48 = 48.0; // large breathing room
 
   /// Horizontal page margin, identical on both edges of every screen.
-  static const pageX = 20.0;
+  /// Measured from the grocery-app reference: 12pt margins, 12pt gutters.
+  static const pageX = 12.0;
 
-  /// Corner radius of product tiles and large cards.
-  static const cardRadius = 20.0;
+  /// The top bar sits a touch further in than the content (reference: ~16pt).
+  static const headerX = 16.0;
+
+  /// Corner radius of product tiles and cards (reference: ~12pt).
+  static const cardRadius = 12.0;
 
   /// Columns on the home grid; the categories screen uses two.
   static const homeColumns = 3;

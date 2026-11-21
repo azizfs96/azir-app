@@ -89,7 +89,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
     final cellH = GroceryProductCard.heightFor(cellW);
     // Clearance under the last section: 32 to the nav bar, the bar itself, its
     // safe area, and the floating cart pill when there is one.
-    final bottomClearance = Gr.s32 +
+    final bottomClearance = Gr.s24 +
         GroceryNavBar.height +
         MediaQuery.paddingOf(context).bottom +
         (cart.isEmpty ? 0 : _CartPill.height + Gr.s16);
@@ -105,18 +105,18 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
             child: CustomScrollView(
               controller: _scroll,
               slivers: [
-                // Vertical rhythm (8pt grid): header ─24─ search ─24─ categories
-                // ─24─ promo ─32─ best sellers ─32─ each category (title ─16─
-                // grid) ─40─ features card ─32─ nav bar.
+                // Vertical rhythm (8pt grid, reference density): header ─16─
+                // search ─16─ categories ─16─ promo ─24─ best sellers ─24─ each
+                // category (title ─12─ grid) ─24─ features card ─24─ nav bar.
                 SliverToBoxAdapter(child: _Header(store: store, s: s, token: widget.token, onShare: widget.onShare)),
-                const _Gap(Gr.s24),
+                const _Gap(Gr.s16),
                 SliverToBoxAdapter(child: _SearchField(token: widget.token, s: s)),
                 if (categories.isNotEmpty) ...[
-                  const _Gap(Gr.s24),
+                  const _Gap(Gr.s16),
                   SliverToBoxAdapter(child: _CategoryStrip(categories: categories, onTap: _jumpTo)),
                 ],
                 if (promo != null) ...[
-                  const _Gap(Gr.s24),
+                  const _Gap(Gr.s16),
                   SliverToBoxAdapter(
                     child: _PromoBanner(
                       image: promo,
@@ -126,7 +126,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                 ],
                 if (featured.isNotEmpty) ...[
-                  const _Gap(Gr.s32),
+                  const _Gap(Gr.s24),
                   SliverToBoxAdapter(
                     child: _SectionTitle(
                       title: s.groceryBestSellers,
@@ -154,7 +154,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                 ],
                 for (final category in categories) ...[
-                  const _Gap(Gr.s32),
+                  const _Gap(Gr.s24),
                   SliverToBoxAdapter(
                     child: KeyedSubtree(
                       key: _sectionKeys.putIfAbsent(category.id, GlobalKey.new),
@@ -174,7 +174,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
-                  const _Gap(Gr.s32),
+                  const _Gap(Gr.s24),
                   SliverToBoxAdapter(child: _SectionTitle(title: s.groceryAllProducts)),
                   _ProductGrid(token: widget.token, items: menu.uncategorised, s: s, cellHeight: cellH),
                 ],
@@ -190,7 +190,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                     ),
                   ),
                 ],
-                const _Gap(Gr.s40),
+                const _Gap(Gr.s24),
                 SliverToBoxAdapter(child: _FeaturesRow(s: s)),
                 // Room so the nav bar and the floating cart pill never cover content.
                 _Gap(bottomClearance),
@@ -208,7 +208,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, GroceryNavBar.height + Gr.s12),
+                  padding: const EdgeInsets.fromLTRB(Gr.headerX, 0, Gr.headerX, GroceryNavBar.height + Gr.s12),
                   child: _CartPill(token: widget.token, s: s),
                 ),
               ),
@@ -245,7 +245,7 @@ class _Header extends StatelessWidget {
     final hero = store.cover ?? store.logo;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(Gr.pageX, top + Gr.s8, Gr.pageX, 0),
+      padding: EdgeInsets.fromLTRB(Gr.headerX, top + Gr.s8, Gr.headerX, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -256,7 +256,7 @@ class _Header extends StatelessWidget {
                 onTap: context.canPop() ? () => context.pop() : onShare,
                 flipForRtl: context.canPop(),
               ),
-              const SizedBox(width: Gr.s12),
+              const SizedBox(width: Gr.s8),
               StoreAvatar(name: store.name, logoPath: store.logo, brandColor: store.brandColor, size: 32),
               const SizedBox(width: Gr.s8),
               Expanded(
@@ -274,7 +274,7 @@ class _Header extends StatelessWidget {
               _RoundIcon(icon: Icons.notifications_none_rounded, onTap: () => context.push('/notifications')),
             ],
           ),
-          const SizedBox(height: Gr.s24),
+          const SizedBox(height: Gr.s16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -303,12 +303,12 @@ class _Header extends StatelessWidget {
                 ),
               ),
               if (hero != null) ...[
-                const SizedBox(width: Gr.s16),
+                const SizedBox(width: Gr.s12),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(Gr.cardRadius),
+                  borderRadius: BorderRadius.circular(Gr.s16),
                   child: SizedBox(
-                    width: 120,
-                    height: 120,
+                    width: 112,
+                    height: 112,
                     child: AppImage(
                       url: logoUrlOf(hero),
                       placeholderColor: Gr.surface2,
@@ -360,19 +360,19 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+      padding: const EdgeInsets.symmetric(horizontal: Gr.headerX),
       child: Row(
         children: [
           Expanded(
             child: Material(
               color: Gr.surface2,
-              borderRadius: BorderRadius.circular(Gr.s16),
+              borderRadius: BorderRadius.circular(Gr.cardRadius),
               child: InkWell(
-                borderRadius: BorderRadius.circular(Gr.s16),
+                borderRadius: BorderRadius.circular(Gr.cardRadius),
                 onTap: () => context.push('/s/$token/search'),
                 child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: Gr.s16),
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
                   child: Row(
                     children: [
                       const Icon(Icons.search_rounded, color: Gr.ink3, size: 20),
@@ -384,14 +384,14 @@ class _SearchField extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: Gr.s12),
+          const SizedBox(width: Gr.s8),
           Material(
             color: Gr.accent,
-            borderRadius: BorderRadius.circular(Gr.s16),
+            borderRadius: BorderRadius.circular(Gr.cardRadius),
             child: InkWell(
-              borderRadius: BorderRadius.circular(Gr.s16),
+              borderRadius: BorderRadius.circular(Gr.cardRadius),
               onTap: () => context.push('/s/$token/categories'),
-              child: const SizedBox(width: 48, height: 48, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
+              child: const SizedBox(width: 44, height: 44, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
             ),
           ),
         ],
@@ -408,14 +408,14 @@ class _CategoryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 64 chip + 8 + two label lines (11.5 × 1.2 × 2 ≈ 28) = 100.
+    // 60 chip + 8 + two label lines (11.5 × 1.2 × 2 ≈ 28) = 96.
     return SizedBox(
-      height: 100,
+      height: 96,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
         itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Gr.s12),
+        separatorBuilder: (_, _) => const SizedBox(width: Gr.s8),
         itemBuilder: (_, i) {
           final c = categories[i];
           return GestureDetector(
@@ -426,8 +426,8 @@ class _CategoryStrip extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    width: 64,
-                    height: 64,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
                       color: Gr.surface2,
                       shape: BoxShape.circle,
@@ -467,7 +467,7 @@ class _CategoryGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Center(child: Text(categoryGlyph(name), style: const TextStyle(fontSize: 30, height: 1)));
+      Center(child: Text(categoryGlyph(name), style: const TextStyle(fontSize: 28, height: 1)));
 }
 
 class _PromoBanner extends StatelessWidget {
@@ -551,12 +551,12 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The section gap above comes from the page rhythm; 16 below to the products.
+    // The section gap above comes from the page rhythm; 12 below to the products.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, Gr.s16),
+      padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, Gr.s12),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Gr.ink))),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Gr.ink))),
           if (action != null)
             GestureDetector(
               onTap: onAction,
@@ -630,7 +630,7 @@ class _FeaturesRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Gr.s8, vertical: Gr.s16),
+        padding: const EdgeInsets.symmetric(horizontal: Gr.s8, vertical: Gr.s12),
         decoration: BoxDecoration(
           color: Gr.surface,
           borderRadius: BorderRadius.circular(Gr.cardRadius),

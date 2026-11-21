@@ -47,13 +47,13 @@ class GroceryProductCard extends ConsumerWidget {
   // Fixed heights of the text block so every card in a row is identical no
   // matter how long its name is or whether it has a unit / old price.
   static const _priceH = 20.0;
-  static const _nameH = 34.0; // two lines of 12.5pt at 1.3
-  static const _unitH = 16.0;
+  static const _nameH = 36.0; // two lines of 13pt at 1.35
+  static const _unitH = 15.0;
 
-  /// Total height of a card whose square image tile is [width] wide:
-  /// tile + 12 + price + 8 + name + 4 + unit.
+  /// Total height of a card whose square image tile is [width] wide
+  /// (reference rhythm): tile + 8 + price + 4 + name + 4 + unit.
   static double heightFor(double width) =>
-      width + Gr.s12 + _priceH + Gr.s8 + _nameH + Gr.s4 + _unitH;
+      width + Gr.s8 + _priceH + Gr.s4 + _nameH + Gr.s4 + _unitH;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,7 +101,7 @@ class GroceryProductCard extends ConsumerWidget {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Padding(
-                  padding: const EdgeInsets.all(Gr.s12),
+                  padding: const EdgeInsets.all(Gr.s8),
                   child: ColorFiltered(
                     colorFilter: orderable
                         ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
@@ -122,20 +122,20 @@ class GroceryProductCard extends ConsumerWidget {
               ),
               if (item.hasDiscount)
                 PositionedDirectional(
-                  top: Gr.s8,
-                  start: Gr.s8,
+                  top: 6,
+                  start: 6,
                   child: _Badge(text: s.discountBadge(item.discountPercent!), color: Gr.red),
                 ),
               if (!orderable)
                 PositionedDirectional(
-                  top: Gr.s8,
-                  end: Gr.s8,
+                  top: 6,
+                  end: 6,
                   child: _Badge(text: s.soldOut, color: AppColors.ink700),
                 ),
               // "+" in the end corner — the one tap that adds; a stepper after.
               PositionedDirectional(
-                bottom: Gr.s8,
-                end: Gr.s8,
+                bottom: 6,
+                end: 6,
                 child: AnimatedSwitcher(
                   duration: AppMotion.dur(context, AppMotion.fast),
                   child: qty == 0
@@ -146,7 +146,7 @@ class GroceryProductCard extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: Gr.s12),
+        const SizedBox(height: Gr.s8),
         // Price line: sale price in red, old price struck through. Scales down
         // rather than overflowing in a narrow three-column cell.
         SizedBox(
@@ -159,7 +159,7 @@ class GroceryProductCard extends ConsumerWidget {
               children: [
                 RiyalPrice(
                   amount: item.price,
-                  size: 14.5,
+                  size: 15,
                   weight: FontWeight.w800,
                   color: item.hasDiscount ? Gr.red : Gr.ink,
                   decimals: 2,
@@ -183,14 +183,14 @@ class GroceryProductCard extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: Gr.s8),
+        const SizedBox(height: Gr.s4),
         SizedBox(
           height: _nameH,
           child: Text(
             item.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Gr.ink, height: 1.3),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35),
           ),
         ),
         const SizedBox(height: Gr.s4),
@@ -203,7 +203,7 @@ class GroceryProductCard extends ConsumerWidget {
                   item.unit!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: Gr.ink3, height: 1.3),
+                  style: const TextStyle(fontSize: 11, color: Gr.ink3, height: 1.25),
                 ),
         ),
       ],
@@ -233,7 +233,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Gr.s8)),
       child: Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
     );
   }
@@ -248,18 +248,19 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Reference: a plain white disc with a soft shadow, no outline.
     return Material(
       color: Colors.white,
-      shape: const CircleBorder(side: BorderSide(color: Gr.line)),
-      elevation: 1.5,
-      shadowColor: Colors.black26,
+      shape: const CircleBorder(),
+      elevation: 2,
+      shadowColor: Colors.black38,
       child: InkWell(
         onTap: enabled ? onTap : null,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(Icons.add_rounded, size: 20, color: enabled ? AppColors.ink900 : AppColors.ink300),
+          width: 28,
+          height: 28,
+          child: Icon(Icons.add_rounded, size: 18, color: enabled ? AppColors.ink900 : AppColors.ink300),
         ),
       ),
     );
@@ -277,7 +278,7 @@ class _Stepper extends StatelessWidget {
     Widget btn(IconData icon, VoidCallback onTap) => InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(99),
-          child: SizedBox(width: 28, height: 32, child: Icon(icon, size: 16, color: Gr.onAccent)),
+          child: SizedBox(width: 26, height: 28, child: Icon(icon, size: 15, color: Gr.onAccent)),
         );
 
     return Material(
