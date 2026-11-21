@@ -19,6 +19,8 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // A runtime server override (developer setting) wins per request.
+          options.baseUrl = Env.current;
           final token = await _tokens.read();
           if (token != null) options.headers['Authorization'] = 'Bearer $token';
           options.headers['Accept-Language'] = await _tokens.locale();

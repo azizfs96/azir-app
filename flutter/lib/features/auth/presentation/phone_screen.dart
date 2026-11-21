@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/session_cache.dart';
+import '../../../core/config/server_dialog.dart';
 
 import '../../../core/localization/strings.dart';
 import '../../../core/network/api_client.dart';
@@ -89,12 +90,16 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                _codeSent ? s.verifyCode : s.phoneNumber,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.ink900,
+              // Long-press the title: hidden server-address setting (testers).
+              GestureDetector(
+                onLongPress: () => showServerDialog(context, ref),
+                child: Text(
+                  _codeSent ? s.verifyCode : s.phoneNumber,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink900,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),

@@ -21,7 +21,7 @@ String? logoUrlOf(String? path) {
   if (path.startsWith('http')) return path;
 
   // Env.apiBase ends in /api/v1; storage is served from the site root.
-  final origin = Env.apiBase.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
+  final origin = Env.current.replaceFirst(RegExp(r'/api/v\d+/?$'), '');
   return '$origin/storage/$path';
 }
 

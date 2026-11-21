@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/session_cache.dart';
+import '../../core/config/server_dialog.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/network/api_client.dart';
@@ -94,6 +95,8 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.help_outline_rounded,
                 label: s.help,
                 onTap: () => _showHelp(context, s),
+                // Hidden developer setting: long-press to change the server.
+                onLongPress: () => showServerDialog(context, ref),
               ),
             ],
           ),
@@ -222,15 +225,17 @@ class _MenuCard extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.label, required this.onTap});
+  const _Tile({required this.icon, required this.label, required this.onTap, this.onLongPress});
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
+      onLongPress: onLongPress,
       leading: Icon(icon, color: AppColors.ink900),
       title: Text(
         label,

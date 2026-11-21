@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
+import 'core/config/env.dart';
 import 'core/localization/strings.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
@@ -13,6 +14,8 @@ import 'core/widgets/offline_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // A tester may have pointed this device at another server (hidden setting).
+  await Env.loadOverride();
 
   // On the web, use real URL paths (azir.sa/s/TOKEN) instead of hash routing
   // (azir.sa/#/s/TOKEN). Without this the customer link never reaches the
