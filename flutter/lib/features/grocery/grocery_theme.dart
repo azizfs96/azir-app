@@ -7,13 +7,21 @@ import 'package:flutter/material.dart';
 /// Kept separate from `Ds` (the restaurant's warm cream system) so the two
 /// verticals never bleed into each other.
 abstract final class Gr {
-  static const bg = Color(0xFFFFFFFF); // canvas — white (owner's choice)
+  // Neutral whites and greys, sampled from the grocery-app reference: a pure
+  // white canvas, white tiles with a barely-there grey edge, light-grey inputs
+  // and chips, and neutral (not green-tinted) text greys.
+  static const bg = Color(0xFFFFFFFF); // canvas
   static const surface = Color(0xFFFFFFFF); // cards, tiles
-  static const surface2 = Color(0xFFE2ECE5); // chips, inputs, round buttons
-  static const line = Color(0xFFD8E3DB); // hairlines
-  static const ink = Color(0xFF13231A); // primary text
-  static const ink2 = Color(0xFF4F6457); // secondary
-  static const ink3 = Color(0xFF8A9B91); // captions
+  static const surface2 = Color(0xFFF3F4F6); // chips, inputs, round buttons
+  static const line = Color(0xFFEDEEF0); // hairlines, tile edges
+  static const ink = Color(0xFF111827); // primary text
+  static const ink2 = Color(0xFF4B5563); // secondary
+  static const ink3 = Color(0xFF9CA3AF); // captions
+
+  /// The soft lift under a product tile (reference: a faint shadow, no hard line).
+  static const tileShadow = [
+    BoxShadow(color: Color(0x0F000000), blurRadius: 10, offset: Offset(0, 3)),
+  ];
   static const accent = Color(0xFF0D9488); // teal — fills, links, hero accent
   static const accentDeep = Color(0xFF0F766E); // pressed / darker accents
   static const red = Color(0xFFE5484D);

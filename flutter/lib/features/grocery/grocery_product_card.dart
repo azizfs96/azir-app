@@ -123,6 +123,7 @@ class GroceryProductCard extends ConsumerWidget {
                   color: Gr.surface,
                   borderRadius: BorderRadius.circular(Gr.cardRadius),
                   border: Border.all(color: Gr.line),
+                  boxShadow: Gr.tileShadow,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Padding(

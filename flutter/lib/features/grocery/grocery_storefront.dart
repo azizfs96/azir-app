@@ -709,7 +709,7 @@ class _CategoryStrip extends StatelessWidget {
                       gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Gr.surface2, Color(0xFFF6FAF7)],
+                        colors: [Gr.surface2, Color(0xFFFAFAFB)],
                       ),
                       borderRadius: BorderRadius.circular(Gr.s16),
                       border: Border.all(
