@@ -143,9 +143,9 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                             sliver: SliverGrid(
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisSpacing: 10,
+                                mainAxisSpacing: 14,
                                 crossAxisSpacing: 10,
-                                mainAxisExtent: 250,
+                                mainAxisExtent: 236,
                               ),
                               delegate: SliverChildBuilderDelegate(
                                 (_, i) => GroceryProductCard(

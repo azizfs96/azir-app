@@ -120,7 +120,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 268,
+                      height: 230,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -130,7 +130,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                           token: widget.token,
                           item: featured[i],
                           s: s,
-                          width: 164,
+                          width: 128,
                           fallbackGlyph: glyphOf[featured[i].id] ?? '🛒',
                         ),
                       ),
@@ -551,11 +551,12 @@ class _ProductGrid extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverGrid(
+        // Three across on the home page (the reference layout).
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          mainAxisExtent: 262,
+          crossAxisCount: 3,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 10,
+          mainAxisExtent: 208,
         ),
         delegate: SliverChildBuilderDelegate(
           (_, i) => GroceryProductCard(token: token, item: items[i], s: s, fallbackGlyph: glyph),
