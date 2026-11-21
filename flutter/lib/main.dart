@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -16,6 +18,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // A tester may have pointed this device at another server (hidden setting).
   await Env.loadOverride();
+  // Test builds: look up the live address in the background; no-op otherwise.
+  unawaited(Env.discover());
 
   // On the web, use real URL paths (azir.sa/s/TOKEN) instead of hash routing
   // (azir.sa/#/s/TOKEN). Without this the customer link never reaches the

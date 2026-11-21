@@ -515,6 +515,9 @@ class _Header extends StatelessWidget {
                     height: 112,
                     child: AppImage(
                       url: logoUrlOf(hero),
+                      // A wide cover carries its visual on the end side (the
+                      // banner's dark wash covers the start); crop to that side.
+                      alignment: AlignmentDirectional.centerEnd,
                       placeholderColor: Gr.surface2,
                       error: const ColoredBox(color: Gr.surface2),
                     ),

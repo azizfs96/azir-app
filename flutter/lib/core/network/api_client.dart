@@ -32,6 +32,22 @@ class ApiClient {
           if (error.response?.statusCode == 401) {
             await _tokens.clear();
           }
+          // Server unreachable (no response, or the tunnel's own 5xx page):
+          // test builds look up the live address and replay a GET once. Only
+          // GETs — a POST whose result is unknown must not be sent twice.
+          if (_unreachable(error) && error.requestOptions.extra['discoveryRetried'] != true) {
+            final moved = await Env.discover(force: true);
+            if (moved && error.requestOptions.method == 'GET') {
+              try {
+                final opts = error.requestOptions
+                  ..baseUrl = Env.current
+                  ..extra['discoveryRetried'] = true;
+                return handler.resolve(await _dio.fetch(opts));
+              } on DioException catch (e) {
+                return handler.next(e);
+              }
+            }
+          }
           handler.next(error);
         },
       ),
@@ -42,6 +58,20 @@ class ApiClient {
   final TokenStore _tokens;
 
   Dio get dio => _dio;
+
+  /// The API itself never answered: a transport failure, or a gateway error
+  /// page (502/503/530 — what a dead tunnel edge returns).
+  static bool _unreachable(DioException e) {
+    final status = e.response?.statusCode;
+    if (status != null) return const {502, 503, 530}.contains(status);
+    return const {
+      DioExceptionType.connectionTimeout,
+      DioExceptionType.sendTimeout,
+      DioExceptionType.receiveTimeout,
+      DioExceptionType.connectionError,
+      DioExceptionType.badCertificate,
+    }.contains(e.type);
+  }
 
   Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) async {
     final response = await _dio.get<Map<String, dynamic>>(path, queryParameters: query);

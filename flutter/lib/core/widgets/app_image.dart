@@ -15,12 +15,16 @@ class AppImage extends StatelessWidget {
     super.key,
     required this.url,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
     this.error,
     this.placeholderColor,
   });
 
   final String? url;
   final BoxFit fit;
+
+  /// Which part of the image to keep when [fit] crops (directional values work).
+  final AlignmentGeometry alignment;
 
   /// Shown when there is no URL or the image fails to load.
   final Widget? error;
@@ -40,6 +44,7 @@ class AppImage extends StatelessWidget {
     return Image.network(
       u,
       fit: fit,
+      alignment: alignment,
       gaplessPlayback: true,
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
         if (wasSynchronouslyLoaded) return child; // already in memory cache
