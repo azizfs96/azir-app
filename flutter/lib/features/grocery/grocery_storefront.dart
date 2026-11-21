@@ -48,30 +48,31 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
   final _scroll = ScrollController();
   final Map<int, GlobalKey> _sectionKeys = {};
 
-  // ---- the sticky search row ------------------------------------------------
-  // Same mechanism as the restaurant's chip bar: the search row scrolls in its
-  // natural place; a copy follows it and pins under the status bar once it
-  // would scroll out, with a canvas-coloured backdrop over the status bar.
-  final _searchSlot = GlobalKey();
+  // ---- the sticky tools (search row + category chips) -----------------------
+  // Same mechanism as the restaurant's chip bar: the tools scroll in their
+  // natural place; once the search row would scroll out, a docked copy pins
+  // under the status bar — search row plus the categories as compact pills —
+  // with a canvas-coloured backdrop over the status bar.
+  final _toolsSlot = GlobalKey();
   bool _slotMeasured = false;
 
   /// Where the in-flow search row's top edge currently sits relative to the
   /// scroll view's top edge; null until it has been laid out.
-  double? _searchScreenY() {
-    final box = _searchSlot.currentContext?.findRenderObject();
+  double? _toolsScreenY() {
+    final box = _toolsSlot.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.attached || !box.hasSize) return null;
     final viewport = RenderAbstractViewport.maybeOf(box);
     if (viewport == null || !_scroll.hasClients) return null;
     return viewport.getOffsetToReveal(box, 0).offset - _scroll.offset;
   }
 
-  Widget _stickySearch(BuildContext context) {
+  Widget _stickyTools(BuildContext context, List<MenuCategory> categories) {
     final statusTop = MediaQuery.paddingOf(context).top;
     final stickTop = statusTop + Gr.s8;
     return AnimatedBuilder(
       animation: _scroll,
       builder: (context, _) {
-        final y = _searchScreenY();
+        final y = _toolsScreenY();
         if (y == null) {
           // First frame: the row isn't laid out yet — measure once it is.
           if (!_slotMeasured) {
@@ -82,24 +83,30 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
           }
           return const SizedBox.shrink();
         }
-        final pinned = y <= stickTop;
-        final row = _SearchField(token: widget.token, s: s);
+        if (y > stickTop) return const SizedBox.shrink(); // in-flow copy is on screen
         return Positioned(
-          top: pinned ? 0 : y,
+          top: 0,
           left: 0,
           right: 0,
-          child: pinned
-              ? DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: Gr.bg,
-                    border: Border(bottom: BorderSide(color: Gr.line)),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(0, stickTop, 0, Gr.s8),
-                    child: row,
-                  ),
-                )
-              : row,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Gr.bg,
+              border: Border(bottom: BorderSide(color: Gr.line)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(0, stickTop, 0, Gr.s8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SearchField(token: widget.token, s: s),
+                  if (categories.isNotEmpty) ...[
+                    const SizedBox(height: Gr.s8),
+                    _CategoryStrip(categories: categories, onTap: _jumpTo, compact: true),
+                  ],
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -123,13 +130,18 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
       context.push('/s/${widget.token}/categories?category=$categoryId');
       return;
     }
-    Scrollable.ensureVisible(
-      ctx,
-      duration: AppMotion.dur(context, AppMotion.slow),
-      curve: AppMotion.curve,
-      alignment: 0.02,
-    );
+    // Land the section title just under the docked tools, not behind them.
+    final box = ctx.findRenderObject();
+    final viewport = box == null ? null : RenderAbstractViewport.maybeOf(box);
+    if (box == null || viewport == null || !_scroll.hasClients) return;
+    final target = (viewport.getOffsetToReveal(box, 0).offset - _dockedHeight(context) - Gr.s8)
+        .clamp(0.0, _scroll.position.maxScrollExtent);
+    _scroll.animateTo(target, duration: AppMotion.dur(context, AppMotion.slow), curve: AppMotion.curve);
   }
+
+  /// Height of the docked tools block (status bar + search row + compact chips).
+  double _dockedHeight(BuildContext context) =>
+      MediaQuery.paddingOf(context).top + Gr.s8 + _SearchField.height + Gr.s8 + _CategoryStrip.compactHeight + Gr.s8;
 
   @override
   Widget build(BuildContext context) {
@@ -172,9 +184,10 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                 // category (title ─12─ grid) ─24─ features card ─24─ nav bar.
                 SliverToBoxAdapter(child: _Header(store: store, s: s, token: widget.token, onShare: widget.onShare)),
                 const _Gap(Gr.s16),
-                // The in-flow search row; [_stickySearch] draws the copy that pins.
+                // The in-flow search row; [_stickyTools] docks a copy (with the
+                // categories as compact pills) once this scrolls out.
                 SliverToBoxAdapter(
-                  child: KeyedSubtree(key: _searchSlot, child: _SearchField(token: widget.token, s: s)),
+                  child: KeyedSubtree(key: _toolsSlot, child: _SearchField(token: widget.token, s: s)),
                 ),
                 if (categories.isNotEmpty) ...[
                   const _Gap(Gr.s16),
@@ -267,7 +280,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
               ],
             ),
           ),
-          _stickySearch(context),
+          _stickyTools(context, categories),
           // The nav bar sits on the canvas edge; the cart pill floats above it.
           Align(
             alignment: Alignment.bottomCenter,
@@ -428,6 +441,8 @@ class _SearchField extends StatelessWidget {
   final String token;
   final Strings s;
 
+  static const height = 44.0;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -442,7 +457,7 @@ class _SearchField extends StatelessWidget {
                 borderRadius: BorderRadius.circular(Gr.cardRadius),
                 onTap: () => context.push('/s/$token/search'),
                 child: Container(
-                  height: 44,
+                  height: height,
                   padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
                   child: Row(
                     children: [
@@ -462,7 +477,7 @@ class _SearchField extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(Gr.cardRadius),
               onTap: () => context.push('/s/$token/categories'),
-              child: const SizedBox(width: 44, height: 44, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
+              child: const SizedBox(width: height, height: height, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
             ),
           ),
         ],
@@ -472,13 +487,54 @@ class _SearchField extends StatelessWidget {
 }
 
 class _CategoryStrip extends StatelessWidget {
-  const _CategoryStrip({required this.categories, required this.onTap});
+  const _CategoryStrip({required this.categories, required this.onTap, this.compact = false});
 
   final List<MenuCategory> categories;
   final ValueChanged<int> onTap;
 
+  /// Docked form: one row of small pills (glyph + name) instead of the round
+  /// chips, so the pinned tools stay short.
+  final bool compact;
+
+  static const compactHeight = 36.0;
+
   @override
   Widget build(BuildContext context) {
+    if (compact) {
+      return SizedBox(
+        height: compactHeight,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+          itemCount: categories.length,
+          separatorBuilder: (_, _) => const SizedBox(width: Gr.s8),
+          itemBuilder: (_, i) {
+            final c = categories[i];
+            return Material(
+              color: Gr.surface2,
+              borderRadius: BorderRadius.circular(99),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(99),
+                onTap: () => onTap(c.id),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(categoryGlyph(c.name), style: const TextStyle(fontSize: 16, height: 1)),
+                      const SizedBox(width: 6),
+                      Text(c.name,
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.ink)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     // 60 chip + 8 + two label lines (11.5 × 1.2 × 2 ≈ 28) = 96.
     return SizedBox(
       height: 96,
