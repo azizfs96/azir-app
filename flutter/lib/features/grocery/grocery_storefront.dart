@@ -699,12 +699,19 @@ class _CategoryStrip extends StatelessWidget {
               width: 72,
               child: Column(
                 children: [
+                  // Reference: a rounded square tile with a soft light
+                  // gradient, the category's picture filling it, and the name
+                  // in bold underneath. Same 60pt footprint as before.
                   Container(
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Gr.surface2,
-                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Gr.surface2, Color(0xFFF6FAF7)],
+                      ),
+                      borderRadius: BorderRadius.circular(Gr.s16),
                       border: Border.all(
                         color: i == 0 ? Gr.accent : Gr.line,
                         width: 1.5,
@@ -714,7 +721,7 @@ class _CategoryStrip extends StatelessWidget {
                     child: c.image != null
                         ? AppImage(
                             url: logoUrlOf(c.image),
-                            placeholderColor: Gr.surface2,
+                            placeholderColor: Colors.transparent,
                             error: _CategoryGlyph(c.name),
                           )
                         : _CategoryGlyph(c.name),
@@ -728,8 +735,8 @@ class _CategoryStrip extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: Gr.ink2,
+                        fontWeight: FontWeight.w700,
+                        color: Gr.ink,
                         height: 1.2,
                       ),
                     ),

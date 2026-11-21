@@ -229,7 +229,8 @@ class _RailItem extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(color: Gr.surface, shape: BoxShape.circle),
+              // Rounded square, matching the home page's category tiles.
+              decoration: BoxDecoration(color: Gr.surface, borderRadius: BorderRadius.circular(Gr.s12)),
               clipBehavior: Clip.antiAlias,
               child: image != null
                   ? AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface, error: _fallback())
