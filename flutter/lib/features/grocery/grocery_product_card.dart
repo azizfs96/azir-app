@@ -44,16 +44,37 @@ class GroceryProductCard extends ConsumerWidget {
   /// Shown instead of the photo when the product has none (its category's emoji).
   final String fallbackGlyph;
 
-  // The price line has a fixed height; the name/unit block is measured at
-  // its maximum (two name lines + unit) so every row in a grid is identical.
   static const _priceH = 20.0;
-  static const _nameMaxH = 36.0; // two lines of 13pt at 1.35
+  static const _nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35);
+  static const _nameLineH = 13 * 1.35; // 17.55
   static const _unitH = 2.0 + 14.0;
 
-  /// Total height of a card whose square image tile is [width] wide
-  /// (reference rhythm): tile + 8 + price + 4 + name (≤2 lines) + unit.
-  static double heightFor(double width) =>
-      width + Gr.s8 + _priceH + Gr.s4 + _nameMaxH + _unitH;
+  /// Total height of a card whose square image tile is [width] wide and whose
+  /// name needs [nameLines] lines: tile + 8 + price + 4 + name + unit.
+  /// Grids pass the result of [nameLinesFor] so a section of one-line names
+  /// does not reserve an empty second line under every card.
+  static double heightFor(double width, {int nameLines = 1}) =>
+      (width + Gr.s8 + _priceH + Gr.s4 + _nameLineH * nameLines + _unitH).ceilToDouble();
+
+  /// 1 when every name in [items] fits one line at [width], else 2 — measured
+  /// with the card's own text style and the ambient text scale.
+  static int nameLinesFor(BuildContext context, Iterable<MenuItem> items, double width) {
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 2,
+    );
+    for (final item in items) {
+      painter.text = TextSpan(text: item.name, style: _nameStyle);
+      painter.layout(maxWidth: width);
+      if (painter.computeLineMetrics().length > 1) {
+        painter.dispose();
+        return 2;
+      }
+    }
+    painter.dispose();
+    return 1;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -191,7 +212,7 @@ class GroceryProductCard extends ConsumerWidget {
           item.name,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35),
+          style: _nameStyle,
         ),
         if ((item.unit ?? '').isNotEmpty) ...[
           const SizedBox(height: 2),
@@ -205,7 +226,8 @@ class GroceryProductCard extends ConsumerWidget {
       ],
     );
 
-    final sized = width == null ? card : SizedBox(width: width, height: heightFor(width!), child: card);
+    // In the horizontal strip the parent fixes the height; here only the width.
+    final sized = width == null ? card : SizedBox(width: width, child: card);
 
     return Semantics(
       button: true,

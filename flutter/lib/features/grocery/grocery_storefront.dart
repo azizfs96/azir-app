@@ -84,9 +84,13 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
     };
     final promo = store.popups.isNotEmpty ? store.popups.first.image : store.cover;
     final cart = ref.watch(cartForStoreProvider(widget.token));
-    // One cell size for every product tile on the page (grid and best sellers).
+    // One cell width for every product tile on the page (grid and best
+    // sellers); each section's row height follows its longest name.
     final cellW = Gr.homeCellWidth(MediaQuery.sizeOf(context).width);
-    final cellH = GroceryProductCard.heightFor(cellW);
+    double heightFor(Iterable<MenuItem> items) => GroceryProductCard.heightFor(
+          cellW,
+          nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
+        );
     // Clearance under the last section: 32 to the nav bar, the bar itself, its
     // safe area, and the floating cart pill when there is one.
     final bottomClearance = Gr.s24 +
@@ -136,7 +140,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: cellH,
+                      height: heightFor(featured),
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
@@ -170,13 +174,18 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                     items: category.items,
                     s: s,
                     glyph: categoryGlyph(category.name),
-                    cellHeight: cellH,
+                    cellHeight: heightFor(category.items),
                   ),
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
                   const _Gap(Gr.s24),
                   SliverToBoxAdapter(child: _SectionTitle(title: s.groceryAllProducts)),
-                  _ProductGrid(token: widget.token, items: menu.uncategorised, s: s, cellHeight: cellH),
+                  _ProductGrid(
+                    token: widget.token,
+                    items: menu.uncategorised,
+                    s: s,
+                    cellHeight: heightFor(menu.uncategorised),
+                  ),
                 ],
                 if (menu.isEmpty) ...[
                   const _Gap(Gr.s48),

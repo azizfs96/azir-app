@@ -62,7 +62,10 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
     // 20pt page margin − one 12pt gutter. Rows are as tall as the card needs.
     final gridW = MediaQuery.sizeOf(context).width - _railWidth - Gr.pageX;
     final cellW = (gridW - Gr.s12) / 2;
-    final cellH = GroceryProductCard.heightFor(cellW);
+    final cellH = GroceryProductCard.heightFor(
+      cellW,
+      nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
+    );
     final bottomClearance = Gr.s24 + GroceryNavBar.height + MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
