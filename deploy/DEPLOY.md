@@ -8,7 +8,18 @@ services):
 | `api.azir.sa`     | Laravel API     | `/var/www/azir/api/public`  |
 | `portal.azir.sa`  | Merchant portal | `/var/www/azir/portal`      |
 
-DNS: point `api.azir.sa` and `portal.azir.sa` (A/AAAA) at the server.
+DNS: point `api.azir.sa`, `portal.azir.sa` and `azir.sa` (A/AAAA) at the server.
+
+> **Fast path — a brand-new server in one command.** `deploy/bootstrap.sh` does
+> every step below (packages, MySQL, code, `.env`, migrations + seed, queue
+> worker, portal build, landing, Nginx, SSL) and is safe to re-run:
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/azizfs96/azir-app/main/deploy/bootstrap.sh -o bootstrap.sh
+> sudo DB_PASSWORD='strong' SEED_OWNER_PASSWORD='strong' CERT_EMAIL='you@azir.sa' bash bootstrap.sh
+> ```
+> Restoring an old database dump? Import it first, then run with `SEED=no`.
+> Afterwards upload the Firebase `service-account.json` (not in git) and the
+> customer web build (§4b). The manual steps below remain the reference.
 
 ---
 
