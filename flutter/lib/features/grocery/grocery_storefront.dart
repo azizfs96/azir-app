@@ -13,6 +13,7 @@ import '../stores/data/store_repository.dart';
 import '../stores/domain/menu.dart';
 import '../stores/domain/storefront.dart';
 import '../stores/presentation/store_avatar.dart';
+import 'category_glyph.dart';
 import 'grocery_nav_bar.dart';
 import 'grocery_product_card.dart';
 import 'grocery_theme.dart';
@@ -76,6 +77,11 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
   Widget build(BuildContext context) {
     final categories = menu.categories.where((c) => c.items.isNotEmpty).toList();
     final featured = menu.featured.where((i) => i.isAvailable).toList();
+    // Category glyph per item id, for products without a photo.
+    final glyphOf = <int, String>{
+      for (final c in menu.categories)
+        for (final i in c.items) i.id: categoryGlyph(c.name),
+    };
     final promo = store.popups.isNotEmpty ? store.popups.first.image : store.cover;
     final cart = ref.watch(cartForStoreProvider(widget.token));
 
@@ -120,8 +126,13 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: featured.length,
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) =>
-                            GroceryProductCard(token: widget.token, item: featured[i], s: s, width: 164),
+                        itemBuilder: (_, i) => GroceryProductCard(
+                          token: widget.token,
+                          item: featured[i],
+                          s: s,
+                          width: 164,
+                          fallbackGlyph: glyphOf[featured[i].id] ?? '🛒',
+                        ),
                       ),
                     ),
                   ),
@@ -138,7 +149,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                       ),
                     ),
                   ),
-                  _ProductGrid(token: widget.token, items: category.items, s: s),
+                  _ProductGrid(token: widget.token, items: category.items, s: s, glyph: categoryGlyph(category.name)),
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
                   SliverToBoxAdapter(child: _SectionTitle(title: s.groceryAllProducts)),
@@ -389,8 +400,8 @@ class _CategoryStrip extends StatelessWidget {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: c.image != null
-                        ? AppImage(url: logoUrlOf(c.image), placeholderColor: Gr.surface2, error: const _CategoryGlyph())
-                        : const _CategoryGlyph(),
+                        ? AppImage(url: logoUrlOf(c.image), placeholderColor: Gr.surface2, error: _CategoryGlyph(c.name))
+                        : _CategoryGlyph(c.name),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -410,11 +421,16 @@ class _CategoryStrip extends StatelessWidget {
   }
 }
 
+/// The category's emoji, large and centred — Apple's colour artwork on iOS
+/// reads as a real product photo at this size.
 class _CategoryGlyph extends StatelessWidget {
-  const _CategoryGlyph();
+  const _CategoryGlyph(this.name);
+
+  final String name;
 
   @override
-  Widget build(BuildContext context) => const Icon(Icons.eco_rounded, color: Gr.accent, size: 26);
+  Widget build(BuildContext context) =>
+      Center(child: Text(categoryGlyph(name), style: const TextStyle(fontSize: 30, height: 1)));
 }
 
 class _PromoBanner extends StatelessWidget {
@@ -523,11 +539,12 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ProductGrid extends StatelessWidget {
-  const _ProductGrid({required this.token, required this.items, required this.s});
+  const _ProductGrid({required this.token, required this.items, required this.s, this.glyph = '🛒'});
 
   final String token;
   final List<MenuItem> items;
   final Strings s;
+  final String glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -541,7 +558,7 @@ class _ProductGrid extends StatelessWidget {
           mainAxisExtent: 262,
         ),
         delegate: SliverChildBuilderDelegate(
-          (_, i) => GroceryProductCard(token: token, item: items[i], s: s),
+          (_, i) => GroceryProductCard(token: token, item: items[i], s: s, fallbackGlyph: glyph),
           childCount: items.length,
         ),
       ),

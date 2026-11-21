@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/shared/Modal'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { cn } from '@/lib/cn'
+import { categoryGlyph } from './categoryGlyph'
 
 /**
  * The supermarket catalogue: a product GRID (not a menu list) with the fields
@@ -106,6 +107,7 @@ export function CatalogPage() {
             key={cat.id}
             label={cat.name_ar}
             image={cat.image}
+            glyph={categoryGlyph(cat.name_ar + ' ' + (cat.name_en ?? ''))}
             active={filter === cat.id}
             muted={!cat.is_active}
             count={(items ?? []).filter((i) => i.category_id === cat.id).length}
@@ -146,6 +148,7 @@ export function CatalogPage() {
               busy={toggle.isPending}
               onToggleAvailable={() => toggle.mutate({ id: item.id, field: 'is_available', value: !item.is_available })}
               onToggleFeatured={() => toggle.mutate({ id: item.id, field: 'is_featured', value: !item.is_featured })}
+              glyph={categoryGlyph(sortedCategories.find((cat) => cat.id === item.category_id)?.name_ar ?? '')}
               onEdit={() => setEditing(item)}
               onDelete={() => confirm(c.deleteConfirm) && remove.mutate(item.id)}
             />
@@ -174,9 +177,9 @@ export function CatalogPage() {
 }
 
 function CategoryChip({
-  label, image, active, muted, count, onClick, onEdit, onDelete,
+  label, image, glyph, active, muted, count, onClick, onEdit, onDelete,
 }: {
-  label: string; image?: string | null; active: boolean; muted?: boolean; count: number
+  label: string; image?: string | null; glyph?: string; active: boolean; muted?: boolean; count: number
   onClick: () => void; onEdit?: () => void; onDelete?: () => void
 }) {
   const t = useT()
@@ -192,7 +195,7 @@ function CategoryChip({
         )}>
           {image
             ? <img src={mediaUrl(image) ?? undefined} alt="" className="size-full object-cover" />
-            : <ShoppingBasket className="size-5 text-fresh-700" />}
+            : <span className="text-2xl leading-none" aria-hidden>{glyph ?? '🛒'}</span>}
         </span>
         <span className={cn('line-clamp-2 text-[11px] leading-tight', active ? 'font-semibold text-ink-900' : 'text-ink-600')}>
           {label}
@@ -210,9 +213,9 @@ function CategoryChip({
 }
 
 function ProductCard({
-  item, busy, onToggleAvailable, onToggleFeatured, onEdit, onDelete,
+  item, busy, glyph, onToggleAvailable, onToggleFeatured, onEdit, onDelete,
 }: {
-  item: MenuItem; busy: boolean
+  item: MenuItem; busy: boolean; glyph: string
   onToggleAvailable: () => void; onToggleFeatured: () => void; onEdit: () => void; onDelete: () => void
 }) {
   const t = useT()
@@ -225,7 +228,7 @@ function ProductCard({
       <div className="relative aspect-square bg-fresh-50">
         {item.image
           ? <img src={mediaUrl(item.image) ?? undefined} alt="" className={cn('size-full object-cover', soldOut && 'grayscale')} />
-          : <ShoppingBasket className="absolute inset-0 m-auto size-8 text-fresh-700/50" />}
+          : <span className="absolute inset-0 flex items-center justify-center text-5xl" aria-hidden>{glyph}</span>}
         {item.discount_percent != null && (
           <span className="absolute start-2 top-2 rounded-md bg-fresh-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
             {c.discount(item.discount_percent)}

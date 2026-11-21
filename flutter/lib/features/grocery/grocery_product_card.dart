@@ -22,11 +22,15 @@ class GroceryProductCard extends ConsumerWidget {
     required this.item,
     required this.s,
     this.width,
+    this.fallbackGlyph = '🛒',
   });
 
   final String token;
   final MenuItem item;
   final Strings s;
+
+  /// Shown instead of the photo when the product has none (its category's emoji).
+  final String fallbackGlyph;
 
   /// Fixed width for the horizontal best-sellers strip; null fills a grid cell.
   final double? width;
@@ -88,9 +92,9 @@ class GroceryProductCard extends ConsumerWidget {
                   child: AppImage(
                     url: logoUrlOf(item.image),
                     placeholderColor: Gr.surface2,
-                    error: const ColoredBox(
+                    error: ColoredBox(
                       color: Gr.surface2,
-                      child: Icon(Icons.shopping_basket_rounded, color: Gr.ink3, size: 34),
+                      child: Center(child: Text(fallbackGlyph, style: const TextStyle(fontSize: 46))),
                     ),
                   ),
                 ),

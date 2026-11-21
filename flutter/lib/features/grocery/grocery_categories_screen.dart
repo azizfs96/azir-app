@@ -8,6 +8,7 @@ import '../../core/widgets/app_image.dart';
 import '../stores/data/store_repository.dart';
 import '../stores/domain/menu.dart';
 import '../stores/presentation/store_avatar.dart';
+import 'category_glyph.dart';
 import 'grocery_nav_bar.dart';
 import 'grocery_product_card.dart';
 import 'grocery_theme.dart';
@@ -52,6 +53,10 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
     final title = _selected == null
         ? s.groceryBestSellers
         : (categories.where((c) => c.id == _selected).firstOrNull?.name ?? '');
+    final glyphOf = <int, String>{
+      for (final c in menu.categories)
+        for (final i in c.items) i.id: categoryGlyph(c.name),
+    };
 
     return Scaffold(
       backgroundColor: Gr.bg,
@@ -108,6 +113,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                             _RailItem(
                               label: c.name,
                               image: c.image,
+                              glyph: categoryGlyph(c.name),
                               selected: _selected == c.id,
                               onTap: () => setState(() => _selected = c.id),
                             ),
@@ -142,7 +148,12 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                                 mainAxisExtent: 250,
                               ),
                               delegate: SliverChildBuilderDelegate(
-                                (_, i) => GroceryProductCard(token: widget.token, item: items[i], s: s),
+                                (_, i) => GroceryProductCard(
+                                  token: widget.token,
+                                  item: items[i],
+                                  s: s,
+                                  fallbackGlyph: glyphOf[items[i].id] ?? '🛒',
+                                ),
                                 childCount: items.length,
                               ),
                             ),
@@ -166,13 +177,20 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
 }
 
 class _RailItem extends StatelessWidget {
-  const _RailItem({required this.label, required this.selected, required this.onTap, this.image, this.icon});
+  const _RailItem({required this.label, required this.selected, required this.onTap, this.image, this.icon, this.glyph});
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
   final String? image;
   final IconData? icon;
+
+  /// Emoji fallback when there is no image (null → the icon).
+  final String? glyph;
+
+  Widget _fallback() => glyph != null
+      ? Center(child: Text(glyph!, style: const TextStyle(fontSize: 22, height: 1)))
+      : Icon(icon ?? Icons.eco_rounded, color: Gr.accent, size: 20);
 
   @override
   Widget build(BuildContext context) {
@@ -199,8 +217,8 @@ class _RailItem extends StatelessWidget {
               decoration: const BoxDecoration(color: Gr.surface, shape: BoxShape.circle),
               clipBehavior: Clip.antiAlias,
               child: image != null
-                  ? AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface, error: Icon(icon ?? Icons.eco_rounded, color: Gr.accent, size: 20))
-                  : Icon(icon ?? Icons.eco_rounded, color: Gr.accent, size: 20),
+                  ? AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface, error: _fallback())
+                  : _fallback(),
             ),
             const SizedBox(height: 6),
             Text(
