@@ -12,6 +12,7 @@ import '../../booking/data/store_bookings_provider.dart';
 import '../../home/data/my_stores_repository.dart';
 import '../data/store_repository.dart';
 import '../domain/storefront.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../grocery/grocery_storefront.dart';
 import '../../grocery/grocery_theme.dart';
 import '../../menu/cart_screen.dart';
@@ -59,7 +60,11 @@ class _StorefrontScreenState extends ConsumerState<StorefrontScreen> {
       await ref.read(myStoresRepositoryProvider).add(widget.token);
       ref.invalidate(myStoresProvider);
     } catch (_) {
-      // Unauthenticated browsing is expected — the store is added on sign-in.
+      // Unauthenticated browsing is expected — remember the store so the
+      // sign-in that follows (at checkout, or from the profile) saves it.
+      if (!await ref.read(authRepositoryProvider).isSignedIn()) {
+        await ref.read(tokenStoreProvider).setPendingStore(widget.token);
+      }
     }
   }
 

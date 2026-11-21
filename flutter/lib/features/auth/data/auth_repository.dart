@@ -26,6 +26,18 @@ class AuthRepository {
 
     final token = json['token'] as String?;
     if (token != null) await _tokens.write(token);
+
+    // The store the customer was browsing as a guest (a scanned QR) joins
+    // their "My Stores" the moment they have an account.
+    final pending = await _tokens.pendingStore();
+    if (pending != null) {
+      try {
+        await _api.post('/me/stores', body: {'token': pending, 'added_via': 'qr'});
+      } catch (_) {
+        // Best-effort: opening the store again re-adds it.
+      }
+      await _tokens.setPendingStore(null);
+    }
   }
 
   Future<bool> isSignedIn() => _tokens.hasToken();
