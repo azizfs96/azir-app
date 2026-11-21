@@ -46,6 +46,13 @@ class AppImage extends StatelessWidget {
         return AnimatedSwitcher(
           duration: AppMotion.dur(context, AppMotion.base),
           switchInCurve: Curves.easeOut,
+          // Tight constraints for the fading children: with the default loose
+          // Stack an async-loaded image sizes to its own aspect ratio inside
+          // the slot and `BoxFit.cover` never fills it (letterboxing).
+          layoutBuilder: (current, previous) => Stack(
+            fit: StackFit.expand,
+            children: [...previous, ?current],
+          ),
           child: frame == null ? _fill(bg, null) : child,
         );
       },
