@@ -24,4 +24,30 @@ abstract final class Gr {
 
   /// The cart/checkout canvas (identical to [bg]; kept for call sites).
   static const cartCanvas = bg;
+
+  // --- Spacing: an 8pt grid. Every gap in the grocery screens is one of these.
+  static const s4 = 4.0; // fine adjustments (name → unit)
+  static const s8 = 8.0; // related elements (price → name, icon → label)
+  static const s12 = 12.0; // inside a group (tile → price, card padding, gutters)
+  static const s16 = 16.0; // between elements and cards (title → products)
+  static const s24 = 24.0; // inner margins, header → search → categories
+  static const s32 = 32.0; // between sections
+  static const s40 = 40.0; // between major content groups
+  static const s48 = 48.0; // large breathing room
+
+  /// Horizontal page margin, identical on both edges of every screen.
+  static const pageX = 20.0;
+
+  /// Corner radius of product tiles and large cards.
+  static const cardRadius = 20.0;
+
+  /// Columns on the home grid; the categories screen uses two.
+  static const homeColumns = 3;
+
+  /// Width of one home-grid cell for a screen of [screenWidth] — also the
+  /// width of the best-sellers cards, so every product tile on the page is
+  /// the same size.
+  /// Not rounded: it must equal the width the grid itself hands each cell.
+  static double homeCellWidth(double screenWidth) =>
+      (screenWidth - pageX * 2 - s12 * (homeColumns - 1)) / homeColumns;
 }

@@ -12,7 +12,9 @@ import '../menu/cart_controller.dart';
 import 'grocery_theme.dart';
 
 /// The supermarket's bottom nav: Home · Categories · Cart · Orders · Account —
-/// a frosted dark bar with the active tab lit in the fresh green.
+/// a frosted white bar with the active tab lit in the accent colour. Five
+/// equal columns, 24pt icons, 4pt to the label; the iOS home indicator is
+/// handled by [SafeArea].
 enum GroceryTab { home, categories, cart, orders, account }
 
 class GroceryNavBar extends ConsumerWidget {
@@ -20,6 +22,10 @@ class GroceryNavBar extends ConsumerWidget {
 
   final String token;
   final GroceryTab active;
+
+  /// Bar height above the bottom safe area; screens pad their content by this
+  /// so the bar never covers the last row.
+  static const height = 64.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +58,7 @@ class GroceryNavBar extends ConsumerWidget {
     ];
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(Gr.s24)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
@@ -63,7 +69,7 @@ class GroceryNavBar extends ConsumerWidget {
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: 64,
+              height: height,
               child: Row(
                 children: [
                   for (final (tab, icon, label) in items)
@@ -101,15 +107,15 @@ class _Item extends StatelessWidget {
     final iconWidget = Stack(
       clipBehavior: Clip.none,
       children: [
-        Icon(icon, size: 23, color: color),
+        Icon(icon, size: 24, color: color),
         if (badge > 0)
           PositionedDirectional(
-            top: -6,
-            end: -9,
+            top: -Gr.s4,
+            end: -Gr.s8,
             child: Container(
-              constraints: const BoxConstraints(minWidth: 17),
-              height: 17,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              constraints: const BoxConstraints(minWidth: 16),
+              height: 16,
+              padding: const EdgeInsets.symmetric(horizontal: Gr.s4),
               alignment: Alignment.center,
               decoration: BoxDecoration(color: Gr.accent, borderRadius: BorderRadius.circular(99)),
               child: Text('$badge',
@@ -126,7 +132,7 @@ class _Item extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Bump(value: badge, child: iconWidget),
-          const SizedBox(height: 4),
+          const SizedBox(height: Gr.s4),
           AnimatedDefaultTextStyle(
             duration: AppMotion.dur(context, AppMotion.fast),
             style: TextStyle(fontSize: 11, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: color),

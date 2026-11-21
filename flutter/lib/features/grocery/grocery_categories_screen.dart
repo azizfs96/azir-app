@@ -58,6 +58,13 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
         for (final i in c.items) i.id: categoryGlyph(c.name),
     };
 
+    // Two equal columns in the space right of the rail: screen − rail − the
+    // 20pt page margin − one 12pt gutter. Rows are as tall as the card needs.
+    final gridW = MediaQuery.sizeOf(context).width - _railWidth - Gr.pageX;
+    final cellW = (gridW - Gr.s12) / 2;
+    final cellH = GroceryProductCard.heightFor(cellW);
+    final bottomClearance = Gr.s32 + GroceryNavBar.height + MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
       backgroundColor: Gr.bg,
       body: Stack(
@@ -65,7 +72,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
           Column(
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(20, MediaQuery.paddingOf(context).top + 10, 20, 12),
+                padding: EdgeInsets.fromLTRB(Gr.pageX, MediaQuery.paddingOf(context).top + Gr.s8, Gr.pageX, Gr.s16),
                 child: Row(
                   children: [
                     Material(
@@ -75,8 +82,8 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                         customBorder: const CircleBorder(),
                         onTap: () => Navigator.of(context).maybePop(),
                         child: SizedBox(
-                          width: 38,
-                          height: 38,
+                          width: 40,
+                          height: 40,
                           child: Transform.flip(
                             flipX: Directionality.of(context) == TextDirection.rtl,
                             child: const Icon(Icons.arrow_back_rounded, size: 20, color: Gr.ink),
@@ -84,7 +91,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Gr.s12),
                     Expanded(
                       child: Text(s.groceryCategories,
                           style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Gr.ink)),
@@ -96,11 +103,11 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Side rail.
+                    // Side rail: the 20pt page margin outside, 12 to the grid.
                     SizedBox(
-                      width: 92,
+                      width: _railWidth,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(12, 4, 8, 120),
+                        padding: EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.s12, bottomClearance),
                         children: [
                           if (featured.isNotEmpty)
                             _RailItem(
@@ -126,7 +133,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                         slivers: [
                           SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 4, 20, 12),
+                              padding: const EdgeInsets.fromLTRB(0, 0, Gr.pageX, Gr.s16),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -139,13 +146,13 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                             ),
                           ),
                           SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(4, 0, 20, 140),
+                            padding: EdgeInsets.fromLTRB(0, 0, Gr.pageX, bottomClearance),
                             sliver: SliverGrid(
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisSpacing: 14,
-                                crossAxisSpacing: 10,
-                                mainAxisExtent: 236,
+                                mainAxisSpacing: Gr.s16,
+                                crossAxisSpacing: Gr.s12,
+                                mainAxisExtent: cellH,
                               ),
                               delegate: SliverChildBuilderDelegate(
                                 (_, i) => GroceryProductCard(
@@ -176,6 +183,9 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
   }
 }
 
+/// Rail column: 20 margin + 72 item + 12 gutter to the grid.
+const _railWidth = Gr.pageX + 72 + Gr.s12;
+
 class _RailItem extends StatelessWidget {
   const _RailItem({required this.label, required this.selected, required this.onTap, this.image, this.icon, this.glyph});
 
@@ -202,25 +212,25 @@ class _RailItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: AppMotion.dur(context, AppMotion.fast),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        margin: const EdgeInsets.only(bottom: Gr.s8),
+        padding: const EdgeInsets.symmetric(vertical: Gr.s8, horizontal: Gr.s4),
         decoration: BoxDecoration(
           color: selected ? Gr.surface2 : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Gr.s16),
           border: Border.all(color: selected ? Gr.accent : Colors.transparent, width: 1.5),
         ),
         child: Column(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 48,
+              height: 48,
               decoration: const BoxDecoration(color: Gr.surface, shape: BoxShape.circle),
               clipBehavior: Clip.antiAlias,
               child: image != null
                   ? AppImage(url: logoUrlOf(image), placeholderColor: Gr.surface, error: _fallback())
                   : _fallback(),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Gr.s8),
             Text(
               label,
               maxLines: 2,

@@ -20,7 +20,7 @@ import 'grocery_theme.dart';
 
 /// ============================================================================
 /// THE SUPERMARKET STOREFRONT — the grocery home from the design reference:
-/// a dark-green canvas, a greeting + hero line beside the store's photo, a
+/// a pale-green canvas, a greeting + hero line beside the store's photo, a
 /// search field, round category chips, a promo banner, the best sellers as a
 /// horizontal strip with discount badges and one-tap "+", then every category
 /// as a product grid, a features row, and a five-tab bottom nav.
@@ -84,6 +84,15 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
     };
     final promo = store.popups.isNotEmpty ? store.popups.first.image : store.cover;
     final cart = ref.watch(cartForStoreProvider(widget.token));
+    // One cell size for every product tile on the page (grid and best sellers).
+    final cellW = Gr.homeCellWidth(MediaQuery.sizeOf(context).width);
+    final cellH = GroceryProductCard.heightFor(cellW);
+    // Clearance under the last section: 32 to the nav bar, the bar itself, its
+    // safe area, and the floating cart pill when there is one.
+    final bottomClearance = Gr.s32 +
+        GroceryNavBar.height +
+        MediaQuery.paddingOf(context).bottom +
+        (cart.isEmpty ? 0 : _CartPill.height + Gr.s16);
 
     return ColoredBox(
       color: Gr.bg,
@@ -96,13 +105,18 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
             child: CustomScrollView(
               controller: _scroll,
               slivers: [
+                // Vertical rhythm (8pt grid): header ─24─ search ─24─ categories
+                // ─24─ promo ─32─ best sellers ─32─ each category (title ─16─
+                // grid) ─40─ features card ─32─ nav bar.
                 SliverToBoxAdapter(child: _Header(store: store, s: s, token: widget.token, onShare: widget.onShare)),
+                const _Gap(Gr.s24),
                 SliverToBoxAdapter(child: _SearchField(token: widget.token, s: s)),
-                if (categories.isNotEmpty)
-                  SliverToBoxAdapter(
-                    child: _CategoryStrip(categories: categories, onTap: _jumpTo),
-                  ),
-                if (promo != null)
+                if (categories.isNotEmpty) ...[
+                  const _Gap(Gr.s24),
+                  SliverToBoxAdapter(child: _CategoryStrip(categories: categories, onTap: _jumpTo)),
+                ],
+                if (promo != null) ...[
+                  const _Gap(Gr.s24),
                   SliverToBoxAdapter(
                     child: _PromoBanner(
                       image: promo,
@@ -110,7 +124,9 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                       onTap: () => categories.isEmpty ? null : _jumpTo(categories.first.id),
                     ),
                   ),
+                ],
                 if (featured.isNotEmpty) ...[
+                  const _Gap(Gr.s32),
                   SliverToBoxAdapter(
                     child: _SectionTitle(
                       title: s.groceryBestSellers,
@@ -120,25 +136,25 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height: 230,
+                      height: cellH,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
                         itemCount: featured.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        separatorBuilder: (_, _) => const SizedBox(width: Gr.s12),
                         itemBuilder: (_, i) => GroceryProductCard(
                           token: widget.token,
                           item: featured[i],
                           s: s,
-                          width: 128,
+                          width: cellW,
                           fallbackGlyph: glyphOf[featured[i].id] ?? '🛒',
                         ),
                       ),
                     ),
                   ),
                 ],
-                SliverToBoxAdapter(child: _FeaturesRow(s: s)),
                 for (final category in categories) ...[
+                  const _Gap(Gr.s32),
                   SliverToBoxAdapter(
                     child: KeyedSubtree(
                       key: _sectionKeys.putIfAbsent(category.id, GlobalKey.new),
@@ -149,27 +165,35 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
                       ),
                     ),
                   ),
-                  _ProductGrid(token: widget.token, items: category.items, s: s, glyph: categoryGlyph(category.name)),
+                  _ProductGrid(
+                    token: widget.token,
+                    items: category.items,
+                    s: s,
+                    glyph: categoryGlyph(category.name),
+                    cellHeight: cellH,
+                  ),
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
+                  const _Gap(Gr.s32),
                   SliverToBoxAdapter(child: _SectionTitle(title: s.groceryAllProducts)),
-                  _ProductGrid(token: widget.token, items: menu.uncategorised, s: s),
+                  _ProductGrid(token: widget.token, items: menu.uncategorised, s: s, cellHeight: cellH),
                 ],
-                if (menu.isEmpty)
+                if (menu.isEmpty) ...[
+                  const _Gap(Gr.s48),
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.shopping_basket_outlined, color: Gr.ink3, size: 40),
-                          const SizedBox(height: 12),
-                          Text(s.menuEmpty, style: const TextStyle(color: Gr.ink2, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.shopping_basket_outlined, color: Gr.ink3, size: 40),
+                        const SizedBox(height: Gr.s12),
+                        Text(s.menuEmpty, style: const TextStyle(color: Gr.ink2, fontWeight: FontWeight.w600)),
+                      ],
                     ),
                   ),
-                // Room so the floating cart bar + nav never hide the last row.
-                const SliverToBoxAdapter(child: SizedBox(height: 150)),
+                ],
+                const _Gap(Gr.s40),
+                SliverToBoxAdapter(child: _FeaturesRow(s: s)),
+                // Room so the nav bar and the floating cart pill never cover content.
+                _Gap(bottomClearance),
               ],
             ),
           ),
@@ -184,7 +208,7 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
               child: SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 76),
+                  padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, GroceryNavBar.height + Gr.s12),
                   child: _CartPill(token: widget.token, s: s),
                 ),
               ),
@@ -193,6 +217,16 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
       ),
     );
   }
+}
+
+/// A vertical gap between slivers, always one of the [Gr] spacing steps.
+class _Gap extends StatelessWidget {
+  const _Gap(this.height);
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => SliverToBoxAdapter(child: SizedBox(height: height));
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +245,7 @@ class _Header extends StatelessWidget {
     final hero = store.cover ?? store.logo;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, top + 10, 20, 0),
+      padding: EdgeInsets.fromLTRB(Gr.pageX, top + Gr.s8, Gr.pageX, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -222,9 +256,9 @@ class _Header extends StatelessWidget {
                 onTap: context.canPop() ? () => context.pop() : onShare,
                 flipForRtl: context.canPop(),
               ),
-              const SizedBox(width: 10),
-              StoreAvatar(name: store.name, logoPath: store.logo, brandColor: store.brandColor, size: 34),
-              const SizedBox(width: 8),
+              const SizedBox(width: Gr.s12),
+              StoreAvatar(name: store.name, logoPath: store.logo, brandColor: store.brandColor, size: 32),
+              const SizedBox(width: Gr.s8),
               Expanded(
                 child: Text(
                   store.name,
@@ -235,12 +269,12 @@ class _Header extends StatelessWidget {
               ),
               if (store.isOpen != null) ...[
                 OpenBadge(open: store.isOpen!, s: s, compact: true),
-                const SizedBox(width: 8),
+                const SizedBox(width: Gr.s8),
               ],
               _RoundIcon(icon: Icons.notifications_none_rounded, onTap: () => context.push('/notifications')),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: Gr.s24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -249,7 +283,7 @@ class _Header extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(s.groceryWelcome, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.accent)),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: Gr.s4),
                     Text(
                       s.groceryHeroTitle,
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Gr.ink, height: 1.15),
@@ -258,7 +292,7 @@ class _Header extends StatelessWidget {
                       s.groceryHeroAccent,
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Gr.accent, height: 1.15),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Gr.s8),
                     Text(
                       (store.description ?? '').trim().isNotEmpty ? store.description! : s.groceryHeroHint,
                       maxLines: 2,
@@ -269,12 +303,12 @@ class _Header extends StatelessWidget {
                 ),
               ),
               if (hero != null) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: Gr.s16),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(Gr.cardRadius),
                   child: SizedBox(
-                    width: 128,
-                    height: 128,
+                    width: 120,
+                    height: 120,
                     child: AppImage(
                       url: logoUrlOf(hero),
                       placeholderColor: Gr.surface2,
@@ -308,8 +342,8 @@ class _RoundIcon extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 38,
-          height: 38,
+          width: 40,
+          height: 40,
           child: Transform.flip(flipX: flipForRtl && rtl, child: Icon(icon, size: 20, color: Gr.ink)),
         ),
       ),
@@ -326,23 +360,23 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: Row(
         children: [
           Expanded(
             child: Material(
               color: Gr.surface2,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Gr.s16),
               child: InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(Gr.s16),
                 onTap: () => context.push('/s/$token/search'),
                 child: Container(
                   height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: Gr.s16),
                   child: Row(
                     children: [
                       const Icon(Icons.search_rounded, color: Gr.ink3, size: 20),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Gr.s8),
                       Text(s.grocerySearchHint, style: const TextStyle(color: Gr.ink3, fontSize: 14)),
                     ],
                   ),
@@ -350,12 +384,12 @@ class _SearchField extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Gr.s12),
           Material(
             color: Gr.accent,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Gr.s16),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Gr.s16),
               onTap: () => context.push('/s/$token/categories'),
               child: const SizedBox(width: 48, height: 48, child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20)),
             ),
@@ -374,13 +408,14 @@ class _CategoryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 64 chip + 8 + two label lines (11.5 × 1.2 × 2 ≈ 28) = 100.
     return SizedBox(
-      height: 112,
+      height: 100,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
         itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: Gr.s12),
         itemBuilder: (_, i) {
           final c = categories[i];
           return GestureDetector(
@@ -391,8 +426,8 @@ class _CategoryStrip extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    width: 62,
-                    height: 62,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
                       color: Gr.surface2,
                       shape: BoxShape.circle,
@@ -403,13 +438,15 @@ class _CategoryStrip extends StatelessWidget {
                         ? AppImage(url: logoUrlOf(c.image), placeholderColor: Gr.surface2, error: _CategoryGlyph(c.name))
                         : _CategoryGlyph(c.name),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    c.name,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Gr.ink2, height: 1.2),
+                  const SizedBox(height: Gr.s8),
+                  Expanded(
+                    child: Text(
+                      c.name,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Gr.ink2, height: 1.2),
+                    ),
                   ),
                 ],
               ),
@@ -443,9 +480,9 @@ class _PromoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Gr.cardRadius),
         child: AspectRatio(
           aspectRatio: 2.3,
           child: Stack(
@@ -462,19 +499,19 @@ class _PromoBanner extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Gr.s16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(s.groceryPromoKicker.toUpperCase(),
                         style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Gr.accent, letterSpacing: 0.6)),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Gr.s4),
                     Text(s.groceryHeroHint,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Gr.ink, height: 1.25)),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: Gr.s12),
                     Material(
                       color: Gr.accent,
                       borderRadius: BorderRadius.circular(99),
@@ -482,12 +519,12 @@ class _PromoBanner extends StatelessWidget {
                         borderRadius: BorderRadius.circular(99),
                         onTap: onTap,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: Gr.s12, vertical: Gr.s8),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(s.shopNow, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Gr.onAccent)),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: Gr.s4),
                               const Icon(Icons.arrow_forward_rounded, size: 14, color: Gr.onAccent),
                             ],
                           ),
@@ -514,8 +551,9 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The section gap above comes from the page rhythm; 16 below to the products.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+      padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, Gr.s16),
       child: Row(
         children: [
           Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Gr.ink))),
@@ -527,7 +565,7 @@ class _SectionTitle extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(action!, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Gr.accent)),
-                  const SizedBox(width: 2),
+                  const SizedBox(width: Gr.s4),
                   const Icon(Icons.arrow_forward_rounded, size: 14, color: Gr.accent),
                 ],
               ),
@@ -539,24 +577,34 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ProductGrid extends StatelessWidget {
-  const _ProductGrid({required this.token, required this.items, required this.s, this.glyph = '🛒'});
+  const _ProductGrid({
+    required this.token,
+    required this.items,
+    required this.s,
+    required this.cellHeight,
+    this.glyph = '🛒',
+  });
 
   final String token;
   final List<MenuItem> items;
   final Strings s;
   final String glyph;
 
+  /// From [GroceryProductCard.heightFor] of the cell width — every row equal.
+  final double cellHeight;
+
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       sliver: SliverGrid(
-        // Three across on the home page (the reference layout).
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 10,
-          mainAxisExtent: 208,
+        // Three across on the home page (the reference layout); the cell width
+        // follows from the screen width, the two 20pt margins and 12pt gutters.
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: Gr.homeColumns,
+          mainAxisSpacing: Gr.s16,
+          crossAxisSpacing: Gr.s12,
+          mainAxisExtent: cellHeight,
         ),
         delegate: SliverChildBuilderDelegate(
           (_, i) => GroceryProductCard(token: token, item: items[i], s: s, fallbackGlyph: glyph),
@@ -580,25 +628,26 @@ class _FeaturesRow extends StatelessWidget {
       (Icons.eco_rounded, s.groceryFresh, s.groceryFreshHint),
     ];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: Gr.s8, vertical: Gr.s16),
         decoration: BoxDecoration(
           color: Gr.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(Gr.cardRadius),
           border: Border.all(color: Gr.line),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final (icon, title, hint) in features)
               Expanded(
                 child: Column(
                   children: [
                     Icon(icon, color: Gr.accent, size: 24),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: Gr.s8),
                     Text(title, textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Gr.ink)),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: Gr.s4),
                     Text(hint, textAlign: TextAlign.center, maxLines: 2,
                         style: const TextStyle(fontSize: 10.5, color: Gr.ink3, height: 1.3)),
                   ],
@@ -618,28 +667,30 @@ class _CartPill extends ConsumerWidget {
   final String token;
   final Strings s;
 
+  static const height = 56.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartForStoreProvider(token));
     return Material(
       color: Gr.accent,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Gr.s16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Gr.s16),
         onTap: () => context.push('/s/$token/cart'),
         child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: Gr.s16),
           child: Row(
             children: [
               Container(
-                width: 30,
-                height: 30,
+                width: 32,
+                height: 32,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: Gr.onAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(9)),
+                decoration: BoxDecoration(color: Gr.onAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(Gr.s8)),
                 child: Text('${cart.count}', style: const TextStyle(fontWeight: FontWeight.w800, color: Gr.onAccent)),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Gr.s12),
               Expanded(
                 child: Text(s.viewCart, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Gr.onAccent)),
               ),
