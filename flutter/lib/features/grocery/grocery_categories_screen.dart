@@ -107,7 +107,9 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                     SizedBox(
                       width: _railWidth,
                       child: ListView(
-                        padding: EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.s12, bottomClearance),
+                        // Directional: the page margin sits at the screen edge
+                        // in RTL as well, the 12pt gutter faces the grid.
+                        padding: EdgeInsetsDirectional.fromSTEB(Gr.pageX, 0, Gr.s12, bottomClearance),
                         children: [
                           if (featured.isNotEmpty)
                             _RailItem(
@@ -133,7 +135,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                         slivers: [
                           SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 0, Gr.pageX, Gr.s16),
+                              padding: const EdgeInsetsDirectional.fromSTEB(0, 0, Gr.pageX, Gr.s16),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -146,7 +148,7 @@ class _GroceryCategoriesScreenState extends ConsumerState<GroceryCategoriesScree
                             ),
                           ),
                           SliverPadding(
-                            padding: EdgeInsets.fromLTRB(0, 0, Gr.pageX, bottomClearance),
+                            padding: EdgeInsetsDirectional.fromSTEB(0, 0, Gr.pageX, bottomClearance),
                             sliver: SliverGrid(
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
