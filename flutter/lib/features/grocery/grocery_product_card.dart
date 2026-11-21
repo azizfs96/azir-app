@@ -44,16 +44,16 @@ class GroceryProductCard extends ConsumerWidget {
   /// Shown instead of the photo when the product has none (its category's emoji).
   final String fallbackGlyph;
 
-  // Fixed heights of the text block so every card in a row is identical no
-  // matter how long its name is or whether it has a unit / old price.
+  // The price line has a fixed height; the name/unit block is measured at
+  // its maximum (two name lines + unit) so every row in a grid is identical.
   static const _priceH = 20.0;
-  static const _nameH = 36.0; // two lines of 13pt at 1.35
-  static const _unitH = 15.0;
+  static const _nameMaxH = 36.0; // two lines of 13pt at 1.35
+  static const _unitH = 2.0 + 14.0;
 
   /// Total height of a card whose square image tile is [width] wide
-  /// (reference rhythm): tile + 8 + price + 4 + name + 4 + unit.
+  /// (reference rhythm): tile + 8 + price + 4 + name (≤2 lines) + unit.
   static double heightFor(double width) =>
-      width + Gr.s8 + _priceH + Gr.s4 + _nameH + Gr.s4 + _unitH;
+      width + Gr.s8 + _priceH + Gr.s4 + _nameMaxH + _unitH;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -184,28 +184,24 @@ class GroceryProductCard extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: Gr.s4),
-        SizedBox(
-          height: _nameH,
-          child: Text(
-            item.name,
-            maxLines: 2,
+        // The name takes its natural height (one or two lines) and the unit
+        // sits directly under it; the row height is fixed by the grid, so any
+        // slack ends up below the card instead of between name and unit.
+        Text(
+          item.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35),
+        ),
+        if ((item.unit ?? '').isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            item.unit!,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35),
+            style: const TextStyle(fontSize: 11, color: Gr.ink3, height: 1.25),
           ),
-        ),
-        const SizedBox(height: Gr.s4),
-        // Always reserved, so cards without a unit stay the same height.
-        SizedBox(
-          height: _unitH,
-          child: (item.unit ?? '').isEmpty
-              ? null
-              : Text(
-                  item.unit!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: Gr.ink3, height: 1.25),
-                ),
-        ),
+        ],
       ],
     );
 
