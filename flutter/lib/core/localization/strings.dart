@@ -337,6 +337,33 @@ class Strings {
   String get groceryAllProducts => _('كل المنتجات', 'All products');
   String get shopNow => _('تسوّق الآن', 'Shop now');
   String get groceryPromoKicker => _('عرض خاص', 'Special offer');
+  // v3 design (Figma "Supermarket – Home v3").
+  String get groceryGoodMorning => _('صباح الخير 👋', 'Good morning 👋');
+  String get groceryGoodEvening => _('مساء الخير 👋', 'Good evening 👋');
+  String get groceryWhatToday => _('ماذا تحتاج اليوم؟', 'What do you need today?');
+  String get grocerySearchPlaceholder => _('ابحث عن فواكه، خضار، ألبان...', 'Search fruits, vegetables, dairy...');
+  String get groceryShopByCategory => _('تسوق حسب القسم', 'Shop by category');
+  String get groceryTodayOffers => _('عروض اليوم', "Today's offers");
+  String get groceryOfferTag => _('عرض اليوم', "Today's deal");
+  String get groceryOrderNow => _('اطلب الآن', 'Order now');
+  String get groceryDeliverTo => _('التوصيل إلى', 'Deliver to');
+  String get groceryChooseLocation => _('حدد موقع التوصيل', 'Set delivery location');
+  String groceryCategoriesSummary(int categories, int products) =>
+      _('$categories أقسام • $products منتج', '$categories categories • $products products');
+  String groceryProductsCount(int n) => _('$n منتج', '$n products');
+  String groceryItemsCount(int n) => _(n == 1 ? 'منتج واحد' : '$n منتجات', n == 1 ? '1 item' : '$n items');
+  String groceryLoadMore(int remaining) => _('عرض المزيد ($remaining منتج)', 'Show more ($remaining products)');
+  String get groceryAllChip => _('الكل', 'All');
+  String get grocerySortBestSelling => _('الأكثر مبيعاً', 'Best selling');
+  String get grocerySortPriceLow => _('السعر: من الأقل', 'Price: low to high');
+  String get grocerySortPriceHigh => _('السعر: من الأعلى', 'Price: high to low');
+  String get grocerySortDiscount => _('أعلى خصم', 'Biggest discount');
+  String get grocerySortBy => _('ترتيب حسب', 'Sort by');
+  String get groceryRecentSearches => _('عمليات البحث الأخيرة', 'Recent searches');
+  String get clearAll => _('مسح الكل', 'Clear all');
+  String get groceryMostRequested => _('الأكثر طلباً 🔥', 'Most requested 🔥');
+  String get grocerySuggested => _('مقترحة لك', 'Suggested for you');
+  String get grocerySearchFieldHint => _('ابحث عن منتج أو قسم...', 'Search a product or category...');
   String groceryPromoUpTo(int p) => _('خصم حتى $p%', 'Up to $p% Off');
   String groceryPromoOn(String category) => _('على $category', 'On $category');
   String get groceryPromoFreshTitle => _('طازج كل يوم', 'Fresh every day');

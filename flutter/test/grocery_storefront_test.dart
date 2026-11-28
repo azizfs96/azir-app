@@ -100,25 +100,28 @@ void main() {
   });
 
   group('grocery storefront', () {
-    testWidgets('shows the discount badge, unit, and best sellers', (tester) async {
+    testWidgets('shows the discount badge, unit, and today\'s offers', (tester) async {
       await pump(tester, market());
 
-      expect(find.text('خصم 17%'), findsWidgets);
+      expect(find.text('-17%'), findsWidgets);
       expect(find.text('1 لتر'), findsWidgets);
-      expect(find.text('الأكثر مبيعاً'), findsWidgets);
+      expect(find.text('عروض اليوم'), findsWidgets);
+      expect(find.text('تسوق حسب القسم'), findsOneWidget);
 
       // The eggs sit in the category grid further down (slivers are lazy).
       await tester.scrollUntilVisible(find.text('بيض'), 300, scrollable: find.byType(Scrollable).first);
       await tester.pump();
       expect(find.text('نفد'), findsWidgets);
+      // Let the SVG icon loaders finish before the tree is torn down.
+      await tester.pump(const Duration(milliseconds: 100));
     });
 
     testWidgets('"+" adds to the cart in one tap and becomes a stepper', (tester) async {
       final container = await pump(tester, market());
 
-      // The first product card on screen is the milk (best seller strip).
+      // The first product card on screen is the milk (today's offers).
       final card = find.byType(GroceryProductCard).first;
-      final plus = find.descendant(of: card, matching: find.byIcon(Icons.add_rounded)).first;
+      final plus = find.descendant(of: card, matching: find.byKey(const ValueKey('add'))).first;
       await tester.tap(plus);
       await tester.pump();
 
@@ -144,11 +147,12 @@ void main() {
       await tester.scrollUntilVisible(find.text('بيض'), 300, scrollable: find.byType(Scrollable).first);
       await tester.pump();
       final eggsCard = find.ancestor(of: find.text('بيض').first, matching: find.byType(GroceryProductCard));
-      final plus = find.descendant(of: eggsCard, matching: find.byIcon(Icons.add_rounded)).first;
+      final plus = find.descendant(of: eggsCard, matching: find.byKey(const ValueKey('add'))).first;
       await tester.tap(plus);
       await tester.pump();
 
       expect(container.read(cartProvider).count, 0);
+      await tester.pump(const Duration(milliseconds: 100));
     });
   });
 }

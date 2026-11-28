@@ -7,24 +7,23 @@ import '../../core/haptics.dart';
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_image.dart';
-import '../../core/widgets/open_badge.dart';
-import '../../core/widgets/riyal_price.dart';
+import '../menu/address_repository.dart';
 import '../menu/cart_controller.dart';
 import '../stores/data/store_repository.dart';
 import '../stores/domain/menu.dart';
 import '../stores/domain/storefront.dart';
 import '../stores/presentation/store_avatar.dart';
-import 'category_glyph.dart';
 import 'grocery_nav_bar.dart';
 import 'grocery_product_card.dart';
 import 'grocery_theme.dart';
+import 'grocery_widgets.dart';
 
 /// ============================================================================
-/// THE SUPERMARKET STOREFRONT — the grocery home from the design reference:
-/// a pale-green canvas, a greeting + hero line beside the store's photo, a
-/// search field, round category chips, a promo banner, the best sellers as a
-/// horizontal strip with discount badges and one-tap "+", then every category
-/// as a product grid, a features row, and a five-tab bottom nav.
+/// THE SUPERMARKET HOME — Figma "Supermarket – Home v3 (Attractive)":
+/// top bar (cart + bell | delivery location), greeting, search pill, hero
+/// offer, "shop by category" tiles, "today's offers" with a countdown and
+/// 2-column cards, then each category as its own section, under a floating
+/// dark tab bar. Content is inset 20pt with 14pt between blocks.
 /// ============================================================================
 class GroceryStorefront extends ConsumerStatefulWidget {
   const GroceryStorefront({
@@ -48,74 +47,10 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
   final _scroll = ScrollController();
   final Map<int, GlobalKey> _sectionKeys = {};
 
-  // ---- the sticky tools (search row + category chips) -----------------------
-  // Same mechanism as the restaurant's chip bar: the tools scroll in their
-  // natural place; once the search row would scroll out, a docked copy pins
-  // under the status bar — search row plus the categories as compact pills —
-  // with a canvas-coloured backdrop over the status bar.
+  // The search pill scrolls in its natural place; once it would leave the
+  // screen a docked copy (search + category chips) pins under the status bar.
   final _toolsSlot = GlobalKey();
   bool _slotMeasured = false;
-
-  /// Where the in-flow search row's top edge currently sits relative to the
-  /// scroll view's top edge; null until it has been laid out.
-  double? _toolsScreenY() {
-    final box = _toolsSlot.currentContext?.findRenderObject();
-    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
-    final viewport = RenderAbstractViewport.maybeOf(box);
-    if (viewport == null || !_scroll.hasClients) return null;
-    return viewport.getOffsetToReveal(box, 0).offset - _scroll.offset;
-  }
-
-  Widget _stickyTools(BuildContext context, List<MenuCategory> categories) {
-    final statusTop = MediaQuery.paddingOf(context).top;
-    final stickTop = statusTop + Gr.s8;
-    return AnimatedBuilder(
-      animation: _scroll,
-      builder: (context, _) {
-        final y = _toolsScreenY();
-        if (y == null) {
-          // First frame: the row isn't laid out yet — measure once it is.
-          if (!_slotMeasured) {
-            _slotMeasured = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() {});
-            });
-          }
-          return const SizedBox.shrink();
-        }
-        // While the in-flow copy is on screen there is nothing to dock.
-        if (y > stickTop) return const SizedBox.shrink();
-        return Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: Gr.bg,
-              border: Border(bottom: BorderSide(color: Gr.line)),
-            ),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(0, stickTop, 0, Gr.s8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SearchField(token: widget.token, s: s),
-                  if (categories.isNotEmpty) ...[
-                    const SizedBox(height: Gr.s8),
-                    _CategoryStrip(
-                      categories: categories,
-                      onTap: _jumpTo,
-                      compact: true,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Storefront get store => widget.store;
   Strings get s => widget.s;
@@ -127,647 +62,272 @@ class _GroceryStorefrontState extends ConsumerState<GroceryStorefront> {
     super.dispose();
   }
 
+  void _openCategory(int id) => context.push('/s/${widget.token}/category/$id');
+
   void _jumpTo(int categoryId) {
     AppHaptics.tick();
-    final key = _sectionKeys[categoryId];
-    final ctx = key?.currentContext;
-    if (ctx == null) {
-      context.push('/s/${widget.token}/categories?category=$categoryId');
-      return;
-    }
-    // Land the section title just under the docked tools, not behind them.
+    final ctx = _sectionKeys[categoryId]?.currentContext;
+    if (ctx == null) return _openCategory(categoryId);
     final box = ctx.findRenderObject();
     final viewport = box == null ? null : RenderAbstractViewport.maybeOf(box);
     if (box == null || viewport == null || !_scroll.hasClients) return;
-    final target =
-        (viewport.getOffsetToReveal(box, 0).offset -
-                _dockedHeight(context) -
-                Gr.s8)
-            .clamp(0.0, _scroll.position.maxScrollExtent);
-    _scroll.animateTo(
-      target,
-      duration: AppMotion.dur(context, AppMotion.slow),
-      curve: AppMotion.curve,
+    final target = (viewport.getOffsetToReveal(box, 0).offset - _dockedHeight(context) - 8)
+        .clamp(0.0, _scroll.position.maxScrollExtent);
+    _scroll.animateTo(target, duration: AppMotion.dur(context, AppMotion.slow), curve: AppMotion.curve);
+  }
+
+  double _dockedHeight(BuildContext context) =>
+      MediaQuery.paddingOf(context).top + 4 + GrSearchPill.height + 10 + 34 + 10;
+
+  double? _toolsScreenY() {
+    final box = _toolsSlot.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null || !_scroll.hasClients) return null;
+    return viewport.getOffsetToReveal(box, 0).offset - _scroll.offset;
+  }
+
+  Widget _stickyTools(BuildContext context, List<MenuCategory> categories) {
+    final statusTop = MediaQuery.paddingOf(context).top;
+    return AnimatedBuilder(
+      animation: _scroll,
+      builder: (context, _) {
+        final y = _toolsScreenY();
+        if (y == null) {
+          if (!_slotMeasured) {
+            _slotMeasured = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }
+          return const SizedBox.shrink();
+        }
+        if (y > statusTop + 4) return const SizedBox.shrink();
+        return Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            color: Gr.bg,
+            padding: EdgeInsets.fromLTRB(0, statusTop + 4, 0, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                  child: GrSearchPill(
+                    hint: s.grocerySearchPlaceholder,
+                    onTap: () => context.push('/s/${widget.token}/search'),
+                    onFilter: () => context.push('/s/${widget.token}/categories'),
+                  ),
+                ),
+                if (categories.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 34,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                      itemCount: categories.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (_, i) => GrChip(label: categories[i].name, onTap: () => _jumpTo(categories[i].id)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  /// Height of the docked tools block (status bar + search row + compact chips).
-  double _dockedHeight(BuildContext context) =>
-      MediaQuery.paddingOf(context).top +
-      Gr.s8 +
-      _SearchField.height +
-      Gr.s8 +
-      _CategoryStrip.compactHeight +
-      Gr.s8;
-
   @override
   Widget build(BuildContext context) {
-    final categories = menu.categories
-        .where((c) => c.items.isNotEmpty)
-        .toList();
+    final categories = menu.categories.where((c) => c.items.isNotEmpty).toList();
     final featured = menu.featured.where((i) => i.isAvailable).toList();
-    // Category glyph per item id, for products without a photo.
-    final glyphOf = <int, String>{
-      for (final c in menu.categories)
-        for (final i in c.items) i.id: categoryGlyph(c.name),
-    };
-    final promo = store.popups.isNotEmpty
-        ? store.popups.first.image
-        : store.cover;
-    // The banner's headline is the store's best real discount and its category
-    // (never an invented number); without discounts it says "fresh every day".
+    final glyphOf = glyphByItem(menu);
+    final promo = store.popups.isNotEmpty ? store.popups.first.image : store.cover;
+    final cart = ref.watch(cartForStoreProvider(widget.token));
+
+    // The hero's headline is the store's best live discount and its category.
     _Deal? deal;
     for (final c in menu.categories) {
       for (final i in c.items) {
-        if (i.hasDiscount &&
-            i.isAvailable &&
-            (deal == null || i.discountPercent! > deal.percent)) {
+        if (i.hasDiscount && i.isAvailable && (deal == null || i.discountPercent! > deal.percent)) {
           deal = _Deal(percent: i.discountPercent!, category: c);
         }
       }
     }
-    final cart = ref.watch(cartForStoreProvider(widget.token));
-    // One cell width for every product tile on the page (grid and best
-    // sellers); each section's row height follows its longest name.
-    final cellW = Gr.homeCellWidth(MediaQuery.sizeOf(context).width);
-    double heightFor(Iterable<MenuItem> items) => GroceryProductCard.heightFor(
-      cellW,
-      nameLines: GroceryProductCard.nameLinesFor(context, items, cellW),
-    );
-    // Clearance under the last section: 32 to the nav bar, the bar itself, its
-    // safe area, and the floating cart pill when there is one.
-    final bottomClearance =
-        Gr.s24 +
-        GroceryNavBar.height +
-        MediaQuery.paddingOf(context).bottom +
-        (cart.isEmpty ? 0 : _CartPill.height + Gr.s16);
+
+    final width = MediaQuery.sizeOf(context).width;
+    final cellW = (width - Gr.pageX * 2 - 14) / 2;
+    final cellH = GroceryProductCard.heightFor(cellW, GroceryCardStyle.minimal);
+
+    SliverGrid grid(List<MenuItem> items) => SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 14,
+            mainAxisExtent: cellH,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (_, i) => GroceryProductCard(
+              token: widget.token,
+              item: items[i],
+              s: s,
+              fallbackGlyph: glyphOf[items[i].id] ?? '🛒',
+            ),
+            childCount: items.length,
+          ),
+        );
+
+    const gap = _Gap(14);
+    const sectionGap = _Gap(24);
 
     return ColoredBox(
       color: Gr.bg,
       child: Stack(
         children: [
           RefreshIndicator(
-            color: Gr.accent,
+            color: Gr.primary,
             backgroundColor: Gr.surface,
-            onRefresh: () async =>
-                ref.invalidate(storefrontProvider(widget.token)),
+            onRefresh: () async => ref.invalidate(storefrontProvider(widget.token)),
             child: CustomScrollView(
               controller: _scroll,
               slivers: [
-                // Vertical rhythm (8pt grid, reference density): header ─16─
-                // search ─16─ categories ─16─ promo ─24─ best sellers ─24─ each
-                // category (title ─12─ grid) ─24─ features card ─24─ nav bar.
-                SliverToBoxAdapter(
-                  child: _Header(
-                    store: store,
-                    s: s,
-                    token: widget.token,
-                    onShare: widget.onShare,
-                  ),
-                ),
-                const _Gap(Gr.s16),
-                // The in-flow search row; [_stickyTools] docks a copy (with the
-                // categories as compact pills) once this scrolls out.
-                SliverToBoxAdapter(
-                  child: KeyedSubtree(
-                    key: _toolsSlot,
-                    child: _SearchField(token: widget.token, s: s),
-                  ),
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(Gr.pageX, MediaQuery.paddingOf(context).top + 4, Gr.pageX, 0),
+                  sliver: SliverList.list(children: [
+                    _TopBar(store: store, s: s, token: widget.token, cartCount: cart.count),
+                    const SizedBox(height: 14),
+                    _Greeting(s: s),
+                    const SizedBox(height: 14),
+                    KeyedSubtree(
+                      key: _toolsSlot,
+                      child: GrSearchPill(
+                        hint: s.grocerySearchPlaceholder,
+                        onTap: () => context.push('/s/${widget.token}/search'),
+                        onFilter: () => context.push('/s/${widget.token}/categories'),
+                      ),
+                    ),
+                    if (promo != null && categories.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _HeroOffer(
+                        image: promo,
+                        deal: deal,
+                        s: s,
+                        onTap: () => _jumpTo((deal?.category ?? categories.first).id),
+                      ),
+                    ],
+                  ]),
                 ),
                 if (categories.isNotEmpty) ...[
-                  const _Gap(Gr.s16),
-                  SliverToBoxAdapter(
-                    child: _CategoryStrip(
-                      categories: categories,
-                      onTap: _jumpTo,
+                  gap,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: SliverToBoxAdapter(
+                      child: GrSectionHeader(
+                        title: s.groceryShopByCategory,
+                        onSeeAll: () => context.push('/s/${widget.token}/categories'),
+                      ),
                     ),
                   ),
-                ],
-                // Only when the merchant has added a visual (pop-up or cover).
-                if (promo != null && categories.isNotEmpty) ...[
-                  const _Gap(Gr.s16),
-                  SliverToBoxAdapter(
-                    child: _PromoBanner(
-                      image: promo,
-                      deal: deal,
-                      s: s,
-                      onTap: () =>
-                          _jumpTo((deal?.category ?? categories.first).id),
-                    ),
-                  ),
+                  gap,
+                  SliverToBoxAdapter(child: _CategoryTiles(categories: categories, onTap: _openCategory)),
                 ],
                 if (featured.isNotEmpty) ...[
-                  const _Gap(Gr.s24),
-                  SliverToBoxAdapter(
-                    child: _SectionTitle(
-                      title: s.groceryBestSellers,
-                      action: s.seeAll,
-                      onAction: () => context.push(
-                        '/s/${widget.token}/categories?featured=1',
+                  sectionGap,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: SliverToBoxAdapter(
+                      child: GrSectionHeader(
+                        title: s.groceryTodayOffers,
+                        leading: const GrCountdown(),
+                        onSeeAll: () => context.push('/s/${widget.token}/category/featured'),
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: heightFor(featured),
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Gr.pageX,
-                        ),
-                        itemCount: featured.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: Gr.gutter),
-                        itemBuilder: (_, i) => GroceryProductCard(
-                          token: widget.token,
-                          item: featured[i],
-                          s: s,
-                          width: cellW,
-                          fallbackGlyph: glyphOf[featured[i].id] ?? '🛒',
-                        ),
-                      ),
-                    ),
+                  const _Gap(12),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: grid(featured.take(4).toList()),
                   ),
                 ],
                 for (final category in categories) ...[
-                  const _Gap(Gr.s24),
-                  SliverToBoxAdapter(
-                    child: KeyedSubtree(
-                      key: _sectionKeys.putIfAbsent(category.id, GlobalKey.new),
-                      child: _SectionTitle(
-                        title: category.name,
-                        action: s.seeAll,
-                        onAction: () => context.push(
-                          '/s/${widget.token}/categories?category=${category.id}',
-                        ),
+                  sectionGap,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: SliverToBoxAdapter(
+                      child: KeyedSubtree(
+                        key: _sectionKeys.putIfAbsent(category.id, GlobalKey.new),
+                        child: GrSectionHeader(title: category.name, onSeeAll: () => _openCategory(category.id)),
                       ),
                     ),
                   ),
-                  _ProductGrid(
-                    token: widget.token,
-                    items: category.items,
-                    s: s,
-                    glyph: categoryGlyph(category.name),
-                    cellHeight: heightFor(category.items),
+                  const _Gap(12),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: grid(category.items.take(4).toList()),
                   ),
                 ],
                 if (menu.uncategorised.isNotEmpty) ...[
-                  const _Gap(Gr.s24),
-                  SliverToBoxAdapter(
-                    child: _SectionTitle(title: s.groceryAllProducts),
+                  sectionGap,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: SliverToBoxAdapter(child: GrSectionHeader(title: s.groceryAllProducts)),
                   ),
-                  _ProductGrid(
-                    token: widget.token,
-                    items: menu.uncategorised,
-                    s: s,
-                    cellHeight: heightFor(menu.uncategorised),
+                  const _Gap(12),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+                    sliver: grid(menu.uncategorised),
                   ),
                 ],
                 if (menu.isEmpty) ...[
-                  const _Gap(Gr.s48),
+                  const _Gap(48),
                   SliverToBoxAdapter(
                     child: Column(
                       children: [
-                        const Icon(
-                          Icons.shopping_basket_outlined,
-                          color: Gr.ink3,
-                          size: 40,
-                        ),
-                        const SizedBox(height: Gr.s12),
-                        Text(
-                          s.menuEmpty,
-                          style: const TextStyle(
-                            color: Gr.ink2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        const Icon(Icons.shopping_basket_outlined, color: Gr.ink3, size: 40),
+                        const SizedBox(height: 12),
+                        Text(s.menuEmpty, style: Gr.text(14, weight: 600, color: Gr.ink2)),
                       ],
                     ),
                   ),
                 ],
-                const _Gap(Gr.s24),
-                SliverToBoxAdapter(child: _FeaturesRow(s: s)),
-                // Room so the nav bar and the floating cart pill never cover content.
-                _Gap(bottomClearance),
+                _Gap(groceryBottomClearance(context, hasCart: !cart.isEmpty)),
               ],
             ),
           ),
           _stickyTools(context, categories),
-          // The nav bar sits on the canvas edge; the cart pill floats above it.
           Align(
             alignment: Alignment.bottomCenter,
-            child: GroceryNavBar(token: widget.token, active: GroceryTab.home),
-          ),
-          if (!cart.isEmpty)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Gr.headerX,
-                    0,
-                    Gr.headerX,
-                    GroceryNavBar.height + Gr.s12,
-                  ),
-                  child: _CartPill(token: widget.token, s: s),
-                ),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!cart.isEmpty) ...[
+                  GroceryCartBar(token: widget.token),
+                  const SizedBox(height: 12),
+                ],
+                GroceryNavBar(token: widget.token, active: GroceryTab.home),
+              ],
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-/// A vertical gap between slivers, always one of the [Gr] spacing steps.
 class _Gap extends StatelessWidget {
   const _Gap(this.height);
 
   final double height;
 
   @override
-  Widget build(BuildContext context) =>
-      SliverToBoxAdapter(child: SizedBox(height: height));
+  Widget build(BuildContext context) => SliverToBoxAdapter(child: SizedBox(height: height));
 }
 
-// ---------------------------------------------------------------------------
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.store,
-    required this.s,
-    required this.token,
-    required this.onShare,
-  });
-
-  final Storefront store;
-  final Strings s;
-  final String token;
-  final VoidCallback onShare;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = MediaQuery.paddingOf(context).top;
-    final hero = store.cover ?? store.logo;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(Gr.headerX, top + Gr.s8, Gr.headerX, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _RoundIcon(
-                icon: context.canPop()
-                    ? Icons.arrow_back_rounded
-                    : Icons.menu_rounded,
-                onTap: context.canPop() ? () => context.pop() : onShare,
-                flipForRtl: context.canPop(),
-              ),
-              const SizedBox(width: Gr.s8),
-              StoreAvatar(
-                name: store.name,
-                logoPath: store.logo,
-                brandColor: store.brandColor,
-                size: 32,
-              ),
-              const SizedBox(width: Gr.s8),
-              Expanded(
-                child: Text(
-                  store.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Gr.ink,
-                  ),
-                ),
-              ),
-              if (store.isOpen != null) ...[
-                OpenBadge(open: store.isOpen!, s: s, compact: true),
-                const SizedBox(width: Gr.s8),
-              ],
-              _RoundIcon(
-                icon: Icons.notifications_none_rounded,
-                onTap: () => context.push('/notifications'),
-              ),
-            ],
-          ),
-          const SizedBox(height: Gr.s16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s.groceryWelcome,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Gr.accent,
-                      ),
-                    ),
-                    const SizedBox(height: Gr.s4),
-                    Text(
-                      s.groceryHeroTitle,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Gr.ink,
-                        height: 1.15,
-                      ),
-                    ),
-                    Text(
-                      s.groceryHeroAccent,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Gr.accent,
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: Gr.s8),
-                    Text(
-                      (store.description ?? '').trim().isNotEmpty
-                          ? store.description!
-                          : s.groceryHeroHint,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: Gr.ink2,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (hero != null) ...[
-                const SizedBox(width: Gr.s12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Gr.s16),
-                  child: SizedBox(
-                    width: 112,
-                    height: 112,
-                    child: AppImage(
-                      url: logoUrlOf(hero),
-                      // A wide cover carries its visual on the end side (the
-                      // banner's dark wash covers the start); crop to that side.
-                      alignment: AlignmentDirectional.centerEnd,
-                      placeholderColor: Gr.surface2,
-                      error: const ColoredBox(color: Gr.surface2),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoundIcon extends StatelessWidget {
-  const _RoundIcon({
-    required this.icon,
-    required this.onTap,
-    this.flipForRtl = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool flipForRtl;
-
-  @override
-  Widget build(BuildContext context) {
-    final rtl = Directionality.of(context) == TextDirection.rtl;
-    return Material(
-      color: Gr.surface2,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Transform.flip(
-            flipX: flipForRtl && rtl,
-            child: Icon(icon, size: 20, color: Gr.ink),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({required this.token, required this.s});
-
-  final String token;
-  final Strings s;
-
-  static const height = 44.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Gr.headerX),
-      child: Row(
-        children: [
-          Expanded(
-            child: Material(
-              color: Gr.surface2,
-              borderRadius: BorderRadius.circular(Gr.cardRadius),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(Gr.cardRadius),
-                onTap: () => context.push('/s/$token/search'),
-                child: Container(
-                  height: height,
-                  padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.search_rounded,
-                        color: Gr.ink3,
-                        size: 20,
-                      ),
-                      const SizedBox(width: Gr.s8),
-                      Text(
-                        s.grocerySearchHint,
-                        style: const TextStyle(color: Gr.ink3, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: Gr.s8),
-          Material(
-            color: Gr.accent,
-            borderRadius: BorderRadius.circular(Gr.cardRadius),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(Gr.cardRadius),
-              onTap: () => context.push('/s/$token/categories'),
-              child: const SizedBox(
-                width: height,
-                height: height,
-                child: Icon(Icons.tune_rounded, color: Gr.onAccent, size: 20),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryStrip extends StatelessWidget {
-  const _CategoryStrip({
-    required this.categories,
-    required this.onTap,
-    this.compact = false,
-  });
-
-  final List<MenuCategory> categories;
-  final ValueChanged<int> onTap;
-
-  /// Docked form: one row of small pills (glyph + name) instead of the round
-  /// chips, so the pinned tools stay short.
-  final bool compact;
-
-  static const compactHeight = 36.0;
-
-  @override
-  Widget build(BuildContext context) {
-    if (compact) {
-      return SizedBox(
-        height: compactHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
-          itemCount: categories.length,
-          separatorBuilder: (_, _) => const SizedBox(width: Gr.s8),
-          itemBuilder: (_, i) {
-            final c = categories[i];
-            // Text-only, near-square chips (owner: sharp corners, no glyphs).
-            return Material(
-              color: Gr.surface2,
-              borderRadius: BorderRadius.circular(Gr.s4),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(Gr.s4),
-                onTap: () => onTap(c.id),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Gr.s12),
-                  child: Center(
-                    child: Text(
-                      c.name,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: Gr.ink,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    }
-
-    // 60 chip + 8 + two label lines (11.5 × 1.2 × 2 ≈ 28) = 96.
-    return SizedBox(
-      height: 96,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
-        itemCount: categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Gr.s8),
-        itemBuilder: (_, i) {
-          final c = categories[i];
-          return GestureDetector(
-            onTap: () => onTap(c.id),
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 72,
-              child: Column(
-                children: [
-                  // Reference: a rounded square tile with a soft light
-                  // gradient, the category's picture filling it, and the name
-                  // in bold underneath. Same 60pt footprint as before.
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Gr.surface2, Color(0xFFFAFAFB)],
-                      ),
-                      borderRadius: BorderRadius.circular(Gr.s16),
-                      border: Border.all(
-                        color: i == 0 ? Gr.accent : Gr.line,
-                        width: 1.5,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: c.image != null
-                        ? AppImage(
-                            url: logoUrlOf(c.image),
-                            placeholderColor: Colors.transparent,
-                            error: _CategoryGlyph(c.name),
-                          )
-                        : _CategoryGlyph(c.name),
-                  ),
-                  const SizedBox(height: Gr.s8),
-                  Expanded(
-                    child: Text(
-                      c.name,
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: Gr.ink,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// The category's emoji, large and centred — Apple's colour artwork on iOS
-/// reads as a real product photo at this size.
-class _CategoryGlyph extends StatelessWidget {
-  const _CategoryGlyph(this.name);
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Text(
-      categoryGlyph(name),
-      style: const TextStyle(fontSize: 28, height: 1),
-    ),
-  );
-}
-
-/// The store's best live discount, for the promo banner's headline.
 class _Deal {
   const _Deal({required this.percent, required this.category});
 
@@ -775,391 +335,201 @@ class _Deal {
   final MenuCategory category;
 }
 
-/// The promo banner from the reference: a dark-green card after the category
-/// chips — kicker, "up to N% off", the category, a "shop now" pill and a star
-/// badge — over the merchant's pop-up or cover photo. Shown only when the
-/// merchant has added such a photo.
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner({
-    required this.image,
-    required this.deal,
-    required this.s,
-    required this.onTap,
-  });
+// ---------------------------------------------------------------------------
+
+/// Figma "Top Bar": the delivery-location pill on the start side, the dark
+/// cart button (lime count badge) and the white bell on the end side.
+class _TopBar extends ConsumerWidget {
+  const _TopBar({required this.store, required this.s, required this.token, required this.cartCount});
+
+  final Storefront store;
+  final Strings s;
+  final String token;
+  final int cartCount;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final addresses = ref.watch(addressesProvider).asData?.value ?? const <CustomerAddress>[];
+    final address = addresses.where((a) => a.isDefault).firstOrNull ?? addresses.firstOrNull;
+    final location = address == null
+        ? s.groceryChooseLocation
+        : (address.addressText.trim().isNotEmpty ? address.addressText : address.label);
+
+    return Row(
+      children: [
+        // Location pill (Figma "Location").
+        Flexible(
+          child: GestureDetector(
+            onTap: () => context.push('/addresses'),
+            child: Container(
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Gr.surface,
+                borderRadius: BorderRadius.circular(Gr.pill),
+                boxShadow: Gr.pillShadow,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const GrIcon('pin', size: 16),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(location, maxLines: 1, overflow: TextOverflow.ellipsis, style: Gr.text(13, weight: 600)),
+                  ),
+                  const SizedBox(width: 6),
+                  const GrIcon('chevron_down', size: 14),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const Spacer(),
+        GrCircleButton(icon: 'bell', onTap: () => context.push('/notifications'), semanticLabel: s.notifications),
+        const SizedBox(width: 8),
+        GrCircleButton(
+          icon: 'cart',
+          dark: true,
+          badge: cartCount,
+          onTap: () => context.push('/s/$token/cart'),
+          semanticLabel: s.cart,
+        ),
+      ],
+    );
+  }
+}
+
+/// Figma "Greeting": a grey time-of-day line and the 26pt question.
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.s});
+
+  final Strings s;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(groceryGreeting(s), style: Gr.text(14, color: Gr.ink2)),
+        Text(s.groceryWhatToday, style: Gr.text(26, weight: 800, height: 1.2)),
+      ],
+    );
+  }
+}
+
+/// Figma "Hero Offer": the merchant's photo under a dark-green wash that
+/// deepens towards the text side; a lime tag, a two-line headline from the
+/// store's best live discount, and a lime "order now" pill.
+class _HeroOffer extends StatelessWidget {
+  const _HeroOffer({required this.image, required this.deal, required this.s, required this.onTap});
 
   final String image;
   final _Deal? deal;
   final Strings s;
   final VoidCallback onTap;
 
-  static const _dark = Color(0xFF0B3B33);
-  static const _lime = Color(0xFF8DE3C4); // kicker on the dark card
-
   @override
   Widget build(BuildContext context) {
-    final title = deal != null
-        ? s.groceryPromoUpTo(deal!.percent)
-        : s.groceryPromoFreshTitle;
-    final subtitle = deal != null
-        ? s.groceryPromoOn(deal!.category.name)
-        : s.groceryHeroHint;
+    final line1 = deal != null ? s.groceryPromoUpTo(deal!.percent) : s.groceryPromoFreshTitle;
+    final line2 = deal != null ? s.groceryPromoOn(deal!.category.name) : s.groceryHeroHint;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(Gr.cardRadius),
-        child: AspectRatio(
-          aspectRatio: 2.3,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // The merchant's photo with a dark wash from the start side so
-              // the copy stays legible; the photo shows through on the end side.
-              AppImage(
-                url: logoUrlOf(image),
-                placeholderColor: _dark,
-                error: const ColoredBox(color: _dark),
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: AlignmentDirectional.centerStart,
-                    end: AlignmentDirectional.centerEnd,
-                    colors: [Color(0xF20B3B33), Color(0x400B3B33)],
-                  ),
-                ),
-              ),
-              // Star badge (reference: a lit circle in the top-end corner).
-              PositionedDirectional(
-                top: Gr.s12,
-                end: Gr.s12,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: const BoxDecoration(
-                    color: Gr.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.star_rounded,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              // Copy block on the start 2/3 so it never runs under the visual.
-              Padding(
-                padding: const EdgeInsets.all(Gr.s16),
-                child: FractionallySizedBox(
-                  alignment: AlignmentDirectional.centerStart,
-                  widthFactor: 0.68,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        s.groceryPromoKicker.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: _lime,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                      const SizedBox(height: Gr.s4),
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.15,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFD6EFE4),
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: Gr.s12),
-                      Material(
-                        color: Gr.accent,
-                        borderRadius: BorderRadius.circular(99),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(99),
-                          onTap: onTap,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: Gr.s12,
-                              vertical: Gr.s8,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  s.shopNow,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: Gr.onAccent,
-                                  ),
-                                ),
-                                const SizedBox(width: Gr.s4),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 14,
-                                  color: Gr.onAccent,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title, this.action, this.onAction});
-
-  final String title;
-  final String? action;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    // The section gap above comes from the page rhythm; 12 below to the products.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Gr.pageX, 0, Gr.pageX, Gr.s12),
-      child: Row(
+    return Container(
+      height: 176,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(Gr.rHero), boxShadow: Gr.heroShadow),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Gr.ink,
-              ),
-            ),
-          ),
-          if (action != null)
-            GestureDetector(
-              onTap: onAction,
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    action!,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Gr.accent,
-                    ),
-                  ),
-                  const SizedBox(width: Gr.s4),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 14,
-                    color: Gr.accent,
-                  ),
+          AppImage(url: logoUrlOf(image), fit: BoxFit.cover, placeholderColor: Gr.primary, error: const ColoredBox(color: Gr.primary)),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: AlignmentDirectional.centerEnd,
+                end: AlignmentDirectional.centerStart,
+                stops: const [0, 0.42, 0.75, 1],
+                colors: [
+                  Gr.primary.withValues(alpha: 0),
+                  Gr.primary.withValues(alpha: 0.15),
+                  Gr.primary.withValues(alpha: 0.9),
+                  Gr.primary,
                 ],
               ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(22, 14, 16, 14),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FractionallySizedBox(
+                widthFactor: 0.6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                      decoration: BoxDecoration(color: Gr.lime, borderRadius: BorderRadius.circular(Gr.pill)),
+                      child: Text(s.groceryOfferTag, style: Gr.text(11, weight: 700, color: Gr.onLime)),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(line1, maxLines: 1, overflow: TextOverflow.ellipsis, style: Gr.text(22, weight: 800, color: Colors.white, height: 1.25)),
+                    Text(line2, maxLines: 1, overflow: TextOverflow.ellipsis, style: Gr.text(22, weight: 800, color: Colors.white, height: 1.25)),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: onTap,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        decoration: BoxDecoration(color: Gr.lime, borderRadius: BorderRadius.circular(Gr.pill)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const GrIcon('arrow_cta', size: 16, flipForRtl: true),
+                            const SizedBox(width: 6),
+                            Text(s.groceryOrderNow, style: Gr.text(13, weight: 700, color: Gr.onLime)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ProductGrid extends StatelessWidget {
-  const _ProductGrid({
-    required this.token,
-    required this.items,
-    required this.s,
-    required this.cellHeight,
-    this.glyph = '🛒',
-  });
+/// Figma "Category Tiles": five tiles spread across the width; more than five
+/// scroll horizontally with the same spacing.
+class _CategoryTiles extends StatelessWidget {
+  const _CategoryTiles({required this.categories, required this.onTap});
 
-  final String token;
-  final List<MenuItem> items;
-  final Strings s;
-  final String glyph;
-
-  /// From [GroceryProductCard.heightFor] of the cell width — every row equal.
-  final double cellHeight;
+  final List<MenuCategory> categories;
+  final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
-      sliver: SliverGrid(
-        // Three across on the home page (the reference layout); the cell width
-        // follows from the screen width, the two 20pt margins and 12pt gutters.
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: Gr.homeColumns,
-          mainAxisSpacing: Gr.s16,
-          crossAxisSpacing: Gr.gutter,
-          mainAxisExtent: cellHeight,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (_, i) => GroceryProductCard(
-            token: token,
-            item: items[i],
-            s: s,
-            fallbackGlyph: glyph,
-          ),
-          childCount: items.length,
-        ),
-      ),
-    );
-  }
-}
-
-class _FeaturesRow extends StatelessWidget {
-  const _FeaturesRow({required this.s});
-
-  final Strings s;
-
-  @override
-  Widget build(BuildContext context) {
-    final features = [
-      (
-        Icons.delivery_dining_rounded,
-        s.groceryFastDelivery,
-        s.groceryFastDeliveryHint,
-      ),
-      (Icons.sell_outlined, s.groceryBestPrices, s.groceryBestPricesHint),
-      (Icons.eco_rounded, s.groceryFresh, s.groceryFreshHint),
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Gr.s8,
-          vertical: Gr.s12,
-        ),
-        decoration: BoxDecoration(
-          color: Gr.surface,
-          borderRadius: BorderRadius.circular(Gr.cardRadius),
-          border: Border.all(color: Gr.line),
-        ),
+    if (categories.length <= 5) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            for (final (icon, title, hint) in features)
-              Expanded(
-                child: Column(
-                  children: [
-                    Icon(icon, color: Gr.accent, size: 24),
-                    const SizedBox(height: Gr.s8),
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Gr.ink,
-                      ),
-                    ),
-                    const SizedBox(height: Gr.s4),
-                    Text(
-                      hint,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      style: const TextStyle(
-                        fontSize: 10.5,
-                        color: Gr.ink3,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            for (final c in categories) GrCategoryTile(category: c, onTap: () => onTap(c.id)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The floating "view cart" pill above the nav (`.viewcart`, in grocery colours).
-class _CartPill extends ConsumerWidget {
-  const _CartPill({required this.token, required this.s});
-
-  final String token;
-  final Strings s;
-
-  static const height = 56.0;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(cartForStoreProvider(token));
-    return Material(
-      color: Gr.accent,
-      borderRadius: BorderRadius.circular(Gr.s16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Gr.s16),
-        onTap: () => context.push('/s/$token/cart'),
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.symmetric(horizontal: Gr.s16),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Gr.onAccent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(Gr.s8),
-                ),
-                child: Text(
-                  '${cart.count}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Gr.onAccent,
-                  ),
-                ),
-              ),
-              const SizedBox(width: Gr.s12),
-              Expanded(
-                child: Text(
-                  s.viewCart,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: Gr.onAccent,
-                  ),
-                ),
-              ),
-              RiyalPrice(
-                amount: cart.total,
-                size: 15,
-                color: Gr.onAccent,
-                decimals: 2,
-              ),
-            ],
-          ),
-        ),
+      );
+    }
+    return SizedBox(
+      height: 64 + 8 + 20,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: Gr.pageX),
+        itemCount: categories.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (_, i) => GrCategoryTile(category: categories[i], onTap: () => onTap(categories[i].id)),
       ),
     );
   }

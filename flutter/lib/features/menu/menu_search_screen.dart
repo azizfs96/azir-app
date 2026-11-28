@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../grocery/grocery_search_screen.dart';
 import '../stores/data/store_repository.dart';
 import '../stores/domain/menu.dart';
 import '../stores/presentation/store_avatar.dart';
@@ -38,6 +39,8 @@ class _MenuSearchScreenState extends ConsumerState<MenuSearchScreen> {
   Widget build(BuildContext context) {
     final s = Strings.of(context);
     final store = ref.watch(storefrontProvider(widget.token)).value;
+    // Supermarkets get the grocery design's search screen.
+    if (store?.isSupermarket == true) return GrocerySearchScreen(token: widget.token);
     final brand = store != null ? brandColorOf(store.brandColor) : AppColors.ink900;
     final menu = store?.menu ?? const Menu(categories: [], uncategorised: []);
 

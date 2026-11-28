@@ -5,31 +5,33 @@ import '../../core/haptics.dart';
 import '../../core/localization/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_image.dart';
-import '../../core/widgets/riyal_price.dart';
 import '../menu/cart_controller.dart';
 import '../menu/item_sheet.dart';
 import '../stores/domain/menu.dart';
 import '../stores/presentation/store_avatar.dart';
 import 'grocery_theme.dart';
 
-/// A product tile in the grocery-app idiom (the reference screenshot):
-///
-///   ┌──────────────┐
-///   │   product    │   a light square image tile, the discount badge in the
-///   │    photo   + │   start corner, a small "+" in the end corner that turns
-///   └──────────────┘   into a quantity stepper once the product is in the cart
-///   ﷼ 29.95  ~~34.50~~  sale price in red with the old price struck through
-///   راتشيلز زبادي يوناني   the name, two lines, then the unit
-///
-/// Compact enough for THREE columns on the home page; the same tile simply
-/// grows in the two-column categories screen. Products with option groups
-/// (rare for groceries) open the options sheet instead of adding directly.
+/// Which of the design's two product cards to draw.
+enum GroceryCardStyle {
+  /// "Product Card – Minimal" (Figma 10:239): 2-column, image 175 tall with
+  /// 24pt corners, name 15, unit 12, price 16 + a 34pt round add button.
+  minimal,
+
+  /// "Product Card – Compact" (Figma 20:358): 3-column, square image with
+  /// 18pt corners, name 13, unit 11, price 13 + a 34pt rounded-square add.
+  compact,
+}
+
+/// A product card in the design's idiom. The one tap on the add button puts
+/// the product in the cart (no sheet, unless it has option groups); once in
+/// the cart the button becomes a − qty + pill in the same dark green.
 class GroceryProductCard extends ConsumerWidget {
   const GroceryProductCard({
     super.key,
     required this.token,
     required this.item,
     required this.s,
+    this.style = GroceryCardStyle.minimal,
     this.width,
     this.fallbackGlyph = '🛒',
   });
@@ -37,47 +39,25 @@ class GroceryProductCard extends ConsumerWidget {
   final String token;
   final MenuItem item;
   final Strings s;
+  final GroceryCardStyle style;
 
-  /// Fixed width for the horizontal best-sellers strip; null fills a grid cell.
+  /// Fixed width for horizontal strips; null fills a grid cell.
   final double? width;
 
   /// Shown instead of the photo when the product has none (its category's emoji).
   final String fallbackGlyph;
 
-  static const _priceH = 20.0;
-  static const _nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Gr.ink, height: 1.35);
-  // Text lines are budgeted at their rounded-up height (13 × 1.35 = 17.55 →
-  // 18; 11 × 1.25 = 13.75 → 14): the engine snaps line boxes up, so an exact
-  // product would overflow by a fraction of a pixel.
-  static const _nameLineH = 18.0;
-  static const _unitH = 2.0 + 14.0;
+  bool get _minimal => style == GroceryCardStyle.minimal;
 
-  /// Total height of a card whose square image tile is [width] wide and whose
-  /// name needs [nameLines] lines: tile + 8 + price + 4 + name + unit, plus
-  /// one pixel of slack for device-pixel rounding.
-  /// Grids pass the result of [nameLinesFor] so a section of one-line names
-  /// does not reserve an empty second line under every card.
-  static double heightFor(double width, {int nameLines = 1}) =>
-      (width + Gr.s8 + _priceH + Gr.s4 + _nameLineH * nameLines + _unitH).ceilToDouble() + 1;
-
-  /// 1 when every name in [items] fits one line at [width], else 2 — measured
-  /// with the card's own text style and the ambient text scale.
-  static int nameLinesFor(BuildContext context, Iterable<MenuItem> items, double width) {
-    final painter = TextPainter(
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 2,
-    );
-    for (final item in items) {
-      painter.text = TextSpan(text: item.name, style: _nameStyle);
-      painter.layout(maxWidth: width);
-      if (painter.computeLineMetrics().length > 1) {
-        painter.dispose();
-        return 2;
-      }
-    }
-    painter.dispose();
-    return 1;
+  /// Height of a card in a grid whose cells are [cellWidth] wide:
+  /// image + gap + name + unit + gap + price row.
+  static double heightFor(double cellWidth, GroceryCardStyle style) {
+    final minimal = style == GroceryCardStyle.minimal;
+    final image = minimal ? 175.0 : cellWidth;
+    final gap = minimal ? 8.0 : 6.0;
+    final name = (minimal ? 15.0 : 13.0) * 1.25;
+    final unit = (minimal ? 12.0 : 11.0) * 1.25;
+    return image + gap + name + unit + gap + 34 + 2;
   }
 
   @override
@@ -89,7 +69,7 @@ class GroceryProductCard extends ConsumerWidget {
     void add() {
       if (!orderable) return;
       if (item.optionGroups.isNotEmpty) {
-        showItemSheet(context, storeToken: token, item: item, brand: Gr.accentDeep);
+        showItemSheet(context, storeToken: token, item: item, brand: Gr.primary);
         return;
       }
       ref.read(cartProvider.notifier).add(
@@ -109,129 +89,126 @@ class GroceryProductCard extends ConsumerWidget {
       ref.read(cartProvider.notifier).setQuantity(line.signature, q);
     }
 
-    final card = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // The image tile: light so product packaging reads like the reference.
-        AspectRatio(
-          aspectRatio: 1,
+    final imageRadius = _minimal ? Gr.rCardMinimal : Gr.rCardCompact;
+    final textPad = _minimal ? 4.0 : 2.0;
+
+    Widget image(double? height) => Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: Gr.surface,
+            borderRadius: BorderRadius.circular(imageRadius),
+            boxShadow: Gr.cardShadow,
+          ),
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Gr.surface,
-                  borderRadius: BorderRadius.circular(Gr.cardRadius),
-                  border: Border.all(color: Gr.line),
-                  boxShadow: Gr.tileShadow,
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.all(Gr.s8),
-                  child: ColorFiltered(
-                    colorFilter: orderable
-                        ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
-                        : const ColorFilter.matrix(<double>[
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0.2126, 0.7152, 0.0722, 0, 0,
-                            0, 0, 0, 1, 0,
-                          ]),
-                    child: AppImage(
-                      url: logoUrlOf(item.image),
-                      fit: BoxFit.contain,
-                      placeholderColor: Colors.transparent,
-                      error: Center(child: Text(fallbackGlyph, style: const TextStyle(fontSize: 44))),
-                    ),
+              ColorFiltered(
+                colorFilter: orderable
+                    ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
+                    : const ColorFilter.matrix(<double>[
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0.2126, 0.7152, 0.0722, 0, 0,
+                        0, 0, 0, 1, 0,
+                      ]),
+                child: AppImage(
+                  url: logoUrlOf(item.image),
+                  fit: BoxFit.cover,
+                  placeholderColor: Gr.surface,
+                  error: Center(
+                    child: Text(fallbackGlyph, style: TextStyle(fontSize: _minimal ? 64 : 44)),
                   ),
                 ),
               ),
-              if (item.hasDiscount)
-                PositionedDirectional(
-                  top: 6,
-                  start: 6,
-                  child: _Badge(text: s.discountBadge(item.discountPercent!), color: Gr.red),
-                ),
               if (!orderable)
                 PositionedDirectional(
-                  top: 6,
-                  end: 6,
+                  top: 8,
+                  start: 8,
                   child: _Badge(text: s.soldOut, color: AppColors.ink700),
                 ),
-              // "+" in the end corner — the one tap that adds; a stepper after.
-              PositionedDirectional(
-                bottom: 6,
-                end: 6,
-                child: AnimatedSwitcher(
-                  duration: AppMotion.dur(context, AppMotion.fast),
-                  child: qty == 0
-                      ? _AddButton(key: const ValueKey('add'), enabled: orderable, onTap: add)
-                      : _Stepper(key: const ValueKey('stepper'), qty: qty, onChanged: setQty),
+              if (item.hasDiscount && orderable)
+                PositionedDirectional(
+                  top: 8,
+                  start: 8,
+                  child: _Badge(text: '-${item.discountPercent}%', color: Gr.lime, textColor: Gr.onLime),
                 ),
+            ],
+          ),
+        );
+
+    final card = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_minimal) image(175) else AspectRatio(aspectRatio: 1, child: image(null)),
+        SizedBox(height: _minimal ? 8 : 6),
+        Padding(
+          padding: EdgeInsetsDirectional.symmetric(horizontal: textPad),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Gr.text(_minimal ? 15 : 13, weight: 600, height: 1.25),
+              ),
+              Text(
+                (item.unit ?? '').isEmpty ? ' ' : item.unit!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Gr.text(_minimal ? 12 : 11, color: Gr.ink3, height: 1.25),
               ),
             ],
           ),
         ),
-        const SizedBox(height: Gr.s8),
-        // Price line: sale price in red, old price struck through. Scales down
-        // rather than overflowing in a narrow three-column cell.
-        SizedBox(
-          height: _priceH,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RiyalPrice(
-                  amount: item.price,
-                  size: 15,
-                  weight: FontWeight.w800,
-                  color: item.hasDiscount ? Gr.red : Gr.ink,
-                  decimals: 2,
-                ),
-                if (item.compareAtPrice != null) ...[
-                  const SizedBox(width: 6),
-                  const SarGlyph(size: 9, color: Gr.ink3),
-                  const SizedBox(width: 2),
-                  Text(
-                    item.compareAtPrice!.toStringAsFixed(2),
-                    textDirection: TextDirection.ltr,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: Gr.ink3,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: Gr.ink3,
-                    ),
+        SizedBox(height: _minimal ? 8 : 6),
+        Padding(
+          padding: EdgeInsetsDirectional.symmetric(horizontal: textPad),
+          child: Row(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        Gr.price(item.price, s.sar),
+                        style: Gr.text(_minimal ? 16 : 13, weight: 700, height: 1.25),
+                      ),
+                      if (item.compareAtPrice != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          item.compareAtPrice!.toStringAsFixed(2),
+                          style: Gr.text(_minimal ? 12 : 11, color: Gr.ink3, decoration: TextDecoration.lineThrough),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
-            ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              AnimatedSwitcher(
+                duration: AppMotion.dur(context, AppMotion.fast),
+                child: qty == 0
+                    ? _AddButton(
+                        key: const ValueKey('add'),
+                        enabled: orderable,
+                        radius: _minimal ? 17 : 14,
+                        onTap: add,
+                      )
+                    : _Stepper(key: const ValueKey('stepper'), qty: qty, onChanged: setQty),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: Gr.s4),
-        // The name takes its natural height (one or two lines) and the unit
-        // sits directly under it; the row height is fixed by the grid, so any
-        // slack ends up below the card instead of between name and unit.
-        Text(
-          item.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: _nameStyle,
-        ),
-        if ((item.unit ?? '').isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            item.unit!,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: Gr.ink3, height: 1.25),
-          ),
-        ],
       ],
     );
 
-    // In the horizontal strip the parent fixes the height; here only the width.
     final sized = width == null ? card : SizedBox(width: width, child: card);
 
     return Semantics(
@@ -247,43 +224,48 @@ class GroceryProductCard extends ConsumerWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.text, required this.color});
+  const _Badge({required this.text, required this.color, this.textColor = Colors.white});
 
   final String text;
   final Color color;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Gr.s8)),
-      child: Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(Gr.pill)),
+      // LTR so "-14%" keeps its sign in front inside an RTL layout.
+      child: Text(text, textDirection: TextDirection.ltr, style: Gr.text(11, weight: 700, color: textColor)),
     );
   }
 }
 
-/// The small "+" that sits on the image tile (reference: a thin plus in the corner).
+/// The 34pt dark-green add control (round on the minimal card, 14pt-rounded
+/// square on the compact card), with the design's white "+" stroke.
 class _AddButton extends StatelessWidget {
-  const _AddButton({super.key, required this.enabled, required this.onTap});
+  const _AddButton({super.key, required this.enabled, required this.radius, required this.onTap});
 
   final bool enabled;
+  final double radius;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    // Reference: a plain white disc with a soft shadow, no outline.
     return Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
-      elevation: 2,
-      shadowColor: Colors.black38,
+      color: enabled ? Gr.primary : Gr.surface2,
+      borderRadius: BorderRadius.circular(radius),
       child: InkWell(
         onTap: enabled ? onTap : null,
-        customBorder: const CircleBorder(),
+        borderRadius: BorderRadius.circular(radius),
         child: SizedBox(
-          width: 28,
-          height: 28,
-          child: Icon(Icons.add_rounded, size: 18, color: enabled ? AppColors.ink900 : AppColors.ink300),
+          width: 34,
+          height: 34,
+          child: Center(
+            child: enabled
+                ? const GrIcon('plus', size: 16)
+                : const Icon(Icons.add_rounded, size: 18, color: Gr.ink3),
+          ),
         ),
       ),
     );
@@ -300,20 +282,18 @@ class _Stepper extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget btn(IconData icon, VoidCallback onTap) => InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(99),
-          child: SizedBox(width: 26, height: 28, child: Icon(icon, size: 15, color: Gr.onAccent)),
+          borderRadius: BorderRadius.circular(Gr.pill),
+          child: SizedBox(width: 30, height: 34, child: Icon(icon, size: 16, color: Gr.onPrimary)),
         );
 
     return Material(
-      color: Gr.accent,
-      borderRadius: BorderRadius.circular(99),
-      elevation: 1.5,
-      shadowColor: Colors.black26,
+      color: Gr.primary,
+      borderRadius: BorderRadius.circular(Gr.pill),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           btn(qty == 1 ? Icons.delete_outline_rounded : Icons.remove_rounded, () => onChanged(qty - 1)),
-          Text('$qty', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Gr.onAccent)),
+          Text('$qty', style: Gr.text(13, weight: 800, color: Gr.onPrimary)),
           btn(Icons.add_rounded, () => onChanged(qty + 1)),
         ],
       ),

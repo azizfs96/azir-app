@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.13.0
@@ -28,6 +28,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter_web_plugins:
+    sdk: flutter
   flutter:
     sdk: flutter
 
@@ -40,6 +42,8 @@ dependencies:
   dio: ^5.11.0
   mobile_scanner: ^7.4.0
   shared_preferences: ^2.5.5
+  connectivity_plus: ^6.1.0
+  flutter_svg: ^2.0.10
   intl: ^0.20.3
   # A real map location picker (OpenStreetMap tiles — no API key needed),
   # device GPS, and native reverse geocoding for the address text.
@@ -99,6 +103,16 @@ flutter:
           weight: 600
         - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
           weight: 700
+    # Cairo (SIL OFL 1.1 — assets/fonts/cairo/OFL.txt): the supermarket
+    # template's typeface, straight from the owner's Figma design. A variable
+    # font; the grocery theme sets the `wght` axis alongside fontWeight.
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/cairo/Cairo-Variable.ttf
+
+  assets:
+    # Icons exported from the supermarket Figma design (stroke icons, 14–24pt).
+    - assets/icons/grocery/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
